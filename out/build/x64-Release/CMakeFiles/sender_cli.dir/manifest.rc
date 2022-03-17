@@ -1,0 +1,2 @@
+#pragma code_page(65001)
+1 /* CREATEPROCESS_MANIFEST_RESOURCE_ID */ 24 /* RT_MANIFEST */ "D:/psi_h/apsi_3_8/APSI/out/build/x64-Release/CMakeFiles/sender_cli.dir/embed.manifest"

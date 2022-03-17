@@ -1,0 +1,46 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"install"
+		],
+		"files" : 
+		[
+			"common/apsi/oprf/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 12,
+				"parent" : 0
+			}
+		]
+	},
+	"installers" : 
+	[
+		{
+			"backtrace" : 1,
+			"component" : "Unspecified",
+			"destination" : "include/APSI-0.7/apsi/oprf",
+			"paths" : 
+			[
+				"common/apsi/oprf/ecpoint.h",
+				"common/apsi/oprf/oprf_common.h",
+				"common/apsi/oprf/oprf_sender.h",
+				"common/apsi/oprf/oprf_receiver.h"
+			],
+			"type" : "file"
+		}
+	],
+	"paths" : 
+	{
+		"build" : "common/apsi/oprf",
+		"source" : "common/apsi/oprf"
+	}
+}

@@ -1,0 +1,10 @@
+^D:\PSI_H\MULIT\APSI\CMAKELISTS.TXT
+setlocal
+D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\bin\cmake.exe -SD:/psi_h/mulit/APSI -BD:/psi_h/mulit/APSI/build --check-stamp-file D:/psi_h/mulit/APSI/build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

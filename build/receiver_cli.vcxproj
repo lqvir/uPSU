@@ -1,0 +1,349 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <PreferredToolArchitecture>x86</PreferredToolArchitecture>
+  </PropertyGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="MinSizeRel|x64">
+      <Configuration>MinSizeRel</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="RelWithDebInfo|x64">
+      <Configuration>RelWithDebInfo</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{012F2956-7C30-3FB5-9680-725E5FC9FBB1}</ProjectGuid>
+    <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
+    <Keyword>Win32Proj</Keyword>
+    <Platform>x64</Platform>
+    <ProjectName>receiver_cli</ProjectName>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\psi_h\mulit\APSI\build\bin\Debug\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">receiver_cli.dir\Debug\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">receiver_cli</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.exe</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</GenerateManifest>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\psi_h\mulit\APSI\build\bin\Release\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">receiver_cli.dir\Release\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">receiver_cli</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.exe</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</GenerateManifest>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">D:\psi_h\mulit\APSI\build\bin\MinSizeRel\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">receiver_cli.dir\MinSizeRel\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">receiver_cli</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">.exe</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">true</GenerateManifest>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">D:\psi_h\mulit\APSI\build\bin\RelWithDebInfo\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">receiver_cli.dir\RelWithDebInfo\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">receiver_cli</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">.exe</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">true</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">true</GenerateManifest>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>D:\psi_h\mulit\APSI\cli;D:\psi_h\mulit\APSI\ D:\psi_h\mulit\APSI\thirdparty\include;D:\psi_h\mulit\APSI\common;D:\psi_h\mulit\APSI\sender;D:\psi_h\mulit\APSI\receiver;D:\psi_h\mulit\APSI\build\common;D:\psi_h\mulit\APSI\build\sender;D:\psi_h\mulit\APSI\thirdparty\include\SEAL-3.7;D:\psi_h\mulit\APSI\thirdparty\include;D:\psi_h\mulit\APSI\thirdparty\include\Kuku-2.1;D:\anaconda3\Library\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <Optimization>Disabled</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;HAVE_CONFIG;USE_SECURE_SEED;USE_ENDO=true;__WINDOWS__;_AMD64_;_AVX2_;ZMQ_STATIC;CMAKE_INTDIR="Debug"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;_WINDOWS;HAVE_CONFIG;USE_SECURE_SEED;USE_ENDO=true;__WINDOWS__;_AMD64_;_AVX2_;ZMQ_STATIC;CMAKE_INTDIR=\"Debug\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>D:\psi_h\mulit\APSI\cli;D:\psi_h\mulit\APSI\ D:\psi_h\mulit\APSI\thirdparty\include;D:\psi_h\mulit\APSI\common;D:\psi_h\mulit\APSI\sender;D:\psi_h\mulit\APSI\receiver;D:\psi_h\mulit\APSI\build\common;D:\psi_h\mulit\APSI\build\sender;D:\psi_h\mulit\APSI\thirdparty\include\SEAL-3.7;D:\psi_h\mulit\APSI\thirdparty\include;D:\psi_h\mulit\APSI\thirdparty\include\Kuku-2.1;D:\anaconda3\Library\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>D:\psi_h\mulit\APSI\cli;D:\psi_h\mulit\APSI\ D:\psi_h\mulit\APSI\thirdparty\include;D:\psi_h\mulit\APSI\common;D:\psi_h\mulit\APSI\sender;D:\psi_h\mulit\APSI\receiver;D:\psi_h\mulit\APSI\build\common;D:\psi_h\mulit\APSI\build\sender;D:\psi_h\mulit\APSI\thirdparty\include\SEAL-3.7;D:\psi_h\mulit\APSI\thirdparty\include;D:\psi_h\mulit\APSI\thirdparty\include\Kuku-2.1;D:\anaconda3\Library\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Link>
+      <AdditionalDependencies>lib\Debug\apsi-0.7.lib;..\thirdparty\debug\lib\seal-3.7.lib;D:\anaconda3\Library\lib\z.lib;D:\anaconda3\Library\lib\zstd_static.lib;..\thirdparty\debug\lib\kuku-2.1.lib;..\thirdparty\debug\lib\flatbuffers.lib;..\thirdparty\debug\lib\jsoncpp.lib;..\thirdparty\debug\lib\log4cplusD.lib;advapi32.lib;D:\anaconda3\Library\lib\libzmq-mt-s-4_3_3.lib;D:\anaconda3\Library\lib\libsodium.lib;ws2_32.lib;rpcrt4.lib;iphlpapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImportLibrary>D:/psi_h/mulit/APSI/build/lib/Debug/receiver_cli.lib</ImportLibrary>
+      <ProgramDataBaseFile>D:/psi_h/mulit/APSI/build/bin/Debug/receiver_cli.pdb</ProgramDataBaseFile>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>D:\psi_h\mulit\APSI\cli;D:\psi_h\mulit\APSI\ D:\psi_h\mulit\APSI\thirdparty\include;D:\psi_h\mulit\APSI\common;D:\psi_h\mulit\APSI\sender;D:\psi_h\mulit\APSI\receiver;D:\psi_h\mulit\APSI\build\common;D:\psi_h\mulit\APSI\build\sender;D:\psi_h\mulit\APSI\thirdparty\include\SEAL-3.7;D:\psi_h\mulit\APSI\thirdparty\include;D:\psi_h\mulit\APSI\thirdparty\include\Kuku-2.1;D:\anaconda3\Library\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;HAVE_CONFIG;USE_SECURE_SEED;USE_ENDO=true;__WINDOWS__;_AMD64_;_AVX2_;ZMQ_STATIC;CMAKE_INTDIR="Release"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;HAVE_CONFIG;USE_SECURE_SEED;USE_ENDO=true;__WINDOWS__;_AMD64_;_AVX2_;ZMQ_STATIC;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>D:\psi_h\mulit\APSI\cli;D:\psi_h\mulit\APSI\ D:\psi_h\mulit\APSI\thirdparty\include;D:\psi_h\mulit\APSI\common;D:\psi_h\mulit\APSI\sender;D:\psi_h\mulit\APSI\receiver;D:\psi_h\mulit\APSI\build\common;D:\psi_h\mulit\APSI\build\sender;D:\psi_h\mulit\APSI\thirdparty\include\SEAL-3.7;D:\psi_h\mulit\APSI\thirdparty\include;D:\psi_h\mulit\APSI\thirdparty\include\Kuku-2.1;D:\anaconda3\Library\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>D:\psi_h\mulit\APSI\cli;D:\psi_h\mulit\APSI\ D:\psi_h\mulit\APSI\thirdparty\include;D:\psi_h\mulit\APSI\common;D:\psi_h\mulit\APSI\sender;D:\psi_h\mulit\APSI\receiver;D:\psi_h\mulit\APSI\build\common;D:\psi_h\mulit\APSI\build\sender;D:\psi_h\mulit\APSI\thirdparty\include\SEAL-3.7;D:\psi_h\mulit\APSI\thirdparty\include;D:\psi_h\mulit\APSI\thirdparty\include\Kuku-2.1;D:\anaconda3\Library\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Link>
+      <AdditionalDependencies>lib\Release\apsi-0.7.lib;..\thirdparty\lib\seal-3.7.lib;D:\anaconda3\Library\lib\z.lib;D:\anaconda3\Library\lib\zstd_static.lib;..\thirdparty\lib\kuku-2.1.lib;..\thirdparty\lib\flatbuffers.lib;..\thirdparty\lib\jsoncpp.lib;..\thirdparty\lib\log4cplus.lib;advapi32.lib;D:\anaconda3\Library\lib\libzmq-mt-s-4_3_3.lib;D:\anaconda3\Library\lib\libsodium.lib;ws2_32.lib;rpcrt4.lib;iphlpapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImportLibrary>D:/psi_h/mulit/APSI/build/lib/Release/receiver_cli.lib</ImportLibrary>
+      <ProgramDataBaseFile>D:/psi_h/mulit/APSI/build/bin/Release/receiver_cli.pdb</ProgramDataBaseFile>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>D:\psi_h\mulit\APSI\cli;D:\psi_h\mulit\APSI\ D:\psi_h\mulit\APSI\thirdparty\include;D:\psi_h\mulit\APSI\common;D:\psi_h\mulit\APSI\sender;D:\psi_h\mulit\APSI\receiver;D:\psi_h\mulit\APSI\build\common;D:\psi_h\mulit\APSI\build\sender;D:\psi_h\mulit\APSI\thirdparty\include\SEAL-3.7;D:\psi_h\mulit\APSI\thirdparty\include;D:\psi_h\mulit\APSI\thirdparty\include\Kuku-2.1;D:\anaconda3\Library\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <Optimization>MinSpace</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;HAVE_CONFIG;USE_SECURE_SEED;USE_ENDO=true;__WINDOWS__;_AMD64_;_AVX2_;ZMQ_STATIC;CMAKE_INTDIR="MinSizeRel"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;HAVE_CONFIG;USE_SECURE_SEED;USE_ENDO=true;__WINDOWS__;_AMD64_;_AVX2_;ZMQ_STATIC;CMAKE_INTDIR=\"MinSizeRel\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>D:\psi_h\mulit\APSI\cli;D:\psi_h\mulit\APSI\ D:\psi_h\mulit\APSI\thirdparty\include;D:\psi_h\mulit\APSI\common;D:\psi_h\mulit\APSI\sender;D:\psi_h\mulit\APSI\receiver;D:\psi_h\mulit\APSI\build\common;D:\psi_h\mulit\APSI\build\sender;D:\psi_h\mulit\APSI\thirdparty\include\SEAL-3.7;D:\psi_h\mulit\APSI\thirdparty\include;D:\psi_h\mulit\APSI\thirdparty\include\Kuku-2.1;D:\anaconda3\Library\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>D:\psi_h\mulit\APSI\cli;D:\psi_h\mulit\APSI\ D:\psi_h\mulit\APSI\thirdparty\include;D:\psi_h\mulit\APSI\common;D:\psi_h\mulit\APSI\sender;D:\psi_h\mulit\APSI\receiver;D:\psi_h\mulit\APSI\build\common;D:\psi_h\mulit\APSI\build\sender;D:\psi_h\mulit\APSI\thirdparty\include\SEAL-3.7;D:\psi_h\mulit\APSI\thirdparty\include;D:\psi_h\mulit\APSI\thirdparty\include\Kuku-2.1;D:\anaconda3\Library\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Link>
+      <AdditionalDependencies>lib\MinSizeRel\apsi-0.7.lib;..\thirdparty\debug\lib\seal-3.7.lib;D:\anaconda3\Library\lib\z.lib;D:\anaconda3\Library\lib\zstd_static.lib;..\thirdparty\debug\lib\kuku-2.1.lib;..\thirdparty\debug\lib\flatbuffers.lib;..\thirdparty\debug\lib\jsoncpp.lib;..\thirdparty\debug\lib\log4cplusD.lib;advapi32.lib;D:\anaconda3\Library\lib\libzmq-mt-s-4_3_3.lib;D:\anaconda3\Library\lib\libsodium.lib;ws2_32.lib;rpcrt4.lib;iphlpapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImportLibrary>D:/psi_h/mulit/APSI/build/lib/MinSizeRel/receiver_cli.lib</ImportLibrary>
+      <ProgramDataBaseFile>D:/psi_h/mulit/APSI/build/bin/MinSizeRel/receiver_cli.pdb</ProgramDataBaseFile>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>D:\psi_h\mulit\APSI\cli;D:\psi_h\mulit\APSI\ D:\psi_h\mulit\APSI\thirdparty\include;D:\psi_h\mulit\APSI\common;D:\psi_h\mulit\APSI\sender;D:\psi_h\mulit\APSI\receiver;D:\psi_h\mulit\APSI\build\common;D:\psi_h\mulit\APSI\build\sender;D:\psi_h\mulit\APSI\thirdparty\include\SEAL-3.7;D:\psi_h\mulit\APSI\thirdparty\include;D:\psi_h\mulit\APSI\thirdparty\include\Kuku-2.1;D:\anaconda3\Library\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;HAVE_CONFIG;USE_SECURE_SEED;USE_ENDO=true;__WINDOWS__;_AMD64_;_AVX2_;ZMQ_STATIC;CMAKE_INTDIR="RelWithDebInfo"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;HAVE_CONFIG;USE_SECURE_SEED;USE_ENDO=true;__WINDOWS__;_AMD64_;_AVX2_;ZMQ_STATIC;CMAKE_INTDIR=\"RelWithDebInfo\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>D:\psi_h\mulit\APSI\cli;D:\psi_h\mulit\APSI\ D:\psi_h\mulit\APSI\thirdparty\include;D:\psi_h\mulit\APSI\common;D:\psi_h\mulit\APSI\sender;D:\psi_h\mulit\APSI\receiver;D:\psi_h\mulit\APSI\build\common;D:\psi_h\mulit\APSI\build\sender;D:\psi_h\mulit\APSI\thirdparty\include\SEAL-3.7;D:\psi_h\mulit\APSI\thirdparty\include;D:\psi_h\mulit\APSI\thirdparty\include\Kuku-2.1;D:\anaconda3\Library\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>D:\psi_h\mulit\APSI\cli;D:\psi_h\mulit\APSI\ D:\psi_h\mulit\APSI\thirdparty\include;D:\psi_h\mulit\APSI\common;D:\psi_h\mulit\APSI\sender;D:\psi_h\mulit\APSI\receiver;D:\psi_h\mulit\APSI\build\common;D:\psi_h\mulit\APSI\build\sender;D:\psi_h\mulit\APSI\thirdparty\include\SEAL-3.7;D:\psi_h\mulit\APSI\thirdparty\include;D:\psi_h\mulit\APSI\thirdparty\include\Kuku-2.1;D:\anaconda3\Library\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Link>
+      <AdditionalDependencies>lib\RelWithDebInfo\apsi-0.7.lib;..\thirdparty\debug\lib\seal-3.7.lib;D:\anaconda3\Library\lib\z.lib;D:\anaconda3\Library\lib\zstd_static.lib;..\thirdparty\debug\lib\kuku-2.1.lib;..\thirdparty\debug\lib\flatbuffers.lib;..\thirdparty\debug\lib\jsoncpp.lib;..\thirdparty\debug\lib\log4cplusD.lib;advapi32.lib;D:\anaconda3\Library\lib\libzmq-mt-s-4_3_3.lib;D:\anaconda3\Library\lib\libsodium.lib;ws2_32.lib;rpcrt4.lib;iphlpapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImportLibrary>D:/psi_h/mulit/APSI/build/lib/RelWithDebInfo/receiver_cli.lib</ImportLibrary>
+      <ProgramDataBaseFile>D:/psi_h/mulit/APSI/build/bin/RelWithDebInfo/receiver_cli.pdb</ProgramDataBaseFile>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <CustomBuild Include="D:\psi_h\mulit\APSI\CMakeLists.txt">
+      <UseUtf8Encoding>Always</UseUtf8Encoding>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule D:/psi_h/mulit/APSI/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\bin\cmake.exe -SD:/psi_h/mulit/APSI -BD:/psi_h/mulit/APSI/build --check-stamp-file D:/psi_h/mulit/APSI/build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\anaconda3\Library\cmake\ZeroMQConfig.cmake;D:\anaconda3\Library\cmake\ZeroMQConfigVersion.cmake;D:\anaconda3\Library\cmake\ZeroMQTargets-release.cmake;D:\anaconda3\Library\cmake\ZeroMQTargets.cmake;D:\anaconda3\Library\lib\cmake\zstd\zstdConfig.cmake;D:\anaconda3\Library\lib\cmake\zstd\zstdConfigVersion.cmake;D:\anaconda3\Library\lib\cmake\zstd\zstdTargets-release.cmake;D:\anaconda3\Library\lib\cmake\zstd\zstdTargets.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\BasicConfigVersion-SameMinorVersion.cmake.in;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeCInformation.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeCXXInformation.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeCheckCompilerFlagCommonPatterns.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeCommonLanguageInclude.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeDependentOption.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeFindDependencyMacro.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeGenericSystem.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeInitializeConfigs.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeLanguageInformation.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakePackageConfigHelpers.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeRCInformation.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeSystemSpecificInformation.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeSystemSpecificInitialize.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CheckCSourceCompiles.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CheckCXXCompilerFlag.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CheckCXXSourceCompiles.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CheckCXXSourceRuns.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CheckIncludeFile.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CheckLanguage.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CheckLibraryExists.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Compiler\CMakeCommonCompilerMacros.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Compiler\MSVC-C.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Compiler\MSVC-CXX.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\FindPackageHandleStandardArgs.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\FindPackageMessage.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\FindThreads.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\FindZLIB.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\GNUInstallDirs.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Internal\CheckCompilerFlag.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Internal\CheckSourceCompiles.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Internal\CheckSourceRuns.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Platform\Windows-MSVC-C.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Platform\Windows-MSVC-CXX.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Platform\Windows-MSVC.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Platform\Windows.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Platform\WindowsPaths.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\SelectLibraryConfigurations.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\WriteBasicConfigVersionFile.cmake;D:\psi_h\mulit\APSI\build\CMakeFiles\3.21.0\CMakeCCompiler.cmake;D:\psi_h\mulit\APSI\build\CMakeFiles\3.21.0\CMakeCXXCompiler.cmake;D:\psi_h\mulit\APSI\build\CMakeFiles\3.21.0\CMakeRCCompiler.cmake;D:\psi_h\mulit\APSI\build\CMakeFiles\3.21.0\CMakeSystem.cmake;D:\psi_h\mulit\APSI\cmake\APSIConfig.cmake.in;D:\psi_h\mulit\APSI\cmake\APSIMacros.cmake;D:\psi_h\mulit\APSI\cmake\CompileSchemaCXX.cmake;D:\psi_h\mulit\APSI\cmake\DetectArch.cmake;D:\psi_h\mulit\APSI\cmake\FindAVX.cmake;D:\psi_h\mulit\APSI\common\apsi\config.h.in;D:\psi_h\mulit\APSI\thirdparty\share\Microsoft.GSL\Microsoft.GSLConfig.cmake;D:\psi_h\mulit\APSI\thirdparty\share\Microsoft.GSL\Microsoft.GSLConfigVersion.cmake;D:\psi_h\mulit\APSI\thirdparty\share\SEAL\SEALConfig.cmake;D:\psi_h\mulit\APSI\thirdparty\share\SEAL\SEALConfigVersion.cmake;D:\psi_h\mulit\APSI\thirdparty\share\SEAL\SEALTargets-debug.cmake;D:\psi_h\mulit\APSI\thirdparty\share\SEAL\SEALTargets-release.cmake;D:\psi_h\mulit\APSI\thirdparty\share\SEAL\SEALTargets.cmake;D:\psi_h\mulit\APSI\thirdparty\share\cppzmq\cppzmqConfig.cmake;D:\psi_h\mulit\APSI\thirdparty\share\cppzmq\cppzmqConfigVersion.cmake;D:\psi_h\mulit\APSI\thirdparty\share\cppzmq\cppzmqTargets.cmake;D:\psi_h\mulit\APSI\thirdparty\share\flatbuffers\FlatbuffersConfig.cmake;D:\psi_h\mulit\APSI\thirdparty\share\flatbuffers\FlatbuffersConfigVersion.cmake;D:\psi_h\mulit\APSI\thirdparty\share\flatbuffers\FlatbuffersTargets-debug.cmake;D:\psi_h\mulit\APSI\thirdparty\share\flatbuffers\FlatbuffersTargets-release.cmake;D:\psi_h\mulit\APSI\thirdparty\share\flatbuffers\FlatbuffersTargets.cmake;D:\psi_h\mulit\APSI\thirdparty\share\flatbuffers\FlatcTargets-debug.cmake;D:\psi_h\mulit\APSI\thirdparty\share\flatbuffers\FlatcTargets-release.cmake;D:\psi_h\mulit\APSI\thirdparty\share\flatbuffers\FlatcTargets.cmake;D:\psi_h\mulit\APSI\thirdparty\share\jsoncpp\jsoncpp-namespaced-targets.cmake;D:\psi_h\mulit\APSI\thirdparty\share\jsoncpp\jsoncpp-targets-debug.cmake;D:\psi_h\mulit\APSI\thirdparty\share\jsoncpp\jsoncpp-targets-release.cmake;D:\psi_h\mulit\APSI\thirdparty\share\jsoncpp\jsoncpp-targets.cmake;D:\psi_h\mulit\APSI\thirdparty\share\jsoncpp\jsoncppConfig.cmake;D:\psi_h\mulit\APSI\thirdparty\share\jsoncpp\jsoncppConfigVersion.cmake;D:\psi_h\mulit\APSI\thirdparty\share\kuku\KukuConfig.cmake;D:\psi_h\mulit\APSI\thirdparty\share\kuku\KukuConfigVersion.cmake;D:\psi_h\mulit\APSI\thirdparty\share\kuku\KukuTargets-debug.cmake;D:\psi_h\mulit\APSI\thirdparty\share\kuku\KukuTargets-release.cmake;D:\psi_h\mulit\APSI\thirdparty\share\kuku\KukuTargets.cmake;D:\psi_h\mulit\APSI\thirdparty\share\log4cplus\log4cplusConfig.cmake;D:\psi_h\mulit\APSI\thirdparty\share\log4cplus\log4cplusConfigVersion.cmake;D:\psi_h\mulit\APSI\thirdparty\share\log4cplus\log4cplusTargets-debug.cmake;D:\psi_h\mulit\APSI\thirdparty\share\log4cplus\log4cplusTargets-release.cmake;D:\psi_h\mulit\APSI\thirdparty\share\log4cplus\log4cplusTargets.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\psi_h\mulit\APSI\build\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule D:/psi_h/mulit/APSI/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\bin\cmake.exe -SD:/psi_h/mulit/APSI -BD:/psi_h/mulit/APSI/build --check-stamp-file D:/psi_h/mulit/APSI/build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\anaconda3\Library\cmake\ZeroMQConfig.cmake;D:\anaconda3\Library\cmake\ZeroMQConfigVersion.cmake;D:\anaconda3\Library\cmake\ZeroMQTargets-release.cmake;D:\anaconda3\Library\cmake\ZeroMQTargets.cmake;D:\anaconda3\Library\lib\cmake\zstd\zstdConfig.cmake;D:\anaconda3\Library\lib\cmake\zstd\zstdConfigVersion.cmake;D:\anaconda3\Library\lib\cmake\zstd\zstdTargets-release.cmake;D:\anaconda3\Library\lib\cmake\zstd\zstdTargets.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\BasicConfigVersion-SameMinorVersion.cmake.in;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeCInformation.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeCXXInformation.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeCheckCompilerFlagCommonPatterns.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeCommonLanguageInclude.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeDependentOption.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeFindDependencyMacro.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeGenericSystem.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeInitializeConfigs.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeLanguageInformation.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakePackageConfigHelpers.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeRCInformation.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeSystemSpecificInformation.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeSystemSpecificInitialize.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CheckCSourceCompiles.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CheckCXXCompilerFlag.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CheckCXXSourceCompiles.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CheckCXXSourceRuns.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CheckIncludeFile.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CheckLanguage.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CheckLibraryExists.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Compiler\CMakeCommonCompilerMacros.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Compiler\MSVC-C.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Compiler\MSVC-CXX.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\FindPackageHandleStandardArgs.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\FindPackageMessage.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\FindThreads.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\FindZLIB.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\GNUInstallDirs.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Internal\CheckCompilerFlag.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Internal\CheckSourceCompiles.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Internal\CheckSourceRuns.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Platform\Windows-MSVC-C.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Platform\Windows-MSVC-CXX.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Platform\Windows-MSVC.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Platform\Windows.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Platform\WindowsPaths.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\SelectLibraryConfigurations.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\WriteBasicConfigVersionFile.cmake;D:\psi_h\mulit\APSI\build\CMakeFiles\3.21.0\CMakeCCompiler.cmake;D:\psi_h\mulit\APSI\build\CMakeFiles\3.21.0\CMakeCXXCompiler.cmake;D:\psi_h\mulit\APSI\build\CMakeFiles\3.21.0\CMakeRCCompiler.cmake;D:\psi_h\mulit\APSI\build\CMakeFiles\3.21.0\CMakeSystem.cmake;D:\psi_h\mulit\APSI\cmake\APSIConfig.cmake.in;D:\psi_h\mulit\APSI\cmake\APSIMacros.cmake;D:\psi_h\mulit\APSI\cmake\CompileSchemaCXX.cmake;D:\psi_h\mulit\APSI\cmake\DetectArch.cmake;D:\psi_h\mulit\APSI\cmake\FindAVX.cmake;D:\psi_h\mulit\APSI\common\apsi\config.h.in;D:\psi_h\mulit\APSI\thirdparty\share\Microsoft.GSL\Microsoft.GSLConfig.cmake;D:\psi_h\mulit\APSI\thirdparty\share\Microsoft.GSL\Microsoft.GSLConfigVersion.cmake;D:\psi_h\mulit\APSI\thirdparty\share\SEAL\SEALConfig.cmake;D:\psi_h\mulit\APSI\thirdparty\share\SEAL\SEALConfigVersion.cmake;D:\psi_h\mulit\APSI\thirdparty\share\SEAL\SEALTargets-debug.cmake;D:\psi_h\mulit\APSI\thirdparty\share\SEAL\SEALTargets-release.cmake;D:\psi_h\mulit\APSI\thirdparty\share\SEAL\SEALTargets.cmake;D:\psi_h\mulit\APSI\thirdparty\share\cppzmq\cppzmqConfig.cmake;D:\psi_h\mulit\APSI\thirdparty\share\cppzmq\cppzmqConfigVersion.cmake;D:\psi_h\mulit\APSI\thirdparty\share\cppzmq\cppzmqTargets.cmake;D:\psi_h\mulit\APSI\thirdparty\share\flatbuffers\FlatbuffersConfig.cmake;D:\psi_h\mulit\APSI\thirdparty\share\flatbuffers\FlatbuffersConfigVersion.cmake;D:\psi_h\mulit\APSI\thirdparty\share\flatbuffers\FlatbuffersTargets-debug.cmake;D:\psi_h\mulit\APSI\thirdparty\share\flatbuffers\FlatbuffersTargets-release.cmake;D:\psi_h\mulit\APSI\thirdparty\share\flatbuffers\FlatbuffersTargets.cmake;D:\psi_h\mulit\APSI\thirdparty\share\flatbuffers\FlatcTargets-debug.cmake;D:\psi_h\mulit\APSI\thirdparty\share\flatbuffers\FlatcTargets-release.cmake;D:\psi_h\mulit\APSI\thirdparty\share\flatbuffers\FlatcTargets.cmake;D:\psi_h\mulit\APSI\thirdparty\share\jsoncpp\jsoncpp-namespaced-targets.cmake;D:\psi_h\mulit\APSI\thirdparty\share\jsoncpp\jsoncpp-targets-debug.cmake;D:\psi_h\mulit\APSI\thirdparty\share\jsoncpp\jsoncpp-targets-release.cmake;D:\psi_h\mulit\APSI\thirdparty\share\jsoncpp\jsoncpp-targets.cmake;D:\psi_h\mulit\APSI\thirdparty\share\jsoncpp\jsoncppConfig.cmake;D:\psi_h\mulit\APSI\thirdparty\share\jsoncpp\jsoncppConfigVersion.cmake;D:\psi_h\mulit\APSI\thirdparty\share\kuku\KukuConfig.cmake;D:\psi_h\mulit\APSI\thirdparty\share\kuku\KukuConfigVersion.cmake;D:\psi_h\mulit\APSI\thirdparty\share\kuku\KukuTargets-debug.cmake;D:\psi_h\mulit\APSI\thirdparty\share\kuku\KukuTargets-release.cmake;D:\psi_h\mulit\APSI\thirdparty\share\kuku\KukuTargets.cmake;D:\psi_h\mulit\APSI\thirdparty\share\log4cplus\log4cplusConfig.cmake;D:\psi_h\mulit\APSI\thirdparty\share\log4cplus\log4cplusConfigVersion.cmake;D:\psi_h\mulit\APSI\thirdparty\share\log4cplus\log4cplusTargets-debug.cmake;D:\psi_h\mulit\APSI\thirdparty\share\log4cplus\log4cplusTargets-release.cmake;D:\psi_h\mulit\APSI\thirdparty\share\log4cplus\log4cplusTargets.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\psi_h\mulit\APSI\build\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Building Custom Rule D:/psi_h/mulit/APSI/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\bin\cmake.exe -SD:/psi_h/mulit/APSI -BD:/psi_h/mulit/APSI/build --check-stamp-file D:/psi_h/mulit/APSI/build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">D:\anaconda3\Library\cmake\ZeroMQConfig.cmake;D:\anaconda3\Library\cmake\ZeroMQConfigVersion.cmake;D:\anaconda3\Library\cmake\ZeroMQTargets-release.cmake;D:\anaconda3\Library\cmake\ZeroMQTargets.cmake;D:\anaconda3\Library\lib\cmake\zstd\zstdConfig.cmake;D:\anaconda3\Library\lib\cmake\zstd\zstdConfigVersion.cmake;D:\anaconda3\Library\lib\cmake\zstd\zstdTargets-release.cmake;D:\anaconda3\Library\lib\cmake\zstd\zstdTargets.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\BasicConfigVersion-SameMinorVersion.cmake.in;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeCInformation.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeCXXInformation.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeCheckCompilerFlagCommonPatterns.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeCommonLanguageInclude.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeDependentOption.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeFindDependencyMacro.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeGenericSystem.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeInitializeConfigs.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeLanguageInformation.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakePackageConfigHelpers.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeRCInformation.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeSystemSpecificInformation.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeSystemSpecificInitialize.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CheckCSourceCompiles.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CheckCXXCompilerFlag.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CheckCXXSourceCompiles.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CheckCXXSourceRuns.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CheckIncludeFile.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CheckLanguage.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CheckLibraryExists.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Compiler\CMakeCommonCompilerMacros.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Compiler\MSVC-C.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Compiler\MSVC-CXX.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\FindPackageHandleStandardArgs.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\FindPackageMessage.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\FindThreads.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\FindZLIB.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\GNUInstallDirs.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Internal\CheckCompilerFlag.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Internal\CheckSourceCompiles.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Internal\CheckSourceRuns.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Platform\Windows-MSVC-C.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Platform\Windows-MSVC-CXX.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Platform\Windows-MSVC.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Platform\Windows.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Platform\WindowsPaths.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\SelectLibraryConfigurations.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\WriteBasicConfigVersionFile.cmake;D:\psi_h\mulit\APSI\build\CMakeFiles\3.21.0\CMakeCCompiler.cmake;D:\psi_h\mulit\APSI\build\CMakeFiles\3.21.0\CMakeCXXCompiler.cmake;D:\psi_h\mulit\APSI\build\CMakeFiles\3.21.0\CMakeRCCompiler.cmake;D:\psi_h\mulit\APSI\build\CMakeFiles\3.21.0\CMakeSystem.cmake;D:\psi_h\mulit\APSI\cmake\APSIConfig.cmake.in;D:\psi_h\mulit\APSI\cmake\APSIMacros.cmake;D:\psi_h\mulit\APSI\cmake\CompileSchemaCXX.cmake;D:\psi_h\mulit\APSI\cmake\DetectArch.cmake;D:\psi_h\mulit\APSI\cmake\FindAVX.cmake;D:\psi_h\mulit\APSI\common\apsi\config.h.in;D:\psi_h\mulit\APSI\thirdparty\share\Microsoft.GSL\Microsoft.GSLConfig.cmake;D:\psi_h\mulit\APSI\thirdparty\share\Microsoft.GSL\Microsoft.GSLConfigVersion.cmake;D:\psi_h\mulit\APSI\thirdparty\share\SEAL\SEALConfig.cmake;D:\psi_h\mulit\APSI\thirdparty\share\SEAL\SEALConfigVersion.cmake;D:\psi_h\mulit\APSI\thirdparty\share\SEAL\SEALTargets-debug.cmake;D:\psi_h\mulit\APSI\thirdparty\share\SEAL\SEALTargets-release.cmake;D:\psi_h\mulit\APSI\thirdparty\share\SEAL\SEALTargets.cmake;D:\psi_h\mulit\APSI\thirdparty\share\cppzmq\cppzmqConfig.cmake;D:\psi_h\mulit\APSI\thirdparty\share\cppzmq\cppzmqConfigVersion.cmake;D:\psi_h\mulit\APSI\thirdparty\share\cppzmq\cppzmqTargets.cmake;D:\psi_h\mulit\APSI\thirdparty\share\flatbuffers\FlatbuffersConfig.cmake;D:\psi_h\mulit\APSI\thirdparty\share\flatbuffers\FlatbuffersConfigVersion.cmake;D:\psi_h\mulit\APSI\thirdparty\share\flatbuffers\FlatbuffersTargets-debug.cmake;D:\psi_h\mulit\APSI\thirdparty\share\flatbuffers\FlatbuffersTargets-release.cmake;D:\psi_h\mulit\APSI\thirdparty\share\flatbuffers\FlatbuffersTargets.cmake;D:\psi_h\mulit\APSI\thirdparty\share\flatbuffers\FlatcTargets-debug.cmake;D:\psi_h\mulit\APSI\thirdparty\share\flatbuffers\FlatcTargets-release.cmake;D:\psi_h\mulit\APSI\thirdparty\share\flatbuffers\FlatcTargets.cmake;D:\psi_h\mulit\APSI\thirdparty\share\jsoncpp\jsoncpp-namespaced-targets.cmake;D:\psi_h\mulit\APSI\thirdparty\share\jsoncpp\jsoncpp-targets-debug.cmake;D:\psi_h\mulit\APSI\thirdparty\share\jsoncpp\jsoncpp-targets-release.cmake;D:\psi_h\mulit\APSI\thirdparty\share\jsoncpp\jsoncpp-targets.cmake;D:\psi_h\mulit\APSI\thirdparty\share\jsoncpp\jsoncppConfig.cmake;D:\psi_h\mulit\APSI\thirdparty\share\jsoncpp\jsoncppConfigVersion.cmake;D:\psi_h\mulit\APSI\thirdparty\share\kuku\KukuConfig.cmake;D:\psi_h\mulit\APSI\thirdparty\share\kuku\KukuConfigVersion.cmake;D:\psi_h\mulit\APSI\thirdparty\share\kuku\KukuTargets-debug.cmake;D:\psi_h\mulit\APSI\thirdparty\share\kuku\KukuTargets-release.cmake;D:\psi_h\mulit\APSI\thirdparty\share\kuku\KukuTargets.cmake;D:\psi_h\mulit\APSI\thirdparty\share\log4cplus\log4cplusConfig.cmake;D:\psi_h\mulit\APSI\thirdparty\share\log4cplus\log4cplusConfigVersion.cmake;D:\psi_h\mulit\APSI\thirdparty\share\log4cplus\log4cplusTargets-debug.cmake;D:\psi_h\mulit\APSI\thirdparty\share\log4cplus\log4cplusTargets-release.cmake;D:\psi_h\mulit\APSI\thirdparty\share\log4cplus\log4cplusTargets.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">D:\psi_h\mulit\APSI\build\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Building Custom Rule D:/psi_h/mulit/APSI/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\bin\cmake.exe -SD:/psi_h/mulit/APSI -BD:/psi_h/mulit/APSI/build --check-stamp-file D:/psi_h/mulit/APSI/build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">D:\anaconda3\Library\cmake\ZeroMQConfig.cmake;D:\anaconda3\Library\cmake\ZeroMQConfigVersion.cmake;D:\anaconda3\Library\cmake\ZeroMQTargets-release.cmake;D:\anaconda3\Library\cmake\ZeroMQTargets.cmake;D:\anaconda3\Library\lib\cmake\zstd\zstdConfig.cmake;D:\anaconda3\Library\lib\cmake\zstd\zstdConfigVersion.cmake;D:\anaconda3\Library\lib\cmake\zstd\zstdTargets-release.cmake;D:\anaconda3\Library\lib\cmake\zstd\zstdTargets.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\BasicConfigVersion-SameMinorVersion.cmake.in;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeCInformation.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeCXXInformation.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeCheckCompilerFlagCommonPatterns.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeCommonLanguageInclude.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeDependentOption.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeFindDependencyMacro.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeGenericSystem.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeInitializeConfigs.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeLanguageInformation.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakePackageConfigHelpers.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeRCInformation.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeSystemSpecificInformation.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CMakeSystemSpecificInitialize.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CheckCSourceCompiles.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CheckCXXCompilerFlag.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CheckCXXSourceCompiles.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CheckCXXSourceRuns.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CheckIncludeFile.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CheckLanguage.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\CheckLibraryExists.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Compiler\CMakeCommonCompilerMacros.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Compiler\MSVC-C.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Compiler\MSVC-CXX.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\FindPackageHandleStandardArgs.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\FindPackageMessage.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\FindThreads.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\FindZLIB.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\GNUInstallDirs.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Internal\CheckCompilerFlag.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Internal\CheckSourceCompiles.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Internal\CheckSourceRuns.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Platform\Windows-MSVC-C.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Platform\Windows-MSVC-CXX.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Platform\Windows-MSVC.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Platform\Windows.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\Platform\WindowsPaths.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\SelectLibraryConfigurations.cmake;D:\cmake-3.21.0-windows-x86_64\cmake-3.21.0-windows-x86_64\share\cmake-3.21\Modules\WriteBasicConfigVersionFile.cmake;D:\psi_h\mulit\APSI\build\CMakeFiles\3.21.0\CMakeCCompiler.cmake;D:\psi_h\mulit\APSI\build\CMakeFiles\3.21.0\CMakeCXXCompiler.cmake;D:\psi_h\mulit\APSI\build\CMakeFiles\3.21.0\CMakeRCCompiler.cmake;D:\psi_h\mulit\APSI\build\CMakeFiles\3.21.0\CMakeSystem.cmake;D:\psi_h\mulit\APSI\cmake\APSIConfig.cmake.in;D:\psi_h\mulit\APSI\cmake\APSIMacros.cmake;D:\psi_h\mulit\APSI\cmake\CompileSchemaCXX.cmake;D:\psi_h\mulit\APSI\cmake\DetectArch.cmake;D:\psi_h\mulit\APSI\cmake\FindAVX.cmake;D:\psi_h\mulit\APSI\common\apsi\config.h.in;D:\psi_h\mulit\APSI\thirdparty\share\Microsoft.GSL\Microsoft.GSLConfig.cmake;D:\psi_h\mulit\APSI\thirdparty\share\Microsoft.GSL\Microsoft.GSLConfigVersion.cmake;D:\psi_h\mulit\APSI\thirdparty\share\SEAL\SEALConfig.cmake;D:\psi_h\mulit\APSI\thirdparty\share\SEAL\SEALConfigVersion.cmake;D:\psi_h\mulit\APSI\thirdparty\share\SEAL\SEALTargets-debug.cmake;D:\psi_h\mulit\APSI\thirdparty\share\SEAL\SEALTargets-release.cmake;D:\psi_h\mulit\APSI\thirdparty\share\SEAL\SEALTargets.cmake;D:\psi_h\mulit\APSI\thirdparty\share\cppzmq\cppzmqConfig.cmake;D:\psi_h\mulit\APSI\thirdparty\share\cppzmq\cppzmqConfigVersion.cmake;D:\psi_h\mulit\APSI\thirdparty\share\cppzmq\cppzmqTargets.cmake;D:\psi_h\mulit\APSI\thirdparty\share\flatbuffers\FlatbuffersConfig.cmake;D:\psi_h\mulit\APSI\thirdparty\share\flatbuffers\FlatbuffersConfigVersion.cmake;D:\psi_h\mulit\APSI\thirdparty\share\flatbuffers\FlatbuffersTargets-debug.cmake;D:\psi_h\mulit\APSI\thirdparty\share\flatbuffers\FlatbuffersTargets-release.cmake;D:\psi_h\mulit\APSI\thirdparty\share\flatbuffers\FlatbuffersTargets.cmake;D:\psi_h\mulit\APSI\thirdparty\share\flatbuffers\FlatcTargets-debug.cmake;D:\psi_h\mulit\APSI\thirdparty\share\flatbuffers\FlatcTargets-release.cmake;D:\psi_h\mulit\APSI\thirdparty\share\flatbuffers\FlatcTargets.cmake;D:\psi_h\mulit\APSI\thirdparty\share\jsoncpp\jsoncpp-namespaced-targets.cmake;D:\psi_h\mulit\APSI\thirdparty\share\jsoncpp\jsoncpp-targets-debug.cmake;D:\psi_h\mulit\APSI\thirdparty\share\jsoncpp\jsoncpp-targets-release.cmake;D:\psi_h\mulit\APSI\thirdparty\share\jsoncpp\jsoncpp-targets.cmake;D:\psi_h\mulit\APSI\thirdparty\share\jsoncpp\jsoncppConfig.cmake;D:\psi_h\mulit\APSI\thirdparty\share\jsoncpp\jsoncppConfigVersion.cmake;D:\psi_h\mulit\APSI\thirdparty\share\kuku\KukuConfig.cmake;D:\psi_h\mulit\APSI\thirdparty\share\kuku\KukuConfigVersion.cmake;D:\psi_h\mulit\APSI\thirdparty\share\kuku\KukuTargets-debug.cmake;D:\psi_h\mulit\APSI\thirdparty\share\kuku\KukuTargets-release.cmake;D:\psi_h\mulit\APSI\thirdparty\share\kuku\KukuTargets.cmake;D:\psi_h\mulit\APSI\thirdparty\share\log4cplus\log4cplusConfig.cmake;D:\psi_h\mulit\APSI\thirdparty\share\log4cplus\log4cplusConfigVersion.cmake;D:\psi_h\mulit\APSI\thirdparty\share\log4cplus\log4cplusTargets-debug.cmake;D:\psi_h\mulit\APSI\thirdparty\share\log4cplus\log4cplusTargets-release.cmake;D:\psi_h\mulit\APSI\thirdparty\share\log4cplus\log4cplusTargets.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">D:\psi_h\mulit\APSI\build\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="D:\psi_h\mulit\APSI\cli\receiver\receiver.cpp" />
+    <Object Include="D:\psi_h\mulit\APSI\build\common_cli.dir\$(Configuration)\common_utils.obj" />
+    <Object Include="D:\psi_h\mulit\APSI\build\common_cli.dir\$(Configuration)\csv_reader.obj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="D:\psi_h\mulit\APSI\build\ZERO_CHECK.vcxproj">
+      <Project>{F55FEDD7-D9F6-3038-9D3F-B2003397C1B6}</Project>
+      <Name>ZERO_CHECK</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </ProjectReference>
+    <ProjectReference Include="D:\psi_h\mulit\APSI\build\apsi.vcxproj">
+      <Project>{CB95C77A-2FBD-373F-B6AB-EAC16373035F}</Project>
+      <Name>apsi</Name>
+    </ProjectReference>
+    <ProjectReference Include="D:\psi_h\mulit\APSI\build\common_cli.vcxproj">
+      <Project>{D08BDAF1-8407-3ADD-90F4-741F633F95C1}</Project>
+      <Name>common_cli</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

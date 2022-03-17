@@ -1,0 +1,53 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"install"
+		],
+		"files" : 
+		[
+			"common/apsi/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 15,
+				"parent" : 0
+			}
+		]
+	},
+	"installers" : 
+	[
+		{
+			"backtrace" : 1,
+			"component" : "Unspecified",
+			"destination" : "include/APSI-0.7/apsi",
+			"paths" : 
+			[
+				"common/apsi/apsi.h",
+				"common/apsi/crypto_context.h",
+				"common/apsi/item.h",
+				"common/apsi/log.h",
+				"common/apsi/powers.h",
+				"common/apsi/psi_params.h",
+				"common/apsi/requests.h",
+				"common/apsi/responses.h",
+				"common/apsi/seal_object.h",
+				"common/apsi/thread_pool_mgr.h",
+				"common/apsi/version.h"
+			],
+			"type" : "file"
+		}
+	],
+	"paths" : 
+	{
+		"build" : "common/apsi",
+		"source" : "common/apsi"
+	}
+}

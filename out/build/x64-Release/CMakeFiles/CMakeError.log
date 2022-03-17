@@ -1,0 +1,34 @@
+Determining if the include file pthread.h exists failed with the following output:
+Change Dir: D:/psi_h/apsi_3_8/APSI/out/build/x64-Release/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_1a600 && [1/2] Building C object CMakeFiles\cmTC_1a600.dir\CheckIncludeFile.c.obj
+FAILED: CMakeFiles/cmTC_1a600.dir/CheckIncludeFile.c.obj 
+C:\PROGRA~2\MICROS~1\2019\VC\Tools\MSVC\1429~1.301\bin\Hostx64\x64\cl.exe  /nologo   /DWIN32 /D_WINDOWS /W3  /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\cmTC_1a600.dir\CheckIncludeFile.c.obj /FdCMakeFiles\cmTC_1a600.dir\ /FS -c CheckIncludeFile.c
+CheckIncludeFile.c(1): fatal error C1083: Cannot open include file: 'pthread.h': No such file or directory
+ninja: build stopped: subcommand failed.
+
+
+
+Performing C++ SOURCE FILE Test APSI_FOURQ_ARM64 failed with the following compile output:
+Change Dir: D:/psi_h/apsi_3_8/APSI/out/build/x64-Release/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_907bb && [1/2] Building CXX object CMakeFiles\cmTC_907bb.dir\src.cxx.obj
+FAILED: CMakeFiles/cmTC_907bb.dir/src.cxx.obj 
+C:\PROGRA~2\MICROS~1\2019\VC\Tools\MSVC\1429~1.301\bin\Hostx64\x64\cl.exe  /nologo /TP -DAPSI_FOURQ_ARM64  /DWIN32 /D_WINDOWS /W3 /GR /EHsc  /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\cmTC_907bb.dir\src.cxx.obj /FdCMakeFiles\cmTC_907bb.dir\ /FS -c src.cxx
+src.cxx(7): fatal error C1189: #error: 
+ninja: build stopped: subcommand failed.
+
+
+...and run output:
+
+Return value: 1
+Source file was:
+
+        #if defined(_M_ARM64)
+            int main() {
+                return 0;
+            }
+        #else
+            #error
+        #endif
+        
