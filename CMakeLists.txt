@@ -215,6 +215,20 @@ if (APSI_BUILD_CLI)
 endif()
 
 ####################
+# libOTe build     #
+####################
+
+
+include_directories(${CMAKE_SOURCE_DIR}/thirdparty/include)
+include_directories(${CMAKE_SOURCE_DIR}/thirdparty/include/boost-1_77)
+link_directories(${CMAKE_SOURCE_DIR}/thirdparty/lib)
+option(BUILD_LIBOTE_FRONTEND "Compile libOTe frontend" OFF)
+if (BUILD_LIBOTE_FRONTEND)
+    add_subdirectory(frontend)
+endif()
+
+
+####################
 # APSI C++ library #
 ####################
 
@@ -252,6 +266,7 @@ target_include_directories(apsi PUBLIC
 target_include_directories(apsi PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/sender>
     $<INSTALL_INTERFACE:${APSI_INCLUDES_INSTALL_DIR}>)
+
 apsi_set_version(apsi)
 apsi_link_threads(apsi)
 apsi_install_target(apsi APSITargets)
@@ -261,6 +276,13 @@ target_link_libraries(apsi
     PUBLIC Kuku::kuku
     PUBLIC flatbuffers::flatbuffers
     PUBLIC jsoncpp_static)
+target_link_libraries(apsi
+    PUBLIC  
+    libOTe
+    libOTe_Tests
+    relic_s
+
+)
 if(APSI_USE_LOG4CPLUS)
     target_link_libraries(apsi PUBLIC log4cplus::log4cplus)
 endif()
