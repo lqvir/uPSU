@@ -384,17 +384,18 @@ namespace apsi {
             cout << hex<<small_q << endl;
             for (int i = 0; i < slot_count; i++)
             {
-                random_num.push_back(myprng->generate() % small_q);
+                //random_num.push_back(myprng->generate() % small_q);
                 //random_num.push_back(i % small_q);
+                random_num.push_back(0);
             }
            // gsl::span<uint64_t> random_mem = { random_num.data(), random_num.size() };
             Plaintext random_plain(pool);
             encoder->encode(random_num, random_plain);
             random_map[make_pair(bundle_idx, cache_idx)] = random_num;
-
+            
             // Compute the matching result and move to rp
             const BatchedPlaintextPolyn &matching_polyn = cache.get().batched_matching_polyn;
-           
+            random_plain.set_zero();
             // Determine if we use Paterson-Stockmeyer or not
             uint32_t ps_low_degree = sender_db->get_params().query_params().ps_low_degree;
             uint32_t degree = safe_cast<uint32_t>(matching_polyn.batched_coeffs.size()) - 1;
@@ -452,7 +453,7 @@ namespace apsi {
                 plain_request->psi_result[i] ^= random_mem[i];   
                 //cout << (bool)plain_request->psi_result[i];
             }
-            cout << bundle_idx << " " << cache_idx << endl;
+           
             StrideIter<const uint64_t *> plain_rp_iter(
                 plain_request->psi_result.data(), felts_per_item);
                seal_for_each_n(iter(plain_rp_iter, size_t(0)), items_per_bundle, [&](auto &&I) {
@@ -466,7 +467,7 @@ namespace apsi {
                 // in the input items vector so we know where to place the result.
                 size_t table_idx = add_safe(get<1>(I), bundle_start);
              
-                cout << table_idx << endl;
+                cout << bundle_idx << " " << cache_idx <<"match" << table_idx << endl;
 
             });
 

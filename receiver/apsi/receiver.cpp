@@ -431,7 +431,7 @@ namespace apsi {
             {
                 auto sop_re = make_unique<plainResponse>();
                 sop_re->bundle_idx = plain_rp.bundle_idx;
-                
+                sop_re->cache_idx = result_part->cache_idx;
                 sop_re->psi_result.resize(plain_rp.psi_result.size());
                 copy(
                     plain_rp.psi_result.begin(),
@@ -531,7 +531,8 @@ namespace apsi {
                 // in the input items vector so we know where to place the result.
                 size_t table_idx = add_safe(get<1>(I), bundle_start);
                 auto item_idx = itt.find_item_idx(table_idx);
-                cout << table_idx << endl;
+              
+                cout <<plain_rp.bundle_idx<<' '<<result_part->cache_idx<< "match"<<table_idx << endl;
                 // If this table_idx doesn't match any item_idx, ignore the result no matter what it
                 // is
                 if (item_idx == itt.item_count()) {
