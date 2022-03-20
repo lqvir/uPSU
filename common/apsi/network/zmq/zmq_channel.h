@@ -92,6 +92,12 @@ namespace apsi {
             /**
             Disconnect the channel from the connection point.
             */
+           std::string get_end_point(){
+            return end_point_;
+
+           }
+
+
             void disconnect();
 
             /**

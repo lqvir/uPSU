@@ -121,7 +121,8 @@ namespace apsi {
                 const CryptoContext &eval_crypto_context,
                 const std::vector<seal::Ciphertext> &ciphertext_powers,
                 std::size_t ps_low_degree,
-                seal::MemoryPoolHandle &pool) const;
+                seal::MemoryPoolHandle &pool,
+                seal::Plaintext &random_plain) const;
 
             /**
             Returns whether this polynomial has non-zero size.

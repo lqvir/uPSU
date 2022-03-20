@@ -132,12 +132,16 @@ namespace apsi {
             }
 
         public:
-            Sender() = delete;
+            Sender(){
+                ans.clear();
+                pack_cnt = 0;
+                item_cnt = 0;
+            };
 
             /**
             Generate and send a response to a parameter request.
             */
-            static void RunParams(
+            void RunParams(
                 const ParamsRequest &params_request,
                 std::shared_ptr<SenderDB> sender_db,
                 network::Channel &chl,
@@ -147,7 +151,7 @@ namespace apsi {
             /**
             Generate and send a response to an OPRF request.
             */
-            static void RunOPRF(
+            void RunOPRF(
                 const OPRFRequest &oprf_request,
                 oprf::OPRFKey key,
                 network::Channel &chl,
@@ -157,7 +161,7 @@ namespace apsi {
             /**
             Generate and send a response to a query.
             */
-            static void RunQuery(
+            void RunQuery(
                 const Query &query,
                 network::Channel &chl,
                 std::function<void(network::Channel &, Response)> send_fun =
@@ -169,9 +173,10 @@ namespace apsi {
 
             
             
-            static void RunResponse(
+            void RunResponse(
                 const plainRequest &params_request, network::Channel &chl, PSIParams &params_);
         
+            void RunOT();
         
         private:
             /**
@@ -202,9 +207,12 @@ namespace apsi {
                 std::uint32_t cache_idx
                 );
             static std::unordered_map<std::pair<std::uint32_t, std::uint32_t>, std::vector<uint64_t>, pair_hash > random_map;
+            std::uint32_t pack_cnt;
+            std::vector<uint64_t> ans;
+            std::uint64_t item_cnt;
             //static std::vector<uint64_t> match_record;
         }; // class Sender
-        
+       
         std::unordered_map<std::pair<std::uint32_t, std::uint32_t>, std::vector<uint64_t>, pair_hash > Sender::random_map = {};
     }      // namespace sender
 } // namespace apsi

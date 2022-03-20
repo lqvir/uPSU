@@ -31,7 +31,7 @@ namespace apsi {
             This is necessary, for example, when the SenderDB is stripped, in which case it no
             longer carries a valid OPRF key.
             */
-            ZMQSenderDispatcher(std::shared_ptr<SenderDB> sender_db, oprf::OPRFKey oprf_key);
+            ZMQSenderDispatcher(std::shared_ptr<SenderDB> sender_db, oprf::OPRFKey oprf_key,Sender sender);
 
             /**
             Creates a new ZMQSenderDispatcher object. This constructor accepts a SenderDB object. It
@@ -51,7 +51,7 @@ namespace apsi {
 
             oprf::OPRFKey oprf_key_;
 
-
+            Sender sender_;
             
             /**
             Dispatch a Get Parameters request to the Sender.

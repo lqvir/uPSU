@@ -202,7 +202,8 @@ namespace apsi {
             const CryptoContext &eval_crypto_context,
             const vector<Ciphertext> &ciphertext_powers,
             size_t ps_low_degree,
-            MemoryPoolHandle &pool) const
+            MemoryPoolHandle &pool,
+            seal::Plaintext &random_plain) const
         {
 #ifdef SEAL_THROW_ON_TRANSPARENT_CIPHERTEXT
             static_assert(

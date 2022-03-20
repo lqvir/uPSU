@@ -16,7 +16,7 @@
 #define ENABLE_MRR ON
 
 // build the library with POPF Base OT using Moeller KA enabled
-#define ENABLE_MRR_TWIST ON
+/* #undef ENABLE_MRR_TWIST */
 
 // build the library with Masney Rindal Base OT enabled
 #define ENABLE_MR ON

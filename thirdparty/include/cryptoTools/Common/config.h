@@ -8,10 +8,10 @@
 #define ENABLE_RELIC ON
 
 // use the libsodium library for curves
-#define ENABLE_SODIUM ON
+/* #undef ENABLE_SODIUM */
 
 // does the libsodium library support noclamp operations on Montgomery curves?
-#define SODIUM_MONTGOMERY ON
+/* #undef SODIUM_MONTGOMERY */
 
 // compile the circuit library
 /* #undef ENABLE_CIRCUITS */

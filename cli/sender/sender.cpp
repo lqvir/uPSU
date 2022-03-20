@@ -24,7 +24,7 @@
 #include "sender/clp.h"
 #include "sender/sender_utils.h"
 
-#include "cryptoTools/Common/Timer.h"
+
 using namespace std;
 #if defined(__GNUC__) && (__GNUC__ < 8) && !defined(__clang__)
 namespace fs = std::experimental::filesystem;
@@ -178,7 +178,8 @@ int start_sender(const CLP &cmd)
 
     // Run the dispatcher
     atomic<bool> stop = false;
-    ZMQSenderDispatcher dispatcher(sender_db, oprf_key);
+    Sender sender;
+    ZMQSenderDispatcher dispatcher(sender_db, oprf_key,sender);
 
     // The dispatcher will run until stopped.
     dispatcher.run(stop, cmd.net_port());

@@ -276,13 +276,14 @@ target_link_libraries(apsi
     PUBLIC Kuku::kuku
     PUBLIC flatbuffers::flatbuffers
     PUBLIC jsoncpp_static)
-target_link_libraries(apsi
-    PUBLIC  
-    libOTe
-    libOTe_Tests
-    relic_s
-
+target_link_libraries(apsi 
+PUBLIC relic_s 
+PUBLIC bitpolymul
+PUBLIC cryptoTools 
+PUBLIC libOTe
+PRIVATE libsodium 
 )
+
 if(APSI_USE_LOG4CPLUS)
     target_link_libraries(apsi PUBLIC log4cplus::log4cplus)
 endif()

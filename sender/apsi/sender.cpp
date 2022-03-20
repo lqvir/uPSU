@@ -22,6 +22,20 @@
 #include "seal/modulus.h"
 #include "seal/util/common.h"
 
+// libOTe
+
+
+#include <cryptoTools/Network/Session.h>
+#include <cryptoTools/Network/Channel.h>
+#include <cryptoTools/Network/IOService.h>
+#include <cryptoTools/Common/Timer.h>
+#include "cryptoTools/Common/Defines.h"
+#include "cryptoTools/Common/BitVector.h"
+#include "cryptoTools/Network/Channel.h"
+#include "libOTe/TwoChooseOne/IknpOtExtReceiver.h"
+#include "libOTe/TwoChooseOne/IknpOtExtSender.h"
+#include "libOTe/Base/BaseOT.h"
+
 using namespace std;
 using namespace seal;
 using namespace seal::util;
@@ -163,7 +177,8 @@ namespace apsi {
             uint32_t package_count = safe_cast<uint32_t>(sender_db->get_bin_bundle_count());
             QueryResponse response_query = make_unique<QueryResponse::element_type>();
             response_query->package_count = package_count;
-
+            APSI_LOG_INFO(package_count);
+            item_cnt = package_count * params.items_per_bundle();
             try {
                 send_fun(chl, move(response_query));
             } catch (const exception &ex) {
@@ -222,7 +237,9 @@ namespace apsi {
             for (size_t bundle_idx = 0; bundle_idx < bundle_idx_count; bundle_idx++) {
                 auto bundle_caches = sender_db->get_cache_at(static_cast<uint32_t>(bundle_idx));
                 uint32_t cache_count = 0;
+                
                 for (auto &cache : bundle_caches) {
+                    pack_cnt++;
                     futures.push_back(tpm.thread_pool().enqueue([&, bundle_idx, cache]() {
                         ProcessBinBundleCache(
                             sender_db,
@@ -244,7 +261,7 @@ namespace apsi {
             for (auto &f : futures) {
                 f.get();
             }
-             
+            cout<<"pack_cnt"<<pack_cnt<<endl;
             APSI_LOG_INFO("Finished processing query request");
         }
 
@@ -384,9 +401,9 @@ namespace apsi {
             cout << hex<<small_q << endl;
             for (int i = 0; i < slot_count; i++)
             {
-                //random_num.push_back(myprng->generate() % small_q);
+                random_num.push_back(myprng->generate() % small_q);
                 //random_num.push_back(i % small_q);
-                random_num.push_back(0);
+                //random_num.push_back(0);
             }
            // gsl::span<uint64_t> random_mem = { random_num.data(), random_num.size() };
             Plaintext random_plain(pool);
@@ -395,25 +412,25 @@ namespace apsi {
             
             // Compute the matching result and move to rp
             const BatchedPlaintextPolyn &matching_polyn = cache.get().batched_matching_polyn;
-            random_plain.set_zero();
+            //random_plain.set_zero();
             // Determine if we use Paterson-Stockmeyer or not
             uint32_t ps_low_degree = sender_db->get_params().query_params().ps_low_degree;
             uint32_t degree = safe_cast<uint32_t>(matching_polyn.batched_coeffs.size()) - 1;
             bool using_ps = (ps_low_degree > 1) && (ps_low_degree < degree);
             if (using_ps) {
                 rp->psi_result = matching_polyn.eval_patstock(
-                    crypto_context, all_powers[bundle_idx], safe_cast<size_t>(ps_low_degree), pool);
+                    crypto_context, all_powers[bundle_idx], safe_cast<size_t>(ps_low_degree), pool,random_plain);
             } else {
                 rp->psi_result = matching_polyn.eval(all_powers[bundle_idx], pool, random_plain);
             }
-
+            random_plain.set_zero();
             for (const auto &interp_polyn : cache.get().batched_interp_polyns) {
                 // Compute the label result and move to rp
                 degree = safe_cast<uint32_t>(interp_polyn.batched_coeffs.size()) - 1;
                 using_ps = (ps_low_degree > 1) && (ps_low_degree < degree);
                 if (using_ps) {
                     rp->label_result.push_back(interp_polyn.eval_patstock(
-                        crypto_context, all_powers[bundle_idx], ps_low_degree, pool));
+                        crypto_context, all_powers[bundle_idx], ps_low_degree, pool,random_plain));
                 } else {
                     rp->label_result.push_back(
                         interp_polyn.eval(all_powers[bundle_idx], pool, random_plain));
@@ -437,6 +454,11 @@ namespace apsi {
       /*      for (auto i : params_request->psi_result) {
                 cout << i << endl;
             }*/
+
+            // To be atomic counter
+            pack_cnt--;
+
+
             size_t felts_per_item = safe_cast<size_t>(params_.item_params().felts_per_item);
             size_t items_per_bundle = safe_cast<size_t>(params_.items_per_bundle());
             size_t bundle_start =
@@ -468,8 +490,39 @@ namespace apsi {
                 size_t table_idx = add_safe(get<1>(I), bundle_start);
              
                 cout << bundle_idx << " " << cache_idx <<"match" << table_idx << endl;
-
+                ans.push_back(table_idx);
             });
+            // if(!pack_cnt){
+            //     RunOT();
+            // }
+
+        }
+
+        void Sender::RunOT(){
+            int numThreads = 5;
+            osuCrypto::IOService ios;
+            osuCrypto::Session  ep0(ios, "localhost:59999", osuCrypto::SessionMode::Server);
+            osuCrypto::PRNG prng(osuCrypto::sysRandomSeed());
+            std::vector<osuCrypto::Channel> chls(numThreads);
+            for (int i = 0; i < numThreads; ++i)
+                chls[i] = ep0.addChannel();
+            std::vector<osuCrypto::IknpOtExtReceiver> receivers(numThreads);
+            
+            osuCrypto::DefaultBaseOT base;
+            std::array<std::array<osuCrypto::block, 2>, 128> baseMsg;
+            base.send(baseMsg, prng, chls[0], numThreads);
+            receivers[0].setBaseOts(baseMsg, prng, chls[0]);
+            
+            osuCrypto::BitVector choices(item_cnt);
+            for(auto i : ans){
+                choices[i] = 1;
+            }
+             for (auto i = 1; i < numThreads; ++i){
+                receivers[i] = receivers[0].splitBase();
+            }
+            
+            std::vector<osuCrypto::block> messages(item_cnt);
+            receivers[1].receiveChosen(choices, messages, prng, chls[1]);
 
         }
 

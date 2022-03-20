@@ -25,8 +25,8 @@ namespace apsi {
     using namespace oprf;
 
     namespace sender {
-        ZMQSenderDispatcher::ZMQSenderDispatcher(shared_ptr<SenderDB> sender_db, OPRFKey oprf_key)
-            : sender_db_(move(sender_db)), oprf_key_(move(oprf_key))
+        ZMQSenderDispatcher::ZMQSenderDispatcher(shared_ptr<SenderDB> sender_db, OPRFKey oprf_key,Sender sender)
+            : sender_db_(move(sender_db)), oprf_key_(move(oprf_key)), sender_()
         {
             
             
@@ -66,10 +66,10 @@ namespace apsi {
 
             stringstream ss;
             ss << "tcp://*:" << port;
-
+           
             APSI_LOG_INFO("ZMQSenderDispatcher listening on port " << port);
             chl.bind(ss.str());
-
+         
             auto seal_context = sender_db_->get_seal_context();
 
             // Run until stopped
@@ -127,7 +127,7 @@ namespace apsi {
                 // Extract the parameter request
                 ParamsRequest params_request = to_params_request(move(sop->sop));
 
-                Sender::RunParams(
+                sender_.RunParams(
                     params_request,
                     sender_db_,
                     chl,
@@ -154,7 +154,7 @@ namespace apsi {
                 // Extract the OPRF request
                 OPRFRequest oprf_request = to_oprf_request(move(sop->sop));
 
-                Sender::RunOPRF(
+                sender_.RunOPRF(
                     oprf_request,
                     oprf_key_,
                     chl,
@@ -182,7 +182,7 @@ namespace apsi {
                 Query query(to_query_request(move(sop->sop)), sender_db_);
 
                 // Query will send result to client in a stream of ResultPackages (ResultParts)
-                Sender::RunQuery(
+                sender_.RunQuery(
                     query,
                     chl,
                     // Lambda function for sending the query response
@@ -216,14 +216,11 @@ namespace apsi {
                 plainRequest response = to_plain_request(move(sop->sop));
                 cout << "wow " << endl;
                 PSIParams params_ = sender_db_->get_params();
-                Sender::RunResponse(response, chl, move(params_));
+                sender_.RunResponse(response, chl, move(params_));
 
             } catch (const exception &ex) {
                 APSI_LOG_ERROR("Sender threw an exception while processing response: " << ex.what());
             }
-            
-
-
         }
 
 

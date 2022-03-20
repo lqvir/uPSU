@@ -278,7 +278,9 @@ namespace apsi {
                     << cuckoo.loc_func_count()
                     << " hash functions; cuckoo table fill-rate: " << cuckoo.fill_rate());
             }
-
+            cout<<"table_size"<<cuckoo.table_size()<<endl;
+            auto value = items[0].value();
+            uint8_t *s = value.data();
             // Once the table is filled, fill the table_idx_to_item_idx map
             for (size_t item_idx = 0; item_idx < items.size(); item_idx++) {
                 auto item_loc = cuckoo.query(items[item_idx].get_as<kuku::item_type>().front());
