@@ -4,7 +4,7 @@
 // STD
 #include <future>
 #include <sstream>
-
+#include <fstream>
 // APSI
 #include "apsi/crypto_context.h"
 #include "apsi/log.h"
@@ -492,9 +492,9 @@ namespace apsi {
                 cout << bundle_idx << " " << cache_idx <<"match" << table_idx << endl;
                 ans.push_back(table_idx);
             });
-            // if(!pack_cnt){
-            //     RunOT();
-            // }
+            if(!pack_cnt){
+                RunOT();
+            }
 
         }
 
@@ -508,22 +508,33 @@ namespace apsi {
                 chls[i] = ep0.addChannel();
             std::vector<osuCrypto::IknpOtExtReceiver> receivers(numThreads);
             
-            osuCrypto::DefaultBaseOT base;
-            std::array<std::array<osuCrypto::block, 2>, 128> baseMsg;
-            base.send(baseMsg, prng, chls[0], numThreads);
-            receivers[0].setBaseOts(baseMsg, prng, chls[0]);
+            // osuCrypto::DefaultBaseOT base;
+            // std::array<std::array<osuCrypto::block, 2>, 128> baseMsg;
+            // base.send(baseMsg, prng, chls[0], numThreads);
+            // receivers[0].setBaseOts(baseMsg, prng, chls[0]);
             
             osuCrypto::BitVector choices(item_cnt);
             for(auto i : ans){
                 choices[i] = 1;
             }
-             for (auto i = 1; i < numThreads; ++i){
-                receivers[i] = receivers[0].splitBase();
-            }
+            //  for (auto i = 1; i < numThreads; ++i){
+            //     receivers[i] = receivers[0].splitBase();
+            // }
             
             std::vector<osuCrypto::block> messages(item_cnt);
-            receivers[1].receiveChosen(choices, messages, prng, chls[1]);
+            
+            receivers[0].receiveChosen(choices, messages, prng, chls[0]);
+            std::ofstream fout;
+            fout.open("union.csv",std::ofstream::out);
+            for(auto i:messages){
+                if((int)i.as<uint8_t>().data()[0] == 0) continue;
+                stringstream ss;
+                ss<<i.as<uint8_t>().data();
+                APSI_LOG_INFO( ss.str().substr(0,16));
+                APSI_LOG_INFO( ss.str().substr(0,16));
+                fout<<ss.str().substr(0,16)<<endl;
 
+            }
         }
 
     } // namespace sender

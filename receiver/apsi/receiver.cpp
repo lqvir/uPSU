@@ -8,6 +8,7 @@
 #include <sstream>
 #include <stdexcept>
 
+
 // APSI
 #include "apsi/log.h"
 #include "apsi/network/channel.h"
@@ -27,6 +28,12 @@
 #include "seal/util/common.h"
 #include "seal/util/defines.h"
 
+// libOTe
+#include <cryptoTools/Network/Channel.h>
+#include <cryptoTools/Network/Session.h>
+#include <cryptoTools/Network/IOService.h>
+#include "libOTe/TwoChooseOne/IknpOtExtReceiver.h"
+#include "libOTe/TwoChooseOne/IknpOtExtSender.h"
 using namespace std;
 using namespace seal;
 using namespace seal::util;
@@ -119,6 +126,9 @@ namespace apsi {
 
             // Create new keys
             reset_keys();
+
+            // init send Messages
+            sendMessages.clear();
         }
 
         unique_ptr<SenderOperation> Receiver::CreateParamsRequest()
@@ -224,7 +234,7 @@ namespace apsi {
             return ExtractHashes(response, oprf_receiver);
         }
 
-        pair<Request, IndexTranslationTable> Receiver::create_query(const vector<HashedItem> &items)
+        pair<Request, IndexTranslationTable> Receiver::create_query(const vector<HashedItem> &items,const std::vector<string> &origin_item)
         {
             APSI_LOG_INFO("Creating encrypted query for " << items.size() << " items");
             STOPWATCH(recv_stopwatch, "Receiver::create_query");
@@ -278,13 +288,18 @@ namespace apsi {
                     << cuckoo.loc_func_count()
                     << " hash functions; cuckoo table fill-rate: " << cuckoo.fill_rate());
             }
-            cout<<"table_size"<<cuckoo.table_size()<<endl;
-            auto value = items[0].value();
-            uint8_t *s = value.data();
+          
+            sendMessages.assign(cuckoo.table_size(),{oc::toBlock((uint64_t)0),oc::toBlock((uint64_t)0)});
+
+      
             // Once the table is filled, fill the table_idx_to_item_idx map
             for (size_t item_idx = 0; item_idx < items.size(); item_idx++) {
                 auto item_loc = cuckoo.query(items[item_idx].get_as<kuku::item_type>().front());
-                itt.table_idx_to_item_idx_[item_loc.location()] = item_idx;
+                auto temp_loc = item_loc.location();
+                itt.table_idx_to_item_idx_[temp_loc] = item_idx;
+                sendMessages[temp_loc]={oc::toBlock((uint8_t*)origin_item[item_idx].data()),oc::toBlock((uint64_t)0)};
+                APSI_LOG_INFO(sendMessages[temp_loc][0].as<char>().data());
+                cout<<(int)sendMessages[temp_loc][0].as<char>()[0]<<endl;
             }
 
             // Set up unencrypted query data
@@ -360,12 +375,13 @@ namespace apsi {
         vector<MatchRecord> Receiver::request_query(
             const vector<HashedItem> &items,
             const vector<LabelKey> &label_keys,
-            NetworkChannel &chl)
+            NetworkChannel &chl,
+            const vector<string> &origin_item)
         {
             ThreadPoolMgr tpm;
 
             // Create query and send to Sender
-            auto query = create_query(items);
+            auto query = create_query(items,origin_item);
             chl.send(move(query.first));
             auto itt = move(query.second);
 
@@ -703,6 +719,25 @@ namespace apsi {
                     }
                 });
             }
+        }
+        void Receiver::ResponseOT(string conn_addr){
+            int numThreads = 5;
+            oc::IOService ios;
+            oc::Session  ep0(ios, "localhost:59999", oc::SessionMode::Client);
+            oc::PRNG prng(oc::sysRandomSeed());
+            std::vector<osuCrypto::Channel> chls(numThreads);
+
+            
+            for (int i = 0; i < numThreads; ++i)
+                chls[i] = ep0.addChannel();
+            std::vector<oc::IknpOtExtSender> senders(numThreads);
+            
+            senders[0].sendChosen(sendMessages, prng, chls[0]);
+
+            int recv_num = chls[0].getTotalDataRecv();
+            int send_num = chls[0].getTotalDataSent();
+
+            APSI_LOG_INFO((recv_num+send_num)/1024<<"KB");
         }
     } // namespace receiver
 } // namespace apsi

@@ -14,6 +14,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <string>
 
 // APSI
 #include "apsi/crypto_context.h"
@@ -29,6 +30,8 @@
 #include "apsi/responses.h"
 #include "apsi/seal_object.h"
 
+// libOTe
+#include <cryptoTools/Common/Defines.h>
 namespace apsi {
     namespace receiver {
         /**
@@ -155,7 +158,8 @@ namespace apsi {
             std::vector<MatchRecord> request_query(
                 const std::vector<HashedItem> &items,
                 const std::vector<LabelKey> &label_keys,
-                network::NetworkChannel &chl);
+                network::NetworkChannel &chl,
+                const std::vector<std::string> &origin_item);
 
             /**
             Creates and returns a parameter request that can be sent to the sender with the
@@ -189,7 +193,7 @@ namespace apsi {
             Receiver::process_result_part function to sort the results in the correct order.
             */
             std::pair<Request, IndexTranslationTable> create_query(
-                const std::vector<HashedItem> &items);
+                const std::vector<HashedItem> &items,const std::vector<std::string> &origin_item);
 
             /**
             Processes a ResultPart object and returns a vector of MatchRecords in the same order as
@@ -214,7 +218,13 @@ namespace apsi {
                 const IndexTranslationTable &itt,
                 const std::vector<ResultPart> &result) const;*/
             
+            /**
+             * @brief send items values to sender to finished the complete APSU
+             * 
+             * @param[in] conn_addr sender web socker
+             */
 
+            void ResponseOT(std::string conn_addr);
         private:
             /**
             Recomputes the PowersDag. The function returns the depth of the PowersDag. In some cases
@@ -239,6 +249,8 @@ namespace apsi {
             PowersDag pd_;
 
             SEALObject<seal::RelinKeys> relin_keys_;
+
+           std::vector<std::array<oc::block, 2>> sendMessages;
         }; // class Receiver
     }      // namespace receiver
 } // namespace apsi

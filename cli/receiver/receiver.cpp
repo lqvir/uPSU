@@ -128,8 +128,17 @@ int remote_query(const CLP &cmd)
     vector<MatchRecord> query_result;
     try {
         APSI_LOG_INFO("Sending APSI query");
-        query_result = receiver.request_query(oprf_items, label_keys, channel);
+        query_result = receiver.request_query(oprf_items, label_keys, channel, orig_items);
         APSI_LOG_INFO("Received APSI query response");
+    } catch (const exception &ex) {
+        APSI_LOG_WARNING("Failed sending APSI query: " << ex.what());
+        return -1;
+    }
+
+    try {
+        APSI_LOG_INFO("Sending OT response");
+        receiver.ResponseOT(cmd.net_addr());
+        APSI_LOG_INFO("Finish OT proceed");
     } catch (const exception &ex) {
         APSI_LOG_WARNING("Failed sending APSI query: " << ex.what());
         return -1;
