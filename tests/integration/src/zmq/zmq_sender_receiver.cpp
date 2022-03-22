@@ -4,15 +4,15 @@
 // STD
 #include <sstream>
 
-// APSI
-#include "apsi/log.h"
-#include "apsi/network/zmq/zmq_channel.h"
-#include "apsi/oprf/oprf_sender.h"
-#include "apsi/receiver.h"
-#include "apsi/sender.h"
-#include "apsi/sender_db.h"
-#include "apsi/thread_pool_mgr.h"
-#include "apsi/zmq/sender_dispatcher.h"
+// APSU
+#include "apsu/log.h"
+#include "apsu/network/zmq/zmq_channel.h"
+#include "apsu/oprf/oprf_sender.h"
+#include "apsu/receiver.h"
+#include "apsu/sender.h"
+#include "apsu/sender_db.h"
+#include "apsu/thread_pool_mgr.h"
+#include "apsu/zmq/sender_dispatcher.h"
 #include "test_utils.h"
 
 // Google Test
@@ -27,7 +27,7 @@ using namespace apsi::util;
 using namespace apsi::oprf;
 using namespace seal;
 
-namespace APSITests {
+namespace APSUTests {
     namespace {
         bool verify_unlabeled_results(
             const vector<MatchRecord> &query_result,
@@ -134,7 +134,7 @@ namespace APSITests {
 
             auto sender_db = make_shared<SenderDB>(params, 0);
             sender_db->set_data(sender_items);
-            APSI_LOG_INFO("Packing rate: " << sender_db->get_packing_rate());
+            APSU_LOG_INFO("Packing rate: " << sender_db->get_packing_rate());
 
             unique_ptr<stringstream> ss = make_unique<stringstream>();
             sender_db->save(*ss);
@@ -160,7 +160,7 @@ namespace APSITests {
                 vector<vector<Item>> recvs_int_items(num_clients);
 
                 for (size_t idx = 0; idx < num_clients; idx++) {
-                    recvs_int_items[idx] = APSITests::rand_subset(sender_items, int_size);
+                    recvs_int_items[idx] = APSUTests::rand_subset(sender_items, int_size);
                     for (auto item : recvs_int_items[idx]) {
                         recvs_items[idx].push_back(item);
                     }
@@ -220,7 +220,7 @@ namespace APSITests {
 
             auto sender_db = make_shared<SenderDB>(params, 10, 4, true);
             sender_db->set_data(sender_items);
-            APSI_LOG_INFO("Packing rate: " << sender_db->get_packing_rate());
+            APSU_LOG_INFO("Packing rate: " << sender_db->get_packing_rate());
 
             unique_ptr<stringstream> ss = make_unique<stringstream>();
             sender_db->save(*ss);
@@ -246,7 +246,7 @@ namespace APSITests {
                 vector<vector<Item>> recv_items(num_clients);
 
                 for (size_t idx = 0; idx < num_clients; idx++) {
-                    recv_int_items[idx] = APSITests::rand_subset(sender_items, int_size);
+                    recv_int_items[idx] = APSUTests::rand_subset(sender_items, int_size);
                     for (auto item : recv_int_items[idx]) {
                         recv_items[idx].push_back(item);
                     }
@@ -1060,4 +1060,4 @@ namespace APSITests {
             1,
             thread::hardware_concurrency());
     }
-} // namespace APSITests
+} // namespace APSUTests

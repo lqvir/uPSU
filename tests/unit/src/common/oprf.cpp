@@ -8,10 +8,10 @@
 #include <unordered_set>
 #include <vector>
 
-// APSI
-#include "apsi/oprf/oprf_receiver.h"
-#include "apsi/oprf/oprf_sender.h"
-#include "apsi/util/utils.h"
+// APSU
+#include "apsu/oprf/oprf_receiver.h"
+#include "apsu/oprf/oprf_sender.h"
+#include "apsu/util/utils.h"
 
 // SEAL
 #include "seal/randomgen.h"
@@ -24,7 +24,7 @@ using namespace seal;
 using namespace apsi;
 using namespace apsi::oprf;
 
-namespace APSITests {
+namespace APSUTests {
     TEST(OPRFTests, OPRFKeyCreate)
     {
         // Creates a random key
@@ -146,4 +146,4 @@ namespace APSITests {
             ASSERT_EQ(15287245637096301833ULL, w4);
         }
     }
-} // namespace APSITests
+} // namespace APSUTests

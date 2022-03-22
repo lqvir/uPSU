@@ -6,8 +6,8 @@
 #include <sstream>
 #include <utility>
 
-// APSI
-#include "apsi/psi_params.h"
+// APSU
+#include "apsu/psi_params.h"
 
 // Google Test
 #include "gtest/gtest.h"
@@ -16,7 +16,7 @@ using namespace std;
 using namespace apsi;
 using namespace seal;
 
-namespace APSITests {
+namespace APSUTests {
     TEST(PSIParamsTest, Constructor1)
     {
         PSIParams::ItemParams item_params;
@@ -189,7 +189,7 @@ namespace APSITests {
     TEST(PSIParamsTest, JSONLoadPSIParams)
     {
         string json =
-            "/* APSI Parameters */"
+            "/* APSU Parameters */"
             "{"
             "    \"table_params\": {"
             "        /* Number of hash functions to use */"
@@ -256,7 +256,7 @@ namespace APSITests {
         ASSERT_EQ(20, params.seal_params().coeff_modulus()[2].bit_count());
 
         json =
-            "/* APSI Parameters */"
+            "/* APSU Parameters */"
             "{"
             "    \"table_params\": {"
             "        /* Number of hash functions to use */"
@@ -723,4 +723,4 @@ namespace APSITests {
         // Missing coeff_modulus_bits
         ASSERT_THROW(PSIParams::Load(json), runtime_error);
     }
-} // namespace APSITests
+} // namespace APSUTests

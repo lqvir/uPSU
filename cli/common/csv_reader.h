@@ -11,19 +11,19 @@
 #include <variant>
 #include <vector>
 
-// APSI
-#include "apsi/item.h"
-#include "apsi/psi_params.h"
-#include "apsi/util/db_encoding.h"
+// APSU
+#include "apsu/item.h"
+#include "apsu/psi_params.h"
+#include "apsu/util/db_encoding.h"
 
 /**
 Simple CSV file parser
 */
 class CSVReader {
 public:
-    using UnlabeledData = std::vector<apsi::Item>;
+    using UnlabeledData = std::vector<apsu::Item>;
 
-    using LabeledData = std::vector<std::pair<apsi::Item, apsi::Label>>;
+    using LabeledData = std::vector<std::pair<apsu::Item, apsu::Label>>;
 
     using DBData = std::variant<UnlabeledData, LabeledData>;
 
@@ -41,6 +41,6 @@ private:
     std::pair<bool, bool> process_line(
         const std::string &line,
         std::string &orig_item,
-        apsi::Item &item,
-        apsi::Label &label) const;
+        apsu::Item &item,
+        apsu::Label &label) const;
 }; // class CSVReader

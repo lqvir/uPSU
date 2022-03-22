@@ -13,12 +13,12 @@
 #include <filesystem>
 #endif
 
-// APSI
-#include "apsi/log.h"
-#include "apsi/oprf/oprf_sender.h"
-#include "apsi/thread_pool_mgr.h"
-#include "apsi/version.h"
-#include "apsi/zmq/sender_dispatcher.h"
+// APSU
+#include "apsu/log.h"
+#include "apsu/oprf/oprf_sender.h"
+#include "apsu/thread_pool_mgr.h"
+#include "apsu/version.h"
+#include "apsu/zmq/sender_dispatcher.h"
 #include "common/common_utils.h"
 #include "common/csv_reader.h"
 #include "sender/clp.h"
@@ -31,10 +31,10 @@ namespace fs = std::experimental::filesystem;
 #else
 namespace fs = std::filesystem;
 #endif
-using namespace apsi;
-using namespace apsi::sender;
-using namespace apsi::network;
-using namespace apsi::oprf;
+using namespace apsu;
+using namespace apsu::sender;
+using namespace apsu::network;
+using namespace apsu::oprf;
 
 int start_sender(const CLP &cmd);
 
@@ -51,9 +51,9 @@ int main(int argc, char *argv[])
 {
     prepare_console();
 
-    CLP cmd("Example of a Sender implementation", APSI_VERSION);
+    CLP cmd("Example of a Sender implementation", APSU_VERSION);
     if (!cmd.parse_args(argc, argv)) {
-        APSI_LOG_ERROR("Failed parsing command line arguments");
+        APSU_LOG_ERROR("Failed parsing command line arguments");
         return -1;
     }
 
@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
 
 void sigint_handler(int param [[maybe_unused]])
 {
-    APSI_LOG_WARNING("Sender interrupted");
+    APSU_LOG_WARNING("Sender interrupted");
     print_timing_report(sender_stopwatch);
     exit(0);
 }
@@ -75,19 +75,19 @@ shared_ptr<SenderDB> try_load_sender_db(const CLP &cmd, OPRFKey &oprf_key)
     fs.exceptions(ios_base::badbit | ios_base::failbit);
     try {
         auto [data, size] = SenderDB::Load(fs);
-        APSI_LOG_INFO("Loaded SenderDB (" << size << " bytes) from " << cmd.db_file());
+        APSU_LOG_INFO("Loaded SenderDB (" << size << " bytes) from " << cmd.db_file());
         if (!cmd.params_file().empty()) {
-            APSI_LOG_WARNING(
+            APSU_LOG_WARNING(
                 "PSI parameters were loaded with the SenderDB; ignoring given PSI parameters");
         }
         result = make_shared<SenderDB>(move(data));
 
         // Load also the OPRF key
         oprf_key.load(fs);
-        APSI_LOG_INFO("Loaded OPRF key (" << oprf_key_size << " bytes) from " << cmd.db_file());
+        APSU_LOG_INFO("Loaded OPRF key (" << oprf_key_size << " bytes) from " << cmd.db_file());
     } catch (const exception &e) {
         // Failed to load SenderDB
-        APSI_LOG_DEBUG("Failed to load SenderDB: " << e.what());
+        APSU_LOG_DEBUG("Failed to load SenderDB: " << e.what());
     }
 
     return result;
@@ -98,14 +98,14 @@ shared_ptr<SenderDB> try_load_csv_db(const CLP &cmd, OPRFKey &oprf_key)
     unique_ptr<PSIParams> params = build_psi_params(cmd);
     if (!params) {
         // We must have valid parameters given
-        APSI_LOG_ERROR("Failed to set PSI parameters");
+        APSU_LOG_ERROR("Failed to set PSI parameters");
         return nullptr;
     }
 
     unique_ptr<CSVReader::DBData> db_data;
     if (cmd.db_file().empty() || !(db_data = load_db(cmd.db_file()))) {
         // Failed to read db file
-        APSI_LOG_DEBUG("Failed to load data from a CSV file");
+        APSU_LOG_DEBUG("Failed to load data from a CSV file");
         return nullptr;
     }
 
@@ -123,14 +123,14 @@ bool try_save_sender_db(const CLP &cmd, shared_ptr<SenderDB> sender_db, const OP
     fs.exceptions(ios_base::badbit | ios_base::failbit);
     try {
         size_t size = sender_db->save(fs);
-        APSI_LOG_INFO("Saved SenderDB (" << size << " bytes) to " << cmd.sdb_out_file());
+        APSU_LOG_INFO("Saved SenderDB (" << size << " bytes) to " << cmd.sdb_out_file());
 
         // Save also the OPRF key (fixed size: oprf_key_size bytes)
         oprf_key.save(fs);
-        APSI_LOG_INFO("Saved OPRF key (" << oprf_key_size << " bytes) to " << cmd.sdb_out_file());
+        APSU_LOG_INFO("Saved OPRF key (" << oprf_key_size << " bytes) to " << cmd.sdb_out_file());
 
     } catch (const exception &e) {
-        APSI_LOG_WARNING("Failed to save SenderDB: " << e.what());
+        APSU_LOG_WARNING("Failed to save SenderDB: " << e.what());
         return false;
     }
 
@@ -140,7 +140,7 @@ bool try_save_sender_db(const CLP &cmd, shared_ptr<SenderDB> sender_db, const OP
 int start_sender(const CLP &cmd)
 {
     ThreadPoolMgr::SetThreadCount(cmd.threads());
-    APSI_LOG_INFO("Setting thread count to " << ThreadPoolMgr::GetThreadCount());
+    APSU_LOG_INFO("Setting thread count to " << ThreadPoolMgr::GetThreadCount());
     signal(SIGINT, sigint_handler);
 
     // Check that the database file is valid
@@ -151,7 +151,7 @@ int start_sender(const CLP &cmd)
     OPRFKey oprf_key;
     if (!(sender_db = try_load_sender_db(cmd, oprf_key)) &&
         !(sender_db = try_load_csv_db(cmd, oprf_key))) {
-        APSI_LOG_ERROR("Failed to create SenderDB: terminating");
+        APSU_LOG_ERROR("Failed to create SenderDB: terminating");
         return -1;
     }
 
@@ -164,11 +164,11 @@ int start_sender(const CLP &cmd)
             max(max_bin_bundles_per_bundle_idx,
                 static_cast<uint32_t>(sender_db->get_bin_bundle_count(bundle_idx)));
     }
-    APSI_LOG_INFO(
+    APSU_LOG_INFO(
         "SenderDB holds a total of " << sender_db->get_bin_bundle_count() << " bin bundles across "
                                      << sender_db->get_params().bundle_idx_count()
                                      << " bundle indices");
-    APSI_LOG_INFO(
+    APSU_LOG_INFO(
         "The largest bundle index holds " << max_bin_bundles_per_bundle_idx << " bin bundles");
 
     // Try to save the SenderDB if a save file was given
@@ -194,7 +194,7 @@ unique_ptr<CSVReader::DBData> load_db(const string &db_file)
         CSVReader reader(db_file);
         tie(db_data, ignore) = reader.read();
     } catch (const exception &ex) {
-        APSI_LOG_WARNING("Could not open or read file `" << db_file << "`: " << ex.what());
+        APSU_LOG_WARNING("Could not open or read file `" << db_file << "`: " << ex.what());
         return nullptr;
     }
 
@@ -209,7 +209,7 @@ shared_ptr<SenderDB> create_sender_db(
     bool compress)
 {
     if (!psi_params) {
-        APSI_LOG_ERROR("No PSI parameters were given");
+        APSU_LOG_ERROR("No PSI parameters were given");
         return nullptr;
     }
 
@@ -219,10 +219,10 @@ shared_ptr<SenderDB> create_sender_db(
             sender_db = make_shared<SenderDB>(*psi_params, 0, 0, compress);
             sender_db->set_data(get<CSVReader::UnlabeledData>(db_data));
 
-            APSI_LOG_INFO(
+            APSU_LOG_INFO(
                 "Created unlabeled SenderDB with " << sender_db->get_item_count() << " items");
         } catch (const exception &ex) {
-            APSI_LOG_ERROR("Failed to create SenderDB: " << ex.what());
+            APSU_LOG_ERROR("Failed to create SenderDB: " << ex.what());
             return nullptr;
         }
     } else if (holds_alternative<CSVReader::LabeledData>(db_data)) {
@@ -238,28 +238,28 @@ shared_ptr<SenderDB> create_sender_db(
             sender_db =
                 make_shared<SenderDB>(*psi_params, label_byte_count, nonce_byte_count, compress);
             sender_db->set_data(labeled_db_data);
-            APSI_LOG_INFO(
+            APSU_LOG_INFO(
                 "Created labeled SenderDB with " << sender_db->get_item_count() << " items and "
                                                  << label_byte_count << "-byte labels ("
                                                  << nonce_byte_count << "-byte nonces)");
         } catch (const exception &ex) {
-            APSI_LOG_ERROR("Failed to create SenderDB: " << ex.what());
+            APSU_LOG_ERROR("Failed to create SenderDB: " << ex.what());
             return nullptr;
         }
     } else {
         // Should never reach this point
-        APSI_LOG_ERROR("Loaded database is in an invalid state");
+        APSU_LOG_ERROR("Loaded database is in an invalid state");
         return nullptr;
     }
 
     if (compress) {
-        APSI_LOG_INFO("Using in-memory compression to reduce memory footprint");
+        APSU_LOG_INFO("Using in-memory compression to reduce memory footprint");
     }
 
     // Read the OPRFKey and strip the SenderDB to reduce memory use
     oprf_key = sender_db->strip();
 
-    APSI_LOG_INFO("SenderDB packing rate: " << sender_db->get_packing_rate());
+    APSU_LOG_INFO("SenderDB packing rate: " << sender_db->get_packing_rate());
 
     return sender_db;
 }

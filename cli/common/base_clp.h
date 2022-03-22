@@ -16,8 +16,8 @@
 #pragma warning(pop)
 #endif
 
-// APSI
-#include "apsi/log.h"
+// APSU
+#include "apsu/log.h"
 
 /**
 Command line processor based on TCLAP. This is a base class that contains common arguments for both
@@ -84,9 +84,9 @@ public:
             threads_ = threads_arg.getValue();
             log_level_ = log_level_arg_->getValue();
 
-            apsi::Log::SetConsoleDisabled(silent_);
-            apsi::Log::SetLogFile(log_file_);
-            apsi::Log::SetLogLevel(log_level_);
+            apsu::Log::SetConsoleDisabled(silent_);
+            apsu::Log::SetLogFile(log_file_);
+            apsu::Log::SetLogLevel(log_level_);
 
             get_args();
         } catch (...) {

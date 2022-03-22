@@ -8,9 +8,9 @@
 #include <random>
 #include <vector>
 
-// APSI
-#include "apsi/config.h"
-#include "apsi/util/interpolate.h"
+// APSU
+#include "apsu/config.h"
+#include "apsu/util/interpolate.h"
 
 // SEAL
 #include "seal/context.h"
@@ -25,7 +25,7 @@ using namespace apsi::util;
 using namespace seal;
 using namespace seal::util;
 
-namespace APSITests {
+namespace APSUTests {
     uint64_t uint64_t_poly_eval(
         const vector<uint64_t> &poly, const uint64_t &x, const seal::Modulus &mod)
     {
@@ -181,4 +181,4 @@ namespace APSITests {
         random_interp(23);
         random_interp(101);
     }
-} // namespace APSITests
+} // namespace APSUTests

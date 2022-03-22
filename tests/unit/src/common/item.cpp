@@ -6,8 +6,8 @@
 #include <cstdint>
 #include <numeric>
 
-// APSI
-#include "apsi/item.h"
+// APSU
+#include "apsu/item.h"
 
 // SEAL
 #include "seal/util/defines.h"
@@ -19,7 +19,7 @@ using namespace std;
 using namespace apsi;
 using namespace seal;
 
-namespace APSITests {
+namespace APSUTests {
     TEST(BitstringViewTests, Basics)
     {
         array<unsigned char, 8> data = {};
@@ -116,4 +116,4 @@ namespace APSITests {
         ASSERT_EQ(0xFAFAFAFAFAFAFAFAULL, data2[0]);
         ASSERT_EQ(0xB0B0B0B0B0B0B0B0ULL, data2[1]);
     }
-} // namespace APSITests
+} // namespace APSUTests

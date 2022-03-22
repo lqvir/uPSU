@@ -8,14 +8,14 @@
 #include <iterator>
 #include <set>
 
-// APSI
-#include "apsi/powers.h"
-#include "apsi/version.h"
-#include "apsi/util/utils.h"
+// APSU
+#include "apsu/powers.h"
+#include "apsu/version.h"
+#include "apsu/util/utils.h"
 #include "pd_tool/clp.h"
 
 using namespace std;
-using namespace apsi;
+using namespace apsu;
 
 void write_dot(const PowersDag &pd, string dot_file)
 {
@@ -37,7 +37,7 @@ int main(int argc, char **argv)
 {
     CLP clp(
         "pd_tool is a command-line tool for computing the depths of source power configurations.",
-        to_string(apsi_version));
+        to_string(apsu_version));
     clp.parse_args(argc, argv);
 
     PowersDag pd;

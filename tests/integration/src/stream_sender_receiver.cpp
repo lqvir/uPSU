@@ -4,14 +4,14 @@
 // STD
 #include <sstream>
 
-// APSI
-#include "apsi/log.h"
-#include "apsi/network/stream_channel.h"
-#include "apsi/oprf/oprf_sender.h"
-#include "apsi/receiver.h"
-#include "apsi/sender.h"
-#include "apsi/sender_db.h"
-#include "apsi/thread_pool_mgr.h"
+// APSU
+#include "apsu/log.h"
+#include "apsu/network/stream_channel.h"
+#include "apsu/oprf/oprf_sender.h"
+#include "apsu/receiver.h"
+#include "apsu/sender.h"
+#include "apsu/sender_db.h"
+#include "apsu/thread_pool_mgr.h"
 #include "test_utils.h"
 
 // Google Test
@@ -26,7 +26,7 @@ using namespace apsi::util;
 using namespace apsi::oprf;
 using namespace seal;
 
-namespace APSITests {
+namespace APSUTests {
     namespace {
         void RunUnlabeledTest(
             size_t sender_size,
@@ -911,4 +911,4 @@ namespace APSITests {
             create_huge_params2(),
             thread::hardware_concurrency());
     }
-} // namespace APSITests
+} // namespace APSUTests

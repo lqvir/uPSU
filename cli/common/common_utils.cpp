@@ -15,10 +15,10 @@
 #include <filesystem>
 #endif
 
-// APSI
-#include "apsi/log.h"
-#include "apsi/psi_params.h"
-#include "apsi/util/utils.h"
+// APSU
+#include "apsu/log.h"
+#include "apsu/psi_params.h"
+#include "apsu/util/utils.h"
 #include "common/base_clp.h"
 
 using namespace std;
@@ -28,8 +28,8 @@ namespace fs = std::experimental::filesystem;
 namespace fs = std::filesystem;
 #endif
 using namespace seal;
-using namespace apsi;
-using namespace apsi::util;
+using namespace apsu;
+using namespace apsu::util;
 
 /**
 This only turns on showing colors for Windows.
@@ -110,9 +110,9 @@ void print_timing_report(const Stopwatch &stopwatch)
         timing_report =
             generate_timespan_report(timings, stopwatch.get_max_timespan_event_name_length());
 
-        APSI_LOG_INFO("Timespan event information");
+        APSU_LOG_INFO("Timespan event information");
         for (const auto &timing : timing_report) {
-            APSI_LOG_INFO(timing.c_str());
+            APSU_LOG_INFO(timing.c_str());
         }
     }
 
@@ -122,9 +122,9 @@ void print_timing_report(const Stopwatch &stopwatch)
     if (timepoints.size() > 0) {
         timing_report = generate_event_report(timepoints, stopwatch.get_max_event_name_length());
 
-        APSI_LOG_INFO("Single event information");
+        APSU_LOG_INFO("Single event information");
         for (const auto &timing : timing_report) {
-            APSI_LOG_INFO(timing.c_str());
+            APSU_LOG_INFO(timing.c_str());
         }
     }
 }
@@ -134,11 +134,11 @@ void throw_if_file_invalid(const string &file_name)
     fs::path file(file_name);
 
     if (!fs::exists(file)) {
-        APSI_LOG_ERROR("File `" << file.string() << "` does not exist");
+        APSU_LOG_ERROR("File `" << file.string() << "` does not exist");
         throw logic_error("file does not exist");
     }
     if (!fs::is_regular_file(file)) {
-        APSI_LOG_ERROR("File `" << file.string() << "` is not a regular file");
+        APSU_LOG_ERROR("File `" << file.string() << "` is not a regular file");
         throw logic_error("invalid file");
     }
 }

@@ -7,10 +7,10 @@
 #include <sstream>
 #include <vector>
 
-// APSI
-#include "apsi/crypto_context.h"
-#include "apsi/network/result_package.h"
-#include "apsi/psi_params.h"
+// APSU
+#include "apsu/crypto_context.h"
+#include "apsu/network/result_package.h"
+#include "apsu/psi_params.h"
 
 // SEAL
 #include "seal/context.h"
@@ -24,7 +24,7 @@ using namespace seal;
 using namespace apsi;
 using namespace apsi::network;
 
-namespace APSITests {
+namespace APSUTests {
     namespace {
         shared_ptr<PSIParams> get_params()
         {
@@ -170,4 +170,4 @@ namespace APSITests {
         ASSERT_TRUE(all_of(
             prp.label_result[1].begin(), prp.label_result[1].end(), [](auto a) { return !a; }));
     }
-} // namespace APSITests
+} // namespace APSUTests

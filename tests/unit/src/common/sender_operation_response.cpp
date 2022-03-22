@@ -5,8 +5,8 @@
 #include <sstream>
 #include <vector>
 
-// APSI
-#include "apsi/network/sender_operation_response.h"
+// APSU
+#include "apsu/network/sender_operation_response.h"
 
 // Google Test
 #include "gtest/gtest.h"
@@ -16,7 +16,7 @@ using namespace seal;
 using namespace apsi;
 using namespace apsi::network;
 
-namespace APSITests {
+namespace APSUTests {
     TEST(SenderOperationResponseTest, SaveLoadSenderOperationResponseParms)
     {
         SenderOperationResponseParms sopr;
@@ -144,4 +144,4 @@ namespace APSITests {
         ASSERT_EQ(SenderOperationType::sop_query, sopr2.type());
         ASSERT_EQ(sopr.package_count, sopr2.package_count);
     }
-} // namespace APSITests
+} // namespace APSUTests

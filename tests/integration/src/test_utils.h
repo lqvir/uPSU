@@ -15,15 +15,15 @@
 #include <unordered_set>
 #include <vector>
 
-// APSI
-#include "apsi/item.h"
-#include "apsi/psi_params.h"
-#include "apsi/receiver.h"
+// APSU
+#include "apsu/item.h"
+#include "apsu/psi_params.h"
+#include "apsu/receiver.h"
 
 // Google Test
 #include "gtest/gtest.h"
 
-namespace APSITests {
+namespace APSUTests {
     apsi::Label create_label(unsigned char start, std::size_t byte_count);
 
     std::unordered_set<apsi::Item> rand_subset(
@@ -55,4 +55,4 @@ namespace APSITests {
     apsi::PSIParams create_huge_params1();
 
     apsi::PSIParams create_huge_params2();
-} // namespace APSITests
+} // namespace APSUTests

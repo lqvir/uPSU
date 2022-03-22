@@ -8,8 +8,8 @@
 #include <utility>
 #include <vector>
 
-// APSI
-#include "apsi/util/utils.h"
+// APSU
+#include "apsu/util/utils.h"
 
 // SEAL
 #include "seal/util/defines.h"
@@ -22,7 +22,7 @@ using namespace seal;
 using namespace apsi;
 using namespace apsi::util;
 
-namespace APSITests {
+namespace APSUTests {
     namespace {
         template <typename T>
         void compare_up_to(const vector<T> &a, const vector<T> &b, size_t count)
@@ -223,4 +223,4 @@ namespace APSITests {
         xor_buffers(arr1_5, arr2_5, sizeof(arr1_5));
         ASSERT_TRUE(equal(arr1_5, arr1_5 + sizeof(arr1_5), res));
     }
-} // namespace APSITests
+} // namespace APSUTests

@@ -8,9 +8,9 @@
 #include <set>
 #include <sstream>
 
-// APSI
-#include "apsi/powers.h"
-#include "apsi/util/utils.h"
+// APSU
+#include "apsu/powers.h"
+#include "apsu/util/utils.h"
 
 // Google Test
 #include "gtest/gtest.h"
@@ -19,7 +19,7 @@ using namespace std;
 using namespace apsi;
 using namespace apsi::util;
 
-namespace APSITests {
+namespace APSUTests {
     TEST(PowersTests, PowersDagConfigure)
     {
         PowersDag pd;
@@ -201,4 +201,4 @@ namespace APSITests {
         ASSERT_EQ(expected.size(), real.size());
         ASSERT_TRUE(equal(expected.begin(), expected.end(), real.begin()));
     }
-} // namespace APSITests
+} // namespace APSUTests

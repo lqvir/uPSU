@@ -7,10 +7,10 @@
 #include <numeric>
 #include <sstream>
 
-// APSI
-#include "apsi/log.h"
-#include "apsi/psi_params.h"
-#include "apsi/sender_db.h"
+// APSU
+#include "apsu/log.h"
+#include "apsu/psi_params.h"
+#include "apsu/sender_db.h"
 
 // Google Test
 #include "gtest/gtest.h"
@@ -20,7 +20,7 @@ using namespace apsi;
 using namespace apsi::sender;
 using namespace seal;
 
-namespace APSITests {
+namespace APSUTests {
     namespace {
         shared_ptr<PSIParams> get_params1()
         {
@@ -486,7 +486,7 @@ namespace APSITests {
                 sender_db.insert_or_assign(
                     { Item(val, ~val), create_label(static_cast<unsigned char>(val), 20) });
                 val++;
-                APSI_LOG_ERROR(val << " " << sender_db.get_bin_bundle_count());
+                APSU_LOG_ERROR(val << " " << sender_db.get_bin_bundle_count());
             }
 
             // Check that everything was inserted
@@ -768,4 +768,4 @@ namespace APSITests {
         test_fun(get_params1());
         test_fun(get_params2());
     }
-} // namespace APSITests
+} // namespace APSUTests

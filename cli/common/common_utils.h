@@ -7,8 +7,8 @@
 #include <string>
 #include <vector>
 
-// APSI
-#include "apsi/util/stopwatch.h"
+// APSU
+#include "apsu/util/stopwatch.h"
 
 /**
 Prepare console for color output.
@@ -19,18 +19,18 @@ void prepare_console();
 Generate timing report for timespans.
 */
 std::vector<std::string> generate_timespan_report(
-    const std::vector<apsi::util::Stopwatch::TimespanSummary> &timespans, int max_name_length);
+    const std::vector<apsu::util::Stopwatch::TimespanSummary> &timespans, int max_name_length);
 
 /**
 Generate timing report for single events.
 */
 std::vector<std::string> generate_event_report(
-    const std::vector<apsi::util::Stopwatch::Timepoint> &timepoints, int max_name_length);
+    const std::vector<apsu::util::Stopwatch::Timepoint> &timepoints, int max_name_length);
 
 /**
 Print timings.
 */
-void print_timing_report(const apsi::util::Stopwatch &stopwatch);
+void print_timing_report(const apsu::util::Stopwatch &stopwatch);
 
 /**
 Throw an exception if the given file is invalid.

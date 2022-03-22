@@ -9,8 +9,8 @@
 #include <utility>
 #include <vector>
 
-// APSI
-#include "apsi/bin_bundle.h"
+// APSU
+#include "apsu/bin_bundle.h"
 
 // SEAL
 #include "seal/keygenerator.h"
@@ -23,7 +23,7 @@ using namespace apsi;
 using namespace apsi::sender;
 using namespace seal;
 
-namespace APSITests {
+namespace APSUTests {
     namespace {
         shared_ptr<PSIParams> get_params1()
         {
@@ -1145,4 +1145,4 @@ namespace APSITests {
         // Non-power-of-two felts_per_item
         test_fun(get_params2());
     }
-} // namespace APSITests
+} // namespace APSUTests

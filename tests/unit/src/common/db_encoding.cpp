@@ -7,8 +7,8 @@
 #include <stdexcept>
 #include <vector>
 
-// APSI
-#include "apsi/util/db_encoding.h"
+// APSU
+#include "apsu/util/db_encoding.h"
 
 // SEAL
 #include "seal/util/defines.h"
@@ -21,7 +21,7 @@ using namespace apsi;
 using namespace apsi::util;
 using namespace seal;
 
-namespace APSITests {
+namespace APSUTests {
     namespace {
         felt_t get_bit(const vector<unsigned char> &in, size_t bit_idx)
         {
@@ -162,4 +162,4 @@ namespace APSITests {
             }
         }
     }
-} // namespace APSITests
+} // namespace APSUTests

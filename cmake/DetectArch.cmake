@@ -1,4 +1,5 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
+# Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT license.
 
 set(CMAKE_REQUIRED_QUIET_OLD ${CMAKE_REQUIRED_QUIET})
@@ -13,7 +14,7 @@ if(MSVC)
             #error
         #endif
         "
-        APSI_FOURQ_ARM64
+        APSU_FOURQ_ARM64
     )
     check_cxx_source_runs("
         #if defined(_M_AMD64)
@@ -24,7 +25,7 @@ if(MSVC)
             #error
         #endif
         "
-        APSI_FOURQ_AMD64
+        APSU_FOURQ_AMD64
     )
 else()
     check_cxx_source_runs("
@@ -36,7 +37,7 @@ else()
             #error
         #endif
         "
-        APSI_FOURQ_ARM64
+        APSU_FOURQ_ARM64
     )
     check_cxx_source_runs("
         #if defined(__amd64)
@@ -47,7 +48,7 @@ else()
             #error
         #endif
         "
-        APSI_FOURQ_AMD64
+        APSU_FOURQ_AMD64
     )
 endif()
 set(CMAKE_REQUIRED_QUIET ${CMAKE_REQUIRED_QUIET_OLD})

@@ -5,8 +5,8 @@
 #include <algorithm>
 #include <thread>
 
-// APSI
-#include "apsi/util/stopwatch.h"
+// APSU
+#include "apsu/util/stopwatch.h"
 
 // Google Test
 #include "gtest/gtest.h"
@@ -24,7 +24,7 @@ namespace {
     }
 } // namespace
 
-namespace APSITests {
+namespace APSUTests {
     TEST(StopwatchTests, SingleEvent)
     {
         Stopwatch sw;
@@ -201,4 +201,4 @@ namespace APSITests {
             ASSERT_EQ(3, tss.event_count);
         }
     }
-} // namespace APSITests
+} // namespace APSUTests

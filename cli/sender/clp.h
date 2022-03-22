@@ -9,8 +9,8 @@
 #include <set>
 #include <vector>
 
-// APSI
-#include "apsi/util/utils.h"
+// APSU
+#include "apsu/util/utils.h"
 #include "common/base_clp.h"
 
 // SEAL
@@ -98,7 +98,7 @@ private:
     TCLAP::ValueArg<std::string> params_file_arg_ = TCLAP::ValueArg<std::string>(
         "p",
         "paramsFile",
-        "Path to a JSON file that specifies APSI parameters; this must be given if --dbFile is "
+        "Path to a JSON file that specifies APSU parameters; this must be given if --dbFile is "
         "specified with a path "
         "to a CSV file",
         false,

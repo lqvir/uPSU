@@ -10,10 +10,10 @@
 #include "seal/keygenerator.h"
 #include "seal/publickey.h"
 
-// APSI
-#include "apsi/network/stream_channel.h"
-#include "apsi/powers.h"
-#include "apsi/util/utils.h"
+// APSU
+#include "apsu/network/stream_channel.h"
+#include "apsu/powers.h"
+#include "apsu/util/utils.h"
 
 // Google Test
 #include "gtest/gtest.h"
@@ -23,7 +23,7 @@ using namespace seal;
 using namespace apsi;
 using namespace apsi::network;
 
-namespace APSITests {
+namespace APSUTests {
     namespace {
         shared_ptr<PSIParams> get_params()
         {
@@ -245,4 +245,4 @@ namespace APSITests {
         ASSERT_EQ(svr.bytes_sent(), clt.bytes_received());
         ASSERT_EQ(svr.bytes_received(), clt.bytes_sent());
     }
-} // namespace APSITests
+} // namespace APSUTests

@@ -8,14 +8,14 @@
 #include <sstream>
 #include <utility>
 
-// APSI
-#include "apsi/log.h"
+// APSU
+#include "apsu/log.h"
 #include "common/common_utils.h"
 #include "common/csv_reader.h"
 
 using namespace std;
-using namespace apsi;
-using namespace apsi::util;
+using namespace apsu;
+using namespace apsu::util;
 
 CSVReader::CSVReader()
 {}
@@ -32,7 +32,7 @@ auto CSVReader::read(istream &stream) const -> pair<DBData, vector<string>>
     vector<string> orig_items;
 
     if (!getline(stream, line)) {
-        APSI_LOG_WARNING("Nothing to read in `" << file_name_ << "`");
+        APSU_LOG_WARNING("Nothing to read in `" << file_name_ << "`");
         return { UnlabeledData{}, {} };
     } else {
         string orig_item;
@@ -41,7 +41,7 @@ auto CSVReader::read(istream &stream) const -> pair<DBData, vector<string>>
         auto [has_item, has_label] = process_line(line, orig_item, item, label);
 
         if (!has_item) {
-            APSI_LOG_WARNING("Failed to read item from `" << file_name_ << "`");
+            APSU_LOG_WARNING("Failed to read item from `" << file_name_ << "`");
             return { UnlabeledData{}, {} };
         }
 
@@ -61,7 +61,7 @@ auto CSVReader::read(istream &stream) const -> pair<DBData, vector<string>>
 
         if (!has_item) {
             // Something went wrong; skip this item and move on to the next
-            APSI_LOG_WARNING("Failed to read item from `" << file_name_ << "`");
+            APSU_LOG_WARNING("Failed to read item from `" << file_name_ << "`");
             continue;
         }
 
@@ -72,7 +72,7 @@ auto CSVReader::read(istream &stream) const -> pair<DBData, vector<string>>
             get<LabeledData>(result).push_back(make_pair(move(item), move(label)));
         } else {
             // Something is terribly wrong
-            APSI_LOG_ERROR("Critical error reading data");
+            APSU_LOG_ERROR("Critical error reading data");
             throw runtime_error("variant is in bad state");
         }
     }
@@ -86,7 +86,7 @@ auto CSVReader::read() const -> pair<DBData, vector<string>>
 
     ifstream file(file_name_);
     if (!file.is_open()) {
-        APSI_LOG_ERROR("File `" << file_name_ << "` could not be opened for reading");
+        APSU_LOG_ERROR("File `" << file_name_ << "` could not be opened for reading");
         throw runtime_error("could not open file");
     }
 

@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-// APSI
-#include "apsi/util/cuckoo_filter.h"
-#include "apsi/util/cuckoo_filter_table.h"
+// APSU
+#include "apsu/util/cuckoo_filter.h"
+#include "apsu/util/cuckoo_filter_table.h"
 
 // Google Test
 #include "gtest/gtest.h"
@@ -13,7 +13,7 @@ using namespace apsi;
 using namespace apsi::sender;
 using namespace apsi::sender::util;
 
-namespace APSITests {
+namespace APSUTests {
     TEST(SenderUtilsTests, CuckooFilterBasics)
     {
         CuckooFilter filter(70 * 2, 12);
@@ -494,4 +494,4 @@ namespace APSITests {
         ASSERT_FALSE(table.find_tag_in_buckets(0, 1, 0x21));
         ASSERT_FALSE(table.find_tag_in_buckets(0, 2, 0x65));
     }
-} // namespace APSITests
+} // namespace APSUTests

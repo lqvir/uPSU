@@ -6,8 +6,8 @@
 #include <utility>
 #include <vector>
 
-// APSI
-#include "apsi/log.h"
+// APSU
+#include "apsu/log.h"
 #include "common/common_utils.h"
 #include "sender/sender_utils.h"
 
@@ -16,7 +16,7 @@
 
 using namespace std;
 using namespace seal;
-using namespace apsi;
+using namespace apsu;
 
 unique_ptr<PSIParams> build_psi_params(const CLP &cmd)
 {
@@ -27,7 +27,7 @@ unique_ptr<PSIParams> build_psi_params(const CLP &cmd)
         fstream input_file(cmd.params_file(), ios_base::in);
 
         if (!input_file.is_open()) {
-            APSI_LOG_ERROR("File " << cmd.params_file() << " could not be open for reading.");
+            APSU_LOG_ERROR("File " << cmd.params_file() << " could not be open for reading.");
             throw runtime_error("Could not open params file");
         }
 
@@ -39,7 +39,7 @@ unique_ptr<PSIParams> build_psi_params(const CLP &cmd)
 
         input_file.close();
     } catch (const exception &ex) {
-        APSI_LOG_ERROR(
+        APSU_LOG_ERROR(
             "Error trying to read input file " << cmd.params_file() << ": " << ex.what());
         return nullptr;
     }
@@ -48,11 +48,11 @@ unique_ptr<PSIParams> build_psi_params(const CLP &cmd)
     try {
         params = make_unique<PSIParams>(PSIParams::Load(params_json));
     } catch (const exception &ex) {
-        APSI_LOG_ERROR("APSI threw an exception creating PSIParams: " << ex.what());
+        APSU_LOG_ERROR("APSU threw an exception creating PSIParams: " << ex.what());
         return nullptr;
     }
 
-    APSI_LOG_INFO(
+    APSU_LOG_INFO(
         "PSIParams have false-positive probability 2^(" << params->log2_fpp()
                                                         << ") per receiver item");
 
