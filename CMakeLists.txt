@@ -29,9 +29,9 @@ list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_LIST_DIR}/thirdparty/share/cppzmq)
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_LIST_DIR}/thirdparty/share/zstd)
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_LIST_DIR}/thirdparty/share/zeromq)
 
-set(ZLIB_LIBRARY " ${CMAKE_CURRENT_LIST_DIR}/thirdparty/lib/zlib.lib")
-set(ZLIB_INCLUDE_DIR " ${CMAKE_CURRENT_LIST_DIR}/thirdparty/include")
-set(TCLAP_INCLUDE_DIRS " ${CMAKE_CURRENT_LIST_DIR}/thirdparty/include")
+set(ZLIB_LIBRARY "${CMAKE_CURRENT_LIST_DIR}/thirdparty/lib/zlib.lib")
+set(ZLIB_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/thirdparty/include")
+set(TCLAP_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/thirdparty/include")
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY
