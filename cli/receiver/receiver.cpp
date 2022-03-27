@@ -115,15 +115,15 @@ int remote_query(const CLP &cmd)
     auto &items = get<CSVReader::UnlabeledData>(*query_data);
     vector<Item> items_vec(items.begin(), items.end());
     vector<HashedItem> oprf_items;
-    vector<LabelKey> label_keys;
-    try {
-        APSU_LOG_INFO("Sending OPRF request for " << items_vec.size() << " items");
-        tie(oprf_items, label_keys) = Receiver::RequestOPRF(items_vec, channel);
-        APSU_LOG_INFO("Received OPRF request for " << items_vec.size() << " items");
-    } catch (const exception &ex) {
-        APSU_LOG_WARNING("OPRF request failed: " << ex.what());
-        return -1;
-    }
+   
+    // try {
+    //     APSU_LOG_INFO("Sending OPRF request for " << items_vec.size() << " items");
+    //     tie(oprf_items, label_keys) = Receiver::RequestOPRF(items_vec, channel);
+    //     APSU_LOG_INFO("Received OPRF request for " << items_vec.size() << " items");
+    // } catch (const exception &ex) {
+    //     APSU_LOG_WARNING("OPRF request failed: " << ex.what());
+    //     return -1;
+    // }
 
     
     vector<HashedItem> items_without_OPRF;
@@ -136,13 +136,14 @@ int remote_query(const CLP &cmd)
     vector<MatchRecord> query_result;
     try {
         APSU_LOG_INFO("Sending APSU query");
-        query_result = receiver.request_query(items_without_OPRF, label_keys, channel, orig_items);
+        query_result = receiver.request_query(items_without_OPRF,  channel, orig_items);
         APSU_LOG_INFO("Received APSU query response");
     } catch (const exception &ex) {
         APSU_LOG_WARNING("Failed sending APSU query: " << ex.what());
         return -1;
     }
-
+    print_transmitted_data(channel);
+    print_timing_report(recv_stopwatch);
     try {
         APSU_LOG_INFO("Sending OT response");
         receiver.ResponseOT(cmd.net_addr());

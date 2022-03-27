@@ -43,7 +43,7 @@ unique_ptr<CSVReader::DBData> load_db(const string &db_file);
 shared_ptr<SenderDB> create_sender_db(
     const CSVReader::DBData &db_data,
     unique_ptr<PSIParams> psi_params,
-    OPRFKey &oprf_key,
+ 
     size_t nonce_byte_count,
     bool compress);
 
@@ -67,7 +67,7 @@ void sigint_handler(int param [[maybe_unused]])
     exit(0);
 }
 
-shared_ptr<SenderDB> try_load_sender_db(const CLP &cmd, OPRFKey &oprf_key)
+shared_ptr<SenderDB> try_load_sender_db(const CLP &cmd)
 {
     shared_ptr<SenderDB> result = nullptr;
 
@@ -83,8 +83,8 @@ shared_ptr<SenderDB> try_load_sender_db(const CLP &cmd, OPRFKey &oprf_key)
         result = make_shared<SenderDB>(move(data));
 
         // Load also the OPRF key
-        oprf_key.load(fs);
-        APSU_LOG_INFO("Loaded OPRF key (" << oprf_key_size << " bytes) from " << cmd.db_file());
+        //oprf_key.load(fs);
+        //APSU_LOG_INFO("Loaded OPRF key (" << oprf_key_size << " bytes) from " << cmd.db_file());
     } catch (const exception &e) {
         // Failed to load SenderDB
         APSU_LOG_DEBUG("Failed to load SenderDB: " << e.what());
@@ -93,7 +93,7 @@ shared_ptr<SenderDB> try_load_sender_db(const CLP &cmd, OPRFKey &oprf_key)
     return result;
 }
 
-shared_ptr<SenderDB> try_load_csv_db(const CLP &cmd, OPRFKey &oprf_key)
+shared_ptr<SenderDB> try_load_csv_db(const CLP &cmd)
 {
     unique_ptr<PSIParams> params = build_psi_params(cmd);
     if (!params) {
@@ -109,11 +109,10 @@ shared_ptr<SenderDB> try_load_csv_db(const CLP &cmd, OPRFKey &oprf_key)
         return nullptr;
     }
 
-    return create_sender_db(
-        *db_data, move(params), oprf_key, cmd.nonce_byte_count(), cmd.compress());
+    return create_sender_db( *db_data, move(params), cmd.nonce_byte_count(), cmd.compress());
 }
 
-bool try_save_sender_db(const CLP &cmd, shared_ptr<SenderDB> sender_db, const OPRFKey &oprf_key)
+bool try_save_sender_db(const CLP &cmd, shared_ptr<SenderDB> sender_db)
 {
     if (!sender_db) {
         return false;
@@ -126,13 +125,15 @@ bool try_save_sender_db(const CLP &cmd, shared_ptr<SenderDB> sender_db, const OP
         APSU_LOG_INFO("Saved SenderDB (" << size << " bytes) to " << cmd.sdb_out_file());
 
         // Save also the OPRF key (fixed size: oprf_key_size bytes)
-        oprf_key.save(fs);
+    
         APSU_LOG_INFO("Saved OPRF key (" << oprf_key_size << " bytes) to " << cmd.sdb_out_file());
 
     } catch (const exception &e) {
         APSU_LOG_WARNING("Failed to save SenderDB: " << e.what());
         return false;
     }
+
+
 
     return true;
 }
@@ -148,9 +149,9 @@ int start_sender(const CLP &cmd)
 
     // Try loading first as a SenderDB, then as a CSV file
     shared_ptr<SenderDB> sender_db;
-    OPRFKey oprf_key;
-    if (!(sender_db = try_load_sender_db(cmd, oprf_key)) &&
-        !(sender_db = try_load_csv_db(cmd, oprf_key))) {
+  //  OPRFKey oprf_key;
+    if (!(sender_db = try_load_sender_db(cmd)) &&
+        !(sender_db = try_load_csv_db(cmd))) {
         APSU_LOG_ERROR("Failed to create SenderDB: terminating");
         return -1;
     }
@@ -172,14 +173,14 @@ int start_sender(const CLP &cmd)
         "The largest bundle index holds " << max_bin_bundles_per_bundle_idx << " bin bundles");
 
     // Try to save the SenderDB if a save file was given
-    if (!cmd.sdb_out_file().empty() && !try_save_sender_db(cmd, sender_db, oprf_key)) {
+    if (!cmd.sdb_out_file().empty() && !try_save_sender_db(cmd, sender_db)) {
         return -1;
     }
 
     // Run the dispatcher
     atomic<bool> stop = false;
     Sender sender;
-    ZMQSenderDispatcher dispatcher(sender_db, oprf_key,sender);
+    ZMQSenderDispatcher dispatcher(sender_db, sender);
 
     // The dispatcher will run until stopped.
     dispatcher.run(stop, cmd.net_port());
@@ -204,7 +205,6 @@ unique_ptr<CSVReader::DBData> load_db(const string &db_file)
 shared_ptr<SenderDB> create_sender_db(
     const CSVReader::DBData &db_data,
     unique_ptr<PSIParams> psi_params,
-    OPRFKey &oprf_key,
     size_t nonce_byte_count,
     bool compress)
 {
@@ -225,28 +225,7 @@ shared_ptr<SenderDB> create_sender_db(
             APSU_LOG_ERROR("Failed to create SenderDB: " << ex.what());
             return nullptr;
         }
-    } else if (holds_alternative<CSVReader::LabeledData>(db_data)) {
-        try {
-            auto &labeled_db_data = get<CSVReader::LabeledData>(db_data);
-
-            // Find the longest label and use that as label size
-            size_t label_byte_count =
-                max_element(labeled_db_data.begin(), labeled_db_data.end(), [](auto &a, auto &b) {
-                    return a.second.size() < b.second.size();
-                })->second.size();
-
-            sender_db =
-                make_shared<SenderDB>(*psi_params, label_byte_count, nonce_byte_count, compress);
-            sender_db->set_data(labeled_db_data);
-            APSU_LOG_INFO(
-                "Created labeled SenderDB with " << sender_db->get_item_count() << " items and "
-                                                 << label_byte_count << "-byte labels ("
-                                                 << nonce_byte_count << "-byte nonces)");
-        } catch (const exception &ex) {
-            APSU_LOG_ERROR("Failed to create SenderDB: " << ex.what());
-            return nullptr;
-        }
-    } else {
+    }  else {
         // Should never reach this point
         APSU_LOG_ERROR("Loaded database is in an invalid state");
         return nullptr;
@@ -257,7 +236,7 @@ shared_ptr<SenderDB> create_sender_db(
     }
 
     // Read the OPRFKey and strip the SenderDB to reduce memory use
-    oprf_key = sender_db->strip();
+    sender_db->strip();
 
     APSU_LOG_INFO("SenderDB packing rate: " << sender_db->get_packing_rate());
 

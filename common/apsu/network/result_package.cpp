@@ -192,22 +192,22 @@ namespace apsu {
 
             plain_rp.label_byte_count = label_byte_count;
             plain_rp.nonce_byte_count = nonce_byte_count;
-            for (auto &ct : label_result) {
-                Ciphertext label_result_ct = ct.extract(crypto_context.seal_context());
-                Plaintext label_result_pt;
-                crypto_context.decryptor()->decrypt(label_result_ct, label_result_pt);
-                APSU_LOG_DEBUG(
-                    "Label result noise budget: "
-                    << crypto_context.decryptor()->invariant_noise_budget(label_result_ct)
-                    << " bits [" << this_thread::get_id() << "]");
+            // for (auto &ct : label_result) {
+            //     Ciphertext label_result_ct = ct.extract(crypto_context.seal_context());
+            //     Plaintext label_result_pt;
+            //     crypto_context.decryptor()->decrypt(label_result_ct, label_result_pt);
+            //     APSU_LOG_DEBUG(
+            //         "Label result noise budget: "
+            //         << crypto_context.decryptor()->invariant_noise_budget(label_result_ct)
+            //         << " bits [" << this_thread::get_id() << "]");
 
-                vector<uint64_t> label_result_data;
-                crypto_context.encoder()->decode(label_result_pt, label_result_data);
-                plain_rp.label_result.push_back(move(label_result_data));
-            }
+            //     vector<uint64_t> label_result_data;
+            //     crypto_context.encoder()->decode(label_result_pt, label_result_data);
+            //     plain_rp.label_result.push_back(move(label_result_data));
+            // }
 
-            // Clear the label data
-            label_result.clear();
+            // // Clear the label data
+            // label_result.clear();
 
             return plain_rp;
         }

@@ -397,8 +397,6 @@ namespace apsu {
             int slot_count = encoder->slot_count();
             random_num.clear();
             random_num.reserve(slot_count);
-            cout << "small_q" << endl;
-            cout << hex<<small_q << endl;
             for (int i = 0; i < slot_count; i++)
             {
                 random_num.push_back(myprng->generate() % small_q);
@@ -424,18 +422,7 @@ namespace apsu {
                 rp->psi_result = matching_polyn.eval(all_powers[bundle_idx], pool, random_plain);
             }
             random_plain.set_zero();
-            for (const auto &interp_polyn : cache.get().batched_interp_polyns) {
-                // Compute the label result and move to rp
-                degree = safe_cast<uint32_t>(interp_polyn.batched_coeffs.size()) - 1;
-                using_ps = (ps_low_degree > 1) && (ps_low_degree < degree);
-                if (using_ps) {
-                    rp->label_result.push_back(interp_polyn.eval_patstock(
-                        crypto_context, all_powers[bundle_idx], ps_low_degree, pool,random_plain));
-                } else {
-                    rp->label_result.push_back(
-                        interp_polyn.eval(all_powers[bundle_idx], pool, random_plain));
-                }
-            }
+
 
             // Send this result part
             try {
@@ -512,7 +499,8 @@ namespace apsu {
             // std::array<std::array<osuCrypto::block, 2>, 128> baseMsg;
             // base.send(baseMsg, prng, chls[0], numThreads);
             // receivers[0].setBaseOts(baseMsg, prng, chls[0]);
-            
+            cout<<"++++++++++++++"<<endl;
+            cout<<item_cnt<<endl;
             osuCrypto::BitVector choices(item_cnt);
             for(auto i : ans){
                 choices[i] = 1;
@@ -527,11 +515,10 @@ namespace apsu {
             std::ofstream fout;
             fout.open("union.csv",std::ofstream::out);
             for(auto i:messages){
-                if((int)i.as<uint8_t>().data()[0] == 0) continue;
+
+                if(i == oc::ZeroBlock) continue;
                 stringstream ss;
                 ss<<i.as<uint8_t>().data();
-                APSU_LOG_INFO( ss.str().substr(0,16));
-                APSU_LOG_INFO( ss.str().substr(0,16));
                 fout<<ss.str().substr(0,16)<<endl;
 
             }

@@ -157,7 +157,7 @@ namespace apsu {
             */
             std::vector<MatchRecord> request_query(
                 const std::vector<HashedItem> &items,
-                const std::vector<LabelKey> &label_keys,
+              
                 network::NetworkChannel &chl,
                 const std::vector<std::string> &origin_item);
 
@@ -203,7 +203,7 @@ namespace apsu {
             results for each received ResultPart must be checked.
             */
             std::vector<MatchRecord> process_result_part(
-                const std::vector<LabelKey> &label_keys,
+                
                 const IndexTranslationTable &itt,
                 const ResultPart &result_part,
                 network::NetworkChannel &chl) const;
@@ -236,7 +236,7 @@ namespace apsu {
             void process_result_worker(
                 std::atomic<std::uint32_t> &package_count,
                 std::vector<MatchRecord> &mrs,
-                const std::vector<LabelKey> &label_keys,
+        
                 const IndexTranslationTable &itt,
                 network::NetworkChannel &chl) const;
 

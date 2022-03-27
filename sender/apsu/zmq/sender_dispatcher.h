@@ -32,7 +32,7 @@ namespace apsu {
             longer carries a valid OPRF key.
             */
             ZMQSenderDispatcher(std::shared_ptr<SenderDB> sender_db, oprf::OPRFKey oprf_key,Sender sender);
-
+            ZMQSenderDispatcher(std::shared_ptr<SenderDB> sender_db,Sender sender);
             /**
             Creates a new ZMQSenderDispatcher object. This constructor accepts a SenderDB object. It
             attempts to retrieve an OPRF key from the SenderDB and uses it to serve OPRF requests.

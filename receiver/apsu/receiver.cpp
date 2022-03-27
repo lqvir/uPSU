@@ -161,6 +161,8 @@ namespace apsu {
             return *response->params;
         }
 
+// oprf has been removed
+
         OPRFReceiver Receiver::CreateOPRFReceiver(const vector<Item> &items)
         {
             STOPWATCH(recv_stopwatch, "Receiver::CreateOPRFReceiver");
@@ -198,7 +200,7 @@ namespace apsu {
 
             return make_pair(move(items), move(label_keys));
         }
-
+// oprf has been removed
         unique_ptr<SenderOperation> Receiver::CreateOPRFRequest(const OPRFReceiver &oprf_receiver)
         {
             auto sop = make_unique<SenderOperationOPRF>();
@@ -207,7 +209,7 @@ namespace apsu {
 
             return sop;
         }
-
+// oprf has been removed
         pair<vector<HashedItem>, vector<LabelKey>> Receiver::RequestOPRF(
             const vector<Item> &items, NetworkChannel &chl)
         {
@@ -289,7 +291,7 @@ namespace apsu {
                     << " hash functions; cuckoo table fill-rate: " << cuckoo.fill_rate());
             }
           
-            sendMessages.assign(cuckoo.table_size(),{oc::toBlock((uint64_t)0),oc::toBlock((uint64_t)0)});
+            sendMessages.assign(cuckoo.table_size(),{oc::ZeroBlock,oc::ZeroBlock});
 
       
             // Once the table is filled, fill the table_idx_to_item_idx map
@@ -297,9 +299,9 @@ namespace apsu {
                 auto item_loc = cuckoo.query(items[item_idx].get_as<kuku::item_type>().front());
                 auto temp_loc = item_loc.location();
                 itt.table_idx_to_item_idx_[temp_loc] = item_idx;
-                sendMessages[temp_loc]={oc::toBlock((uint8_t*)origin_item[item_idx].data()),oc::toBlock((uint64_t)0)};
-                APSU_LOG_INFO(sendMessages[temp_loc][0].as<char>().data());
-                cout<<(int)sendMessages[temp_loc][0].as<char>()[0]<<endl;
+                sendMessages[temp_loc]={oc::toBlock((uint8_t*)origin_item[item_idx].data()),oc::ZeroBlock};
+              //  APSU_LOG_INFO(sendMessages[temp_loc][0].as<char>().data());
+               // cout<<(int)sendMessages[temp_loc][0].as<char>()[0]<<endl;
             }
 
             // Set up unencrypted query data
@@ -374,7 +376,7 @@ namespace apsu {
 
         vector<MatchRecord> Receiver::request_query(
             const vector<HashedItem> &items,
-            const vector<LabelKey> &label_keys,
+         
             NetworkChannel &chl,
             const vector<string> &origin_item)
         {
@@ -413,7 +415,7 @@ namespace apsu {
                              << " result parts");
             for (size_t t = 0; t < task_count; t++) {
                 futures[t] = tpm.thread_pool().enqueue(
-                    [&]() { process_result_worker(package_count, mrs, label_keys, itt, chl); });
+                    [&]() { process_result_worker(package_count, mrs, itt, chl); });
             }
 
             for (auto &f : futures) {
@@ -429,7 +431,7 @@ namespace apsu {
         }
 
         vector<MatchRecord> Receiver::process_result_part(
-            const vector<LabelKey> &label_keys,
+        
             const IndexTranslationTable &itt,
             const ResultPart &result_part,
             network::NetworkChannel &chl) const
@@ -467,64 +469,14 @@ namespace apsu {
                 mul_safe(safe_cast<size_t>(plain_rp.bundle_idx), items_per_bundle);
 
             // Check if we are supposed to have label data present but don't have for some reason
-            size_t label_byte_count = safe_cast<size_t>(plain_rp.label_byte_count);
-            if (label_byte_count && plain_rp.label_result.empty()) {
-                APSU_LOG_WARNING(
-                    "Expected " << label_byte_count
-                                << "-byte labels in this result part, "
-                                   "but label data is missing entirely");
-
-                // Just ignore the label data
-                label_byte_count = 0;
-            }
+           
 
             // Read the nonce byte count and compute the effective label byte count; set the nonce
             // byte count to zero if no label is expected anyway.
-            size_t nonce_byte_count =
-                label_byte_count ? safe_cast<size_t>(plain_rp.nonce_byte_count) : 0;
-            size_t effective_label_byte_count = add_safe(nonce_byte_count, label_byte_count);
-
-            // How much label data did we actually receive?
-            size_t received_label_bit_count =
-                mul_safe(safe_cast<size_t>(params_.item_bit_count()), plain_rp.label_result.size());
-
-            // Compute the received label byte count and check that it is not less than what was
-            // expected
-            size_t received_label_byte_count = received_label_bit_count / 8;
-            if (received_label_byte_count < nonce_byte_count) {
-                APSU_LOG_WARNING(
-                    "Expected " << nonce_byte_count
-                                << " bytes of nonce data in this result part but only "
-                                << received_label_byte_count
-                                << " bytes were received; ignoring the label data");
-
-                // Just ignore the label data
-                label_byte_count = 0;
-                effective_label_byte_count = 0;
-            } else if (received_label_byte_count < effective_label_byte_count) {
-                APSU_LOG_WARNING(
-                    "Expected " << label_byte_count
-                                << " bytes of label data in this result part but only "
-                                << received_label_byte_count - nonce_byte_count
-                                << " bytes were received");
-
-                // Reset our expectations to what was actually received
-                label_byte_count = received_label_byte_count - nonce_byte_count;
-                effective_label_byte_count = received_label_byte_count;
-            }
-
+   
             // If there is a label, then we better have the appropriate label encryption keys
             // available
-            if (label_byte_count && label_keys.size() != item_count) {
-                APSU_LOG_WARNING(
-                    "Expected " << item_count << " label encryption keys but only "
-                                << label_keys.size() << " were given; ignoring the label data");
-
-                // Just ignore the label data
-                label_byte_count = 0;
-                effective_label_byte_count = 0;
-            }
-
+  
             // Set up the result vector
             vector<MatchRecord> mrs(item_count);
 
@@ -663,7 +615,7 @@ namespace apsu {
         void Receiver::process_result_worker(
             atomic<uint32_t> &package_count,
             vector<MatchRecord> &mrs,
-            const vector<LabelKey> &label_keys,
+          
             const IndexTranslationTable &itt,
             NetworkChannel &chl) const
         {
@@ -697,7 +649,7 @@ namespace apsu {
                     ;
 
                 // Process the ResultPart to get the corresponding vector of MatchRecords
-                auto this_mrs = process_result_part(label_keys, itt, result_part, chl);
+                auto this_mrs = process_result_part( itt, result_part, chl);
 
                 // Merge the new MatchRecords with mrs
                 seal_for_each_n(iter(mrs, this_mrs, size_t(0)), mrs.size(), [](auto &&I) {

@@ -353,11 +353,9 @@ namespace apsu {
 
             evaluator->add_plain_inplace(result, coeff);
 #if APSU == 1
-            uint64_t random_i[3] = { 0 };
-            auto encoder = crypto_context.encoder();
-            Plaintext ri(pool);
-            evaluator->add_plain_inplace(result, ri);
-            cout << ri.to_string() << endl;
+  
+            evaluator->add_plain_inplace(result, random_plain);
+           
 #endif
 
 
@@ -1037,9 +1035,13 @@ namespace apsu {
         {
             // Only recompute the cache if it needs to be recomputed
             if (cache_invalid_) {
+                std::cout<<1<<std::endl;
                 clear_cache();
+                std::cout<<2<<std::endl;
                 regen_polyns();
+               std::cout<<3<<std::endl;
                 regen_plaintexts();
+                std::cout<<4<<std::endl;
                 cache_invalid_ = false;
             }
         }

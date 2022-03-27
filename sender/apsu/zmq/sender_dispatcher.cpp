@@ -42,7 +42,16 @@ namespace apsu {
                 throw logic_error("mismatching OPRF keys");
             }
         }
-
+        ZMQSenderDispatcher::ZMQSenderDispatcher(shared_ptr<SenderDB> sender_db,Sender sender)
+            : sender_db_(move(sender_db)), sender_()
+        {
+            
+            
+            if (!sender_db_) {
+                throw invalid_argument("sender_db is not set");
+            }
+     
+        }
         ZMQSenderDispatcher::ZMQSenderDispatcher(shared_ptr<SenderDB> sender_db)
             : sender_db_(move(sender_db))
         {
@@ -95,10 +104,7 @@ namespace apsu {
                     dispatch_parms(move(sop), chl);
                     break;
 
-                case SenderOperationType::sop_oprf:
-                    APSU_LOG_INFO("Received OPRF request");
-                    dispatch_oprf(move(sop), chl);
-                    break;
+     
 
                 case SenderOperationType::sop_query:
                     APSU_LOG_INFO("Received query");
@@ -145,6 +151,7 @@ namespace apsu {
             }
         }
 
+// oprf has been removed 
         void ZMQSenderDispatcher::dispatch_oprf(
             unique_ptr<ZMQSenderOperation> sop, ZMQSenderChannel &chl)
         {
