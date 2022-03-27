@@ -125,10 +125,18 @@ int remote_query(const CLP &cmd)
         return -1;
     }
 
+    
+    vector<HashedItem> items_without_OPRF;
+    for(auto i:items_vec)
+        items_without_OPRF.emplace_back(i.get_as<uint64_t>()[0],i.get_as<uint64_t>()[1]);
+ 
+
+    
+
     vector<MatchRecord> query_result;
     try {
         APSU_LOG_INFO("Sending APSU query");
-        query_result = receiver.request_query(oprf_items, label_keys, channel, orig_items);
+        query_result = receiver.request_query(items_without_OPRF, label_keys, channel, orig_items);
         APSU_LOG_INFO("Received APSU query response");
     } catch (const exception &ex) {
         APSU_LOG_WARNING("Failed sending APSU query: " << ex.what());

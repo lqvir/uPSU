@@ -105,5 +105,6 @@
         "valarray": "cpp",
         "variant": "cpp",
         "fourq_internal.h": "c"
-    }
+    },
+    "C_Cpp.errorSquiggles": "Enabled"
 }

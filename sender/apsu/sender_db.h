@@ -310,6 +310,7 @@ namespace apsu {
 
             void generate_caches();
 
+            std::vector<HashedItem> change_hashed_item(const gsl::span< const Item > &origin_item) const;
             /**
             The set of all items that have been inserted into the database
             */

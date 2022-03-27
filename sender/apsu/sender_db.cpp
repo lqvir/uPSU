@@ -862,7 +862,9 @@ namespace apsu {
             APSU_LOG_INFO("Start inserting " << data.size() << " items in SenderDB");
 
             // First compute the hashes for the input data
-            auto hashed_data = OPRFSender::ComputeHashes(data, oprf_key_);
+            //auto hashed_data = OPRFSender::ComputeHashes(data, oprf_key_);
+// TO DO : 
+            auto hashed_data = change_hashed_item(data);
 
             // Lock the database for writing
             auto lock = get_writer_lock();
@@ -925,8 +927,9 @@ namespace apsu {
             APSU_LOG_INFO("Start removing " << data.size() << " items from SenderDB");
 
             // First compute the hashes for the input data
-            auto hashed_data = OPRFSender::ComputeHashes(data, oprf_key_);
-
+           // auto hashed_data = OPRFSender::ComputeHashes(data, oprf_key_);
+// TO DO : 
+            auto hashed_data = change_hashed_item(data);
             // Lock the database for writing
             auto lock = get_writer_lock();
 
@@ -976,8 +979,10 @@ namespace apsu {
             }
 
             // First compute the hash for the input item
-            auto hashed_item = OPRFSender::ComputeHashes({ &item, 1 }, oprf_key_)[0];
-
+           // auto hashed_item = OPRFSender::ComputeHashes({ &item, 1 }, oprf_key_)[0];
+// TO DO : 
+            
+            auto hashed_item = change_hashed_item({ &item, 1 })[0];
             // Lock the database for reading
             auto lock = get_reader_lock();
 
@@ -1303,5 +1308,33 @@ namespace apsu {
 
             return { move(*sender_db), total_size };
         }
+
+        vector<HashedItem> SenderDB::change_hashed_item(const gsl::span<const Item> &origin_item) const {
+            STOPWATCH(sender_stopwatch, "Senderdb::ComputeHashes (unlabeled)");
+            APSU_LOG_DEBUG("Start computing OPRF hashes for " << origin_item.size() << " items");
+
+            ThreadPoolMgr tpm;
+            vector<HashedItem> hashes(origin_item.size());
+            size_t task_count = min<size_t>(ThreadPoolMgr::GetThreadCount(), origin_item.size());
+            vector<future<void>> futures(task_count);
+
+            auto ComputeHashesLambda = [&](size_t start_idx, size_t step) {
+                for (size_t idx = start_idx; idx < origin_item.size(); idx += step) {
+                    hashes[idx] = HashedItem{origin_item[idx].get_as<uint64_t>()[0],origin_item[idx].get_as<uint64_t>()[1]};
+                }
+            };
+            for (size_t thread_idx = 0; thread_idx < task_count; thread_idx++) {
+                futures[thread_idx] =
+                    tpm.thread_pool().enqueue(ComputeHashesLambda, thread_idx, task_count);
+            }
+            for (auto &f : futures) {
+                f.get();
+            }
+            APSU_LOG_DEBUG("Finished computing OPRF hashes for " << origin_item.size() << " items");
+            return hashes;
+        }
+
+
+
     } // namespace sender
 } // namespace apsu
