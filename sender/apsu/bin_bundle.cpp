@@ -963,7 +963,7 @@ namespace apsu {
                     compressed_);
                 cache_.batched_matching_polyn = move(bmp);
             }));
-
+      
             for (size_t label_idx = 0; label_idx < cache_.felt_interp_polyns.size(); label_idx++) {
                 futures.push_back(tpm.thread_pool().enqueue([&, label_idx]() {
                     // Compute and cache the batched Newton interpolation polynomials
@@ -1001,7 +1001,7 @@ namespace apsu {
             }
 
             ThreadPoolMgr tpm;
-
+            cout<<label_size<<' ';
             vector<future<void>> futures;
             // For each bin in the bundle, compute and cache the corresponding "matching
             // polynomial"
@@ -1035,13 +1035,13 @@ namespace apsu {
         {
             // Only recompute the cache if it needs to be recomputed
             if (cache_invalid_) {
-                std::cout<<1<<std::endl;
+              
                 clear_cache();
-                std::cout<<2<<std::endl;
+           
                 regen_polyns();
-               std::cout<<3<<std::endl;
+              
                 regen_plaintexts();
-                std::cout<<4<<std::endl;
+                
                 cache_invalid_ = false;
             }
         }

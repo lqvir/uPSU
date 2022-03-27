@@ -178,7 +178,8 @@ namespace apsu {
             QueryResponse response_query = make_unique<QueryResponse::element_type>();
             response_query->package_count = package_count;
             APSU_LOG_INFO(package_count);
-            item_cnt = package_count * params.items_per_bundle();
+            item_cnt = bundle_idx_count * params.items_per_bundle();
+            APSU_LOG_INFO(item_cnt);
             try {
                 send_fun(chl, move(response_query));
             } catch (const exception &ex) {
@@ -500,7 +501,7 @@ namespace apsu {
             // base.send(baseMsg, prng, chls[0], numThreads);
             // receivers[0].setBaseOts(baseMsg, prng, chls[0]);
             cout<<"++++++++++++++"<<endl;
-            cout<<item_cnt<<endl;
+            cout<<hex<<item_cnt<<endl;
             osuCrypto::BitVector choices(item_cnt);
             for(auto i : ans){
                 choices[i] = 1;

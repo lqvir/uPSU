@@ -683,7 +683,7 @@ namespace apsu {
             for (int i = 0; i < numThreads; ++i)
                 chls[i] = ep0.addChannel();
             std::vector<oc::IknpOtExtSender> senders(numThreads);
-            
+            APSU_LOG_INFO(sendMessages.size());
             senders[0].sendChosen(sendMessages, prng, chls[0]);
 
             int recv_num = chls[0].getTotalDataRecv();
