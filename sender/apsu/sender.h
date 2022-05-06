@@ -19,7 +19,19 @@
 #include "apsu/requests.h"
 #include "apsu/responses.h"
 #include "apsu/sender_db.h"
+#include "apsu/permute/apsu_OSNReceiver.h"
 
+
+#include <cryptoTools/Network/Session.h>
+#include <cryptoTools/Network/Channel.h>
+#include <cryptoTools/Network/IOService.h>
+#include <cryptoTools/Common/Timer.h>
+#include "cryptoTools/Common/Defines.h"
+#include "cryptoTools/Common/BitVector.h"
+#include "cryptoTools/Network/Channel.h"
+#include "libOTe/TwoChooseOne/IknpOtExtReceiver.h"
+#include "libOTe/TwoChooseOne/IknpOtExtSender.h"
+#include "libOTe/Base/BaseOT.h"
 namespace apsu {
     namespace sender {
         // An alias to denote the powers of a receiver's ciphertext. At index i, holds Cⁱ, where C
@@ -136,6 +148,10 @@ namespace apsu {
                 ans.clear();
                 pack_cnt = 0;
                 item_cnt = 0;
+                random_map.clear();
+                random_after_permute_map.clear();
+                random_plain_list.clear();
+                
             };
 
             /**
@@ -174,7 +190,7 @@ namespace apsu {
             
             
             void RunResponse(
-                const plainRequest &params_request, network::Channel &chl, PSIParams &params_);
+                const plainRequest &params_request, network::Channel &chl,const PSIParams &params_);
         
             void RunOT();
         
@@ -182,7 +198,7 @@ namespace apsu {
             /**
             Method that handles computing powers for a given bundle index
             */
-            static void ComputePowers(
+             void ComputePowers(
                 const std::shared_ptr<SenderDB> &sender_db,
                 const CryptoContext &crypto_context,
                 std::vector<std::vector<seal::Ciphertext>> &powers,
@@ -194,7 +210,7 @@ namespace apsu {
             Method that processes a single Bin Bundle cache.
             Sends a result package through the given channel.
             */
-            static void ProcessBinBundleCache(
+             void ProcessBinBundleCache(
                 const std::shared_ptr<SenderDB> &sender_db,
                 const CryptoContext &crypto_context,
                 std::reference_wrapper<const BinBundleCache> cache,
@@ -206,13 +222,18 @@ namespace apsu {
                 seal::MemoryPoolHandle &pool,
                 std::uint32_t cache_idx
                 );
-            static std::unordered_map<std::pair<std::uint32_t, std::uint32_t>, std::vector<uint64_t>, pair_hash > random_map;
+            //static std::unordered_map<std::pair<std::uint32_t, std::uint32_t>, std::vector<uint64_t>, pair_hash > random_map;
             std::uint32_t pack_cnt;
             std::vector<uint64_t> ans;
             std::uint64_t item_cnt;
+            int send_size,receiver_size;
+           
+            std::vector<std::vector<uint64_t> > random_map;
+            std::vector<seal::Plaintext > random_plain_list;
+            std::vector<uint64_t > random_after_permute_map;
             //static std::vector<uint64_t> match_record;
         }; // class Sender
        
-        std::unordered_map<std::pair<std::uint32_t, std::uint32_t>, std::vector<uint64_t>, pair_hash > Sender::random_map = {};
+        //std::unordered_map<std::pair<std::uint32_t, std::uint32_t>, std::vector<uint64_t>, pair_hash > Sender::random_map = {};
     }      // namespace sender
 } // namespace apsu

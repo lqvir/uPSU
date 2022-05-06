@@ -22,19 +22,7 @@
 #include "seal/modulus.h"
 #include "seal/util/common.h"
 
-// libOTe
-
-
-#include <cryptoTools/Network/Session.h>
-#include <cryptoTools/Network/Channel.h>
-#include <cryptoTools/Network/IOService.h>
-#include <cryptoTools/Common/Timer.h>
-#include "cryptoTools/Common/Defines.h"
-#include "cryptoTools/Common/BitVector.h"
-#include "cryptoTools/Network/Channel.h"
-#include "libOTe/TwoChooseOne/IknpOtExtReceiver.h"
-#include "libOTe/TwoChooseOne/IknpOtExtSender.h"
-#include "libOTe/Base/BaseOT.h"
+#include "kunlun/mpc/oprf/mp_oprf.hpp"
 
 using namespace std;
 using namespace seal;
@@ -54,7 +42,7 @@ namespace apsu {
                 return all_of(ptr, ptr + count, [](auto a) { return a == T(0); });
             }
         } // namespace
-
+        oc::Timer all_timer;
         void Sender::RunParams(
             const ParamsRequest &params_request,
             shared_ptr<SenderDB> sender_db,
@@ -62,7 +50,7 @@ namespace apsu {
             function<void(Channel &, Response)> send_fun)
         {
             STOPWATCH(sender_stopwatch, "Sender::RunParams");
-
+            all_timer.setTimePoint("RunParames start");
             if (!params_request) {
                 APSU_LOG_ERROR("Failed to process parameter request: request is invalid");
                 throw invalid_argument("request is invalid");
@@ -74,7 +62,8 @@ namespace apsu {
             }
 
             APSU_LOG_INFO("Start processing parameter request");
-
+         
+   
             ParamsResponse response_params = make_unique<ParamsResponse::element_type>();
             response_params->params = make_unique<PSIParams>(sender_db->get_params());
 
@@ -88,6 +77,7 @@ namespace apsu {
             }
 
             APSU_LOG_INFO("Finished processing parameter request");
+            all_timer.setTimePoint("RunParames finish");
         }
 
         void Sender::RunOPRF(
@@ -138,6 +128,12 @@ namespace apsu {
             function<void(Channel &, ResultPart)> send_rp_fun
            )
         {
+            all_timer.setTimePoint("RunQuery start");
+            random_map.clear();
+            random_after_permute_map.clear();
+            random_plain_list.clear();
+            
+            
             if (!query) {
                 APSU_LOG_ERROR("Failed to process query request: query is invalid");
                 throw invalid_argument("query is invalid");
@@ -167,8 +163,8 @@ namespace apsu {
             // Get the PSIParams
             PSIParams params(sender_db->get_params());
 
-            uint32_t bundle_idx_count = params.bundle_idx_count();
-            uint32_t max_items_per_bin = params.table_params().max_items_per_bin;
+            uint32_t bundle_idx_count = safe_cast<uint32_t>(params.bundle_idx_count());
+            uint32_t max_items_per_bin = safe_cast<uint32_t>(params.table_params().max_items_per_bin);
 
             // Extract the PowersDag
             PowersDag pd = query.pd();
@@ -178,7 +174,7 @@ namespace apsu {
             QueryResponse response_query = make_unique<QueryResponse::element_type>();
             response_query->package_count = package_count;
             APSU_LOG_INFO(package_count);
-            item_cnt = bundle_idx_count * params.items_per_bundle();
+            item_cnt = bundle_idx_count * safe_cast<uint32_t>(params.items_per_bundle());
             APSU_LOG_INFO(item_cnt);
             try {
                 send_fun(chl, move(response_query));
@@ -188,11 +184,167 @@ namespace apsu {
                     << ex.what());
                 throw;
             }
-          
+            // generate random number
+            {
+                 all_timer.setTimePoint("random gen start");
+                vector<uint64_t> random_num;
+                prng_seed_type newseed;
+                random_bytes(reinterpret_cast<seal_byte *>(newseed.data()), prng_seed_byte_count);
+                UniformRandomGeneratorInfo myGEN(prng_type::blake2xb, newseed);
+                std::shared_ptr<UniformRandomGenerator> myprng = myGEN.make_prng();
+                auto context_data = crypto_context.seal_context()->last_context_data();
+                // cout << "mod q" << endl;
+                // random mod q
+                //cout << context_data->parms().coeff_modulus().back().value() << endl;
+                uint64_t small_q = context_data->parms().plain_modulus().value();
+                auto encoder = crypto_context.encoder();
+                int slot_count = encoder->slot_count();
+
+                size_t felts_per_item = safe_cast<size_t>(params.item_params().felts_per_item);
+                size_t items_per_bundle = safe_cast<size_t>(params.items_per_bundle());
+                int block_num = ((felts_per_item+3)/4);
+                vector<vector<oc::block > > receiver_set(block_num);
+                vector<vector<oc::block > > receiver_share(block_num);
+
+                for(int j = 0;j<package_count;j++){
+                    Plaintext random_plain(pool);
+                    random_num.clear();
+                    for (int i = 0; i < slot_count; i++)
+                        {
+                            random_num.push_back(myprng->generate() % small_q);
+                            //random_num.push_back(i % small_q);
+                            //random_num.push_back(0);
+                        }
+            // gsl::span<uint64_t> random_mem = { random_num.data(), random_num.size() };
+                    for(int i=0;i<items_per_bundle;i++){
+                        vector<uint64_t> rest(block_num*4,0);
+                        for(int j = 0;j<felts_per_item;j++){
+                            rest[j] = random_num[i*felts_per_item+j];
+                        }
+                        for(int j=0;j<block_num*4;j+=4){
+                            uint64_t l =(uint64_t) (((rest[j+1]&0xffffffff)<<32)|(rest[j+0]&0xffffffff));
+                            uint64_t r =(uint64_t) (((rest[j+3]&0xffffffff)<<32)|(rest[j+2]&0xffffffff));
+                            receiver_set[j/4].push_back(oc::toBlock(r,l));
+                        }
+                    }
+                    encoder->encode(random_num, random_plain);
+                    random_plain_list.push_back(random_plain);
+                    random_map.push_back(random_num);
+                }
+     
+                size_t shuffle_size = receiver_set[0].size();
+                APSU_LOG_INFO("size"<<shuffle_size<<"==============");
+                // vector<uint64_t> temp0;
+                // for(int i=0;i<shuffle_size;i++){
+                //     vector<uint64_t> rest;
+                //     for(int j=0;j<block_num;j++){
+                //         auto temp = receiver_set[j][i];
+                //         rest.push_back(temp.as<uint32_t>()[0]);
+                //         rest.push_back(temp.as<uint32_t>()[1]);
+                //         rest.push_back(temp.as<uint32_t>()[2]);
+                //         rest.push_back(temp.as<uint32_t>()[3]);
+                //     }
+                //     for(int j=0;j<felts_per_item;j++){
+                //         temp0.push_back(rest[j]);
+                //     }
+                // // }
+                // for(int x=0,cnt=0;x<temp0.size();x++){
+                //     if(temp0[x]!=random_map[cnt][x%(int)(items_per_bundle*felts_per_item)]) 
+                //         APSU_LOG_INFO("change error");
+                //     if(x%(int)(items_per_bundle*felts_per_item)==0&&x)
+                //         cnt++;
+                // }
+                all_timer.setTimePoint("random gen finish");
+                int numThreads=1;
+                osuCrypto::IOService ios;
+                
+                oc::Session send_session=oc::Session(ios,"localhost:59999",oc::SessionMode::Server);
+                std::vector<oc::Channel> send_chls(numThreads);
+                for(int i=0;i<numThreads;i++)
+                    send_chls[i]=send_session.addChannel();
+
+                OSNReceiver osn;
+                osn.init(shuffle_size,1);
+                oc::Timer timer;
+	            osn.setTimer(timer);
+
+	            timer.setTimePoint("set -> block_set");
+                all_timer.setTimePoint("set -> block_set");
+                
+                // for(int sets=0;sets<receiver_set_size1;sets++){
+                //     for(int i=0;i<package_count;i++){
+                //         uint64_t l =(uint64_t) (((random_map[i][4*sets+1]&0xffffffff)<<32)|(random_map[i][4*sets]&0xffffffff));
+                //         uint64_t r =(uint64_t) (((random_map[i][4*sets+3]&0xffffffff)<<32)|(random_map[i][4*sets+2]&0xffffffff));
+                //         receiver_set[sets].push_back(oc::toBlock(r,l));
+                //     }
+                // }
+                // for(int i=0,len=0;i<package_count;i++,len=0){
+                //     uint64_t rest[4];
+                //     rest[0] = len++<receiver_set_size2?random_map[i][len]:0;
+                //     rest[1] = len++<receiver_set_size2?random_map[i][len]:0;
+                //     rest[2] = len++<receiver_set_size2?random_map[i][len]:0;
+                //     rest[3] = len++<receiver_set_size2?random_map[i][len]:0;
+                //     uint64_t l =(uint64_t) (((rest[1]&0xffffffff)<<32)|(rest[0]&0xffffffff));
+                //     uint64_t r =(uint64_t) (((rest[3]&0xffffffff)<<32)|(rest[2]&0xffffffff));
+                //     receiver_set[receiver_set_size1].push_back(oc::toBlock(r,l));
+                // }
+                APSU_LOG_INFO(receiver_set.size()<<"per change"<<receiver_set[0].size());
+                all_timer.setTimePoint("before run_osn");
+	            timer.setTimePoint("before run_osn");
+                for(int i=0;i<block_num;i++){
+                  
+                    receiver_share[i] = osn.run_osn(receiver_set[i],send_chls);
+                    APSU_LOG_INFO(receiver_share[i].size());
+                }
+                
+                timer.setTimePoint("after run_osn");
+                all_timer.setTimePoint("after run_osn");
+
+                for(int i=0;i<shuffle_size;i++){
+                    vector<uint64_t> rest;
+                    for(int j=0;j<block_num;j++){
+                        auto temp = receiver_share[j][i];
+                        rest.push_back(temp.as<uint32_t>()[0]);
+                        rest.push_back(temp.as<uint32_t>()[1]);
+                        rest.push_back(temp.as<uint32_t>()[2]);
+                        rest.push_back(temp.as<uint32_t>()[3]);
+                    }
+                    for(int j=0;j<felts_per_item;j++){
+                        random_after_permute_map.push_back(rest[j]);
+                    }
+                }
+                APSU_LOG_INFO("size"<<random_after_permute_map.size()<<"item size"<<shuffle_size);
+                // for(int i=0;i<package_count;i++){
+                //     for(int j=0;j<receiver_set_size1;i++){
+                //         auto temp = receiver_share[i][j];
+                //         random_after_permute_map[i].push_back(temp.as<uint32_t>()[0]);
+                //         random_after_permute_map[i].push_back(temp.as<uint32_t>()[1]);
+                //         random_after_permute_map[i].push_back(temp.as<uint32_t>()[2]);
+                //         random_after_permute_map[i].push_back(temp.as<uint32_t>()[3]);
+                //     }
+                //     for(int j=0;j<receiver_set_size2;j++){
+                //         auto temp = receiver_share[i][receiver_set_size1];
+                //         random_after_permute_map[i].push_back(temp.as<uint32_t>()[j]);
+                //     }
+                // }
+                timer.setTimePoint("block_set -> set");
+                APSU_LOG_INFO("receiver"<<timer);
+                all_timer.setTimePoint("block_set -> set");
+                send_size=0,receiver_size =0;
+                for(auto x: send_chls){
+                    send_size+=x.getTotalDataSent();
+                    receiver_size+=x.getTotalDataRecv();
+                }
+                send_session.stop();
+
+            }
+
+
             // For each bundle index i, we need a vector of powers of the query Qᵢ. We need powers
             // all the way up to Qᵢ^max_items_per_bin. We don't store the zeroth power. If
             // Paterson-Stockmeyer is used, then only a subset of the powers will be populated.
             vector<CiphertextPowers> all_powers(bundle_idx_count);
+            all_timer.setTimePoint("compute power start");
 
             // Initialize powers
             for (CiphertextPowers &powers : all_powers) {
@@ -230,14 +382,15 @@ namespace apsu {
                     static_cast<uint32_t>(bundle_idx),
                     pool);
             }
-          
+            all_timer.setTimePoint("compute power finished");
+
             APSU_LOG_DEBUG("Finished computing powers for all bundle indices");
             APSU_LOG_DEBUG("Start processing bin bundle caches");
 
             vector<future<void>> futures;
             for (size_t bundle_idx = 0; bundle_idx < bundle_idx_count; bundle_idx++) {
                 auto bundle_caches = sender_db->get_cache_at(static_cast<uint32_t>(bundle_idx));
-                uint32_t cache_count = 0;
+                uint32_t pack_num = 0;
                 
                 for (auto &cache : bundle_caches) {
                     pack_cnt++;
@@ -252,7 +405,7 @@ namespace apsu {
                             static_cast<uint32_t>(bundle_idx),
                             query.compr_mode(),
                             pool,
-                            cache_count++
+                            pack_num++
                             );
                     }));
                 }
@@ -263,6 +416,7 @@ namespace apsu {
                 f.get();
             }
             cout<<"pack_cnt"<<pack_cnt<<endl;
+            all_timer.setTimePoint("ProcessBinBundleCache finished");
             APSU_LOG_INFO("Finished processing query request");
         }
 
@@ -371,7 +525,7 @@ namespace apsu {
             uint32_t bundle_idx,
             compr_mode_type compr_mode,
             MemoryPoolHandle &pool,
-            uint32_t cache_idx
+            uint32_t pack_idx
             )
         {
             STOPWATCH(sender_stopwatch, "Sender::ProcessBinBundleCache");
@@ -379,35 +533,12 @@ namespace apsu {
             // Package for the result data
             auto rp = make_unique<ResultPackage>();
             rp->compr_mode = compr_mode;
-            rp->cache_idx = cache_idx;
+            rp->pack_idx = pack_idx;
             rp->bundle_idx = bundle_idx;
             rp->nonce_byte_count = safe_cast<uint32_t>(sender_db->get_nonce_byte_count());
             rp->label_byte_count = safe_cast<uint32_t>(sender_db->get_label_byte_count());
 
-            vector<uint64_t> random_num;
-            prng_seed_type newseed;
-            random_bytes(reinterpret_cast<seal_byte *>(newseed.data()), prng_seed_byte_count);
-            UniformRandomGeneratorInfo myGEN(prng_type::blake2xb, newseed);
-            std::shared_ptr<UniformRandomGenerator> myprng = myGEN.make_prng();
-            auto context_data = crypto_context.seal_context()->last_context_data();
-           // cout << "mod q" << endl;
-            // random mod q
-            //cout << context_data->parms().coeff_modulus().back().value() << endl;
-            uint64_t small_q = context_data->parms().plain_modulus().value();
-            auto encoder = crypto_context.encoder();
-            int slot_count = encoder->slot_count();
-            random_num.clear();
-            random_num.reserve(slot_count);
-            for (int i = 0; i < slot_count; i++)
-            {
-                random_num.push_back(myprng->generate() % small_q);
-                //random_num.push_back(i % small_q);
-                //random_num.push_back(0);
-            }
-           // gsl::span<uint64_t> random_mem = { random_num.data(), random_num.size() };
-            Plaintext random_plain(pool);
-            encoder->encode(random_num, random_plain);
-            random_map[make_pair(bundle_idx, cache_idx)] = random_num;
+
             
             // Compute the matching result and move to rp
             const BatchedPlaintextPolyn &matching_polyn = cache.get().batched_matching_polyn;
@@ -418,11 +549,11 @@ namespace apsu {
             bool using_ps = (ps_low_degree > 1) && (ps_low_degree < degree);
             if (using_ps) {
                 rp->psi_result = matching_polyn.eval_patstock(
-                    crypto_context, all_powers[bundle_idx], safe_cast<size_t>(ps_low_degree), pool,random_plain);
+                    crypto_context, all_powers[bundle_idx], safe_cast<size_t>(ps_low_degree), pool,random_plain_list[pack_idx]);
             } else {
-                rp->psi_result = matching_polyn.eval(all_powers[bundle_idx], pool, random_plain);
+                rp->psi_result = matching_polyn.eval(all_powers[bundle_idx], pool, random_plain_list[pack_idx]);
             }
-            random_plain.set_zero();
+            // random_plain.set_zero();
 
 
             // Send this result part
@@ -436,7 +567,7 @@ namespace apsu {
         }
 
         void Sender::RunResponse(
-            const plainRequest &plain_request, network::Channel &chl, PSIParams &params_)
+            const plainRequest &plain_request, network::Channel &chl,const PSIParams &params_)
         {
       
       /*      for (auto i : params_request->psi_result) {
@@ -444,29 +575,30 @@ namespace apsu {
             }*/
 
             // To be atomic counter
-            pack_cnt--;
+          
 
+            all_timer.setTimePoint("RunResponse start");
 
             size_t felts_per_item = safe_cast<size_t>(params_.item_params().felts_per_item);
             size_t items_per_bundle = safe_cast<size_t>(params_.items_per_bundle());
             size_t bundle_start =
                 mul_safe(safe_cast<size_t>(plain_request->bundle_idx), items_per_bundle);
             ;
-            auto bundle_idx = plain_request->bundle_idx;
-            auto cache_idx = plain_request->cache_idx;
-            auto random_mem = random_map[make_pair(bundle_idx, cache_idx)];
-            for (int i = 0; i < random_mem.size(); i++) {
+            ans.clear();
+            item_cnt = plain_request->psi_result.size();
+            APSU_LOG_INFO("iten_cnt"<<item_cnt);
+            for (int i = 0; i < item_cnt; i++) {
            /*     if (plain_request->psi_result[i] == random_mem[i]) {
                     cout << "success" << endl;
 
                 }*/
-                plain_request->psi_result[i] ^= random_mem[i];   
-                //cout << (bool)plain_request->psi_result[i];
+                plain_request->psi_result[i] ^= random_after_permute_map[i];   
+               // cout << (bool)plain_request->psi_result[i];
             }
-           
+           item_cnt /= felts_per_item;
             StrideIter<const uint64_t *> plain_rp_iter(
                 plain_request->psi_result.data(), felts_per_item);
-               seal_for_each_n(iter(plain_rp_iter, size_t(0)), items_per_bundle, [&](auto &&I) {
+               seal_for_each_n(iter(plain_rp_iter, size_t(0)), item_cnt, [&](auto &&I) {
                 // Find felts_per_item consecutive zeros
                bool match = has_n_zeros(get<0>(I).ptr(), felts_per_item);
                 if (!match) {
@@ -477,23 +609,30 @@ namespace apsu {
                 // in the input items vector so we know where to place the result.
                 size_t table_idx = add_safe(get<1>(I), bundle_start);
              
-                cout << bundle_idx << " " << cache_idx <<"match" << table_idx << endl;
+              //  cout  << " " <<"match" << table_idx << endl;
                 ans.push_back(table_idx);
+                //APSU_LOG_INFO(ans.size());
             });
-            if(!pack_cnt){
-                RunOT();
-            }
+            all_timer.setTimePoint("RunResponse finish");
+             cout<<all_timer<<endl;
+            //RunOT();
 
         }
 
         void Sender::RunOT(){
+            all_timer.setTimePoint("RunOT start");
+
             int numThreads = 5;
             osuCrypto::IOService ios;
-            osuCrypto::Session  ep0(ios, "localhost:59999", osuCrypto::SessionMode::Server);
+            oc::Session send_session=oc::Session(ios,"localhost:59999",oc::SessionMode::Server);
+            std::vector<oc::Channel> send_chls(numThreads);
+            
+
+            
             osuCrypto::PRNG prng(osuCrypto::sysRandomSeed());
-            std::vector<osuCrypto::Channel> chls(numThreads);
+            
             for (int i = 0; i < numThreads; ++i)
-                chls[i] = ep0.addChannel();
+                send_chls[i]=send_session.addChannel();
             std::vector<osuCrypto::IknpOtExtReceiver> receivers(numThreads);
             
             // osuCrypto::DefaultBaseOT base;
@@ -512,7 +651,7 @@ namespace apsu {
             
             std::vector<osuCrypto::block> messages(item_cnt);
             
-            receivers[0].receiveChosen(choices, messages, prng, chls[0]);
+            receivers[0].receiveChosen(choices, messages, prng, send_chls[0]);
             std::ofstream fout;
             fout.open("union.csv",std::ofstream::out);
             for(auto i:messages){
@@ -521,8 +660,18 @@ namespace apsu {
                 stringstream ss;
                 ss<<i.as<uint8_t>().data();
                 fout<<ss.str().substr(0,16)<<endl;
-
             }
+            
+           
+            all_timer.setTimePoint("RunOT finish");
+            cout<<all_timer<<endl;
+            APSU_LOG_INFO("send_com_size ps"<<send_size/1024<<"KB");
+            APSU_LOG_INFO("recv_com_size ps"<<receiver_size/1024<<"KB");
+            APSU_LOG_INFO("OT send_com_size ps"<<send_chls[0].getTotalDataSent()/1024<<"KB");
+            APSU_LOG_INFO("OT recv_com_size ps"<<send_chls[0].getTotalDataRecv()/1024<<"KB");
+            all_timer.reset();
+             send_chls.clear();
+            send_session.stop();
         }
 
     } // namespace sender

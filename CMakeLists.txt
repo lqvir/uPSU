@@ -29,7 +29,7 @@ list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_LIST_DIR}/thirdparty/share/cppzmq)
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_LIST_DIR}/thirdparty/share/zstd)
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_LIST_DIR}/thirdparty/share/zeromq)
 
-set(ZLIB_LIBRARY "${CMAKE_CURRENT_LIST_DIR}/thirdparty/lib/zlib.lib")
+set(ZLIB_LIBRARY "${CMAKE_CURRENT_LIST_DIR}/thirdparty/lib/libz.a")
 set(ZLIB_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/thirdparty/include")
 set(TCLAP_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/thirdparty/include")
 if(NOT CMAKE_BUILD_TYPE)
@@ -119,6 +119,18 @@ set(APSU_INCLUDES_INSTALL_DIR ${CMAKE_INSTALL_INCLUDEDIR}/APSU-${APSU_VERSION_MA
 # All dependencies are assumed pre-installed.
 # find_package might throw a FATAL_ERROR before"xxx: not found", e.g. with vcpkg.cmake.
 
+# OPENSSL
+find_package(OpenSSL REQUIRED)
+INCLUDE_DIRECTORIES(
+    ${OPENSSL_INCLUDE_DIR}
+    "/usr/local/include"
+)
+
+LINK_DIRECTORIES(
+    /usr/local/lib64
+)
+
+
 # Microsoft SEAL
 find_package(SEAL 3.7.2 QUIET REQUIRED)
 if(NOT SEAL_FOUND)
@@ -156,6 +168,8 @@ if (NOT jsoncpp_FOUND)
 else()
     message(STATUS "jsoncpp: found")
 endif()
+
+
 
 # [Option] APSU_USE_LOG4CPLUS (default: ON)
 set(APSU_USE_LOG4CPLUS_OPTION_STR "Use Log4cplus for logging")
@@ -223,7 +237,7 @@ endif()
 
 
 include_directories(${CMAKE_SOURCE_DIR}/thirdparty/include)
-include_directories(${CMAKE_SOURCE_DIR}/thirdparty/include/boost-1_77)
+
 link_directories(${CMAKE_SOURCE_DIR}/thirdparty/lib)
 option(BUILD_LIBOTE_FRONTEND "Compile libOTe frontend" OFF)
 if (BUILD_LIBOTE_FRONTEND)
@@ -273,25 +287,38 @@ target_include_directories(apsu PUBLIC
 apsu_set_version(apsu)
 apsu_link_threads(apsu)
 apsu_install_target(apsu APSUTargets)
-
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-pic -Wno-deprecated-declarations -Xpreprocessor -fopenmp -pthread -O3 -fPIE")
 target_link_libraries(apsu
     PUBLIC SEAL::seal
     PUBLIC Kuku::kuku
     PUBLIC flatbuffers::flatbuffers
     PUBLIC jsoncpp_static)
+TARGET_LINK_LIBRARIES(apsu PUBLIC ${OPENSSL_LIBRARIES})
 target_link_libraries(apsu 
+PUBLIC libOTe
 PUBLIC relic_s 
 PUBLIC bitpolymul
-PUBLIC cryptoTools 
+PUBLIC cryptoTools
+PUBLIC KyberOT
 PUBLIC libOTe
-PRIVATE libsodium 
+PUBLIC pthread
 )
-
+target_link_libraries(apsu 
+PUBLIC boost_atomic 
+PUBLIC boost_date_time
+PUBLIC boost_filesystem
+PUBLIC boost_regex
+PUBLIC boost_system
+PUBLIC boost_thread
+)
+target_link_libraries(apsu PUBLIC -lomp)
+target_link_options(apsu PUBLIC -fPIC -no-pie)
+target_compile_options(apsu PUBLIC -fPIC -no-pie)
 if(APSU_USE_LOG4CPLUS)
     target_link_libraries(apsu PUBLIC log4cplus::log4cplus)
 endif()
 if(APSU_USE_ZMQ)
-    target_link_libraries(apsu PUBLIC libzmq-static cppzmq-static)
+    target_link_libraries(apsu PRIVATE libzmq-static cppzmq-static)
 endif()
 
 # Configurations for FourQlib: system, arch, SIMD, and assembler
@@ -454,4 +481,13 @@ if(APSU_BUILD_CLI)
     target_include_directories(pd_tool PRIVATE cli)
     target_include_directories(pd_tool PRIVATE ${TCLAP_INCLUDE_DIRS})
     target_link_libraries(pd_tool apsu)
+
+    target_link_options(sender_cli PUBLIC -fPIC -no-pie)
+    target_compile_options(apsu PUBLIC -fPIC -no-pie)
+
+    target_link_options(receiver_cli PUBLIC -fPIC -no-pie)
+    target_compile_options(apsu PUBLIC -fPIC -no-pie)
+
+    target_link_options(pd_tool PUBLIC -fPIC -no-pie)
+    target_compile_options(apsu PUBLIC -fPIC -no-pie)
 endif()

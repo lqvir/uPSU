@@ -28,12 +28,7 @@
 #include "seal/util/common.h"
 #include "seal/util/defines.h"
 
-// libOTe
-#include <cryptoTools/Network/Channel.h>
-#include <cryptoTools/Network/Session.h>
-#include <cryptoTools/Network/IOService.h>
-#include "libOTe/TwoChooseOne/IknpOtExtReceiver.h"
-#include "libOTe/TwoChooseOne/IknpOtExtSender.h"
+
 using namespace std;
 using namespace seal;
 using namespace seal::util;
@@ -66,6 +61,7 @@ namespace apsu {
         Receiver::Receiver(PSIParams params) : params_(move(params))
         {
             initialize();
+            
         }
 
         void Receiver::reset_keys()
@@ -129,6 +125,11 @@ namespace apsu {
 
             // init send Messages
             sendMessages.clear();
+
+        
+            
+       
+
         }
 
         unique_ptr<SenderOperation> Receiver::CreateParamsRequest()
@@ -145,6 +146,8 @@ namespace apsu {
             chl.send(CreateParamsRequest());
 
             // Wait for a valid message of the right type
+
+            
             ParamsResponse response;
             bool logged_waiting = false;
             while (!(response = to_params_response(chl.receive_response()))) {
@@ -240,7 +243,7 @@ namespace apsu {
         {
             APSU_LOG_INFO("Creating encrypted query for " << items.size() << " items");
             STOPWATCH(recv_stopwatch, "Receiver::create_query");
-
+            all_timer.setTimePoint("create_query");
             IndexTranslationTable itt;
             itt.item_count_ = items.size();
 
@@ -293,7 +296,7 @@ namespace apsu {
           
             sendMessages.assign(cuckoo.table_size(),{oc::ZeroBlock,oc::ZeroBlock});
 
-      
+            shuffleMessages.assign(cuckoo.table_size(),{oc::ZeroBlock,oc::ZeroBlock});
             // Once the table is filled, fill the table_idx_to_item_idx map
             for (size_t item_idx = 0; item_idx < items.size(); item_idx++) {
                 auto item_loc = cuckoo.query(items[item_idx].get_as<kuku::item_type>().front());
@@ -339,6 +342,8 @@ namespace apsu {
                     // items.
                     plain_powers.emplace_back(move(alg_items), params_, pd_);
                 }
+                
+
             }
 
             // The very last thing to do is encrypt the plain_powers and consolidate the matching
@@ -370,7 +375,7 @@ namespace apsu {
             auto sop = to_request(move(sop_query));
 
             APSU_LOG_INFO("Finished creating encrypted query");
-
+            all_timer.setTimePoint("create_query finish");
             return { move(sop), itt };
         }
 
@@ -386,6 +391,7 @@ namespace apsu {
             auto query = create_query(items,origin_item);
             chl.send(move(query.first));
             auto itt = move(query.second);
+            all_timer.setTimePoint("with response start");
 
             // Wait for query response
             QueryResponse response;
@@ -400,13 +406,86 @@ namespace apsu {
 
                 this_thread::sleep_for(50ms);
             }
+            all_timer.setTimePoint("with response finish");
 
+                uint32_t bundle_idx_count = safe_cast<uint32_t>(params_.bundle_idx_count()); 
+                uint32_t items_per_bundle = safe_cast<uint32_t>(params_.items_per_bundle());
+                size_t felts_per_item = safe_cast<size_t>(params_.item_params().felts_per_item);
+                uint32_t item_cnt = bundle_idx_count* items_per_bundle; 
+
+               int block_num = ((felts_per_item+3)/4);
+               int shuffle_size;
+
+            {
+                
+               
+               
+                int numThreads=1;
+                int pack_cnt =response->package_count;
+                oc::IOService ios;
+                oc::Session recv_session=oc::Session(ios,"localhost:59999",oc::SessionMode::Client);
+                std::vector<oc::Channel> recv_chls(numThreads);
+
+                shuffle_size = pack_cnt * items_per_bundle;
+                APSU_LOG_INFO(pack_cnt);
+                for(int i=0;i<numThreads;i++)
+                    recv_chls[i] = recv_session.addChannel();
+                OSNSender osn;
+                osn.init(shuffle_size, 1, "");
+                APSU_LOG_INFO("??")
+                permutation = osn.dest;
+                oc::Timer timer;
+                osn.setTimer(timer);
+         
+                vector<vector<oc::block> > sendshare(block_num);
+                
+                timer.setTimePoint("before osn");
+                for(int i=0;i<block_num;i++){
+                    sendshare[i]=osn.run_osn(recv_chls);
+                }
+                timer.setTimePoint("after osn");
+                
+                for(int i=0;i<shuffle_size;i++){
+                    vector<uint64_t> rest;
+                    for(int j=0;j<block_num;j++){
+                        auto temp = sendshare[j][i];
+                        rest.push_back(temp.as<uint32_t>()[0]);
+                        rest.push_back(temp.as<uint32_t>()[1]);
+                        rest.push_back(temp.as<uint32_t>()[2]);
+                        rest.push_back(temp.as<uint32_t>()[3]);
+                    }
+                    for(int j=0;j<felts_per_item;j++){
+                        sender_set.push_back(rest[j]);
+                    }
+                }
+                APSU_LOG_INFO("size"<<sender_set.size()<<"item size"<<shuffle_size);
+                timer.setTimePoint("block -> set");
+                send_size=0,receiver_size =0;
+                for(auto x: recv_chls){
+                    send_size+=x.getTotalDataSent();
+                    receiver_size+=x.getTotalDataRecv();
+                }
+                APSU_LOG_INFO("sender Timer"<<timer);
+                recv_session.stop();
+            }
+
+            all_timer.setTimePoint("permute finish");
+        
+            
+           
+            vector<vector<oc::block> > psi_result_after_shuffle(block_num);
+            psi_result_before_shuffle.resize(block_num);
+            for(int i =0;i<block_num;i++){
+                psi_result_before_shuffle[i].resize(shuffle_size);
+                psi_result_after_shuffle[i].resize(shuffle_size);
+            }
+            APSU_LOG_INFO("size"<<shuffle_size);
             // Set up the result
             vector<MatchRecord> mrs(query.second.item_count());
 
             // Get the number of ResultPackages we expect to receive
             atomic<uint32_t> package_count{ response->package_count };
-
+            
             // Launch threads to receive ResultPackages and decrypt results
             size_t task_count = min<size_t>(ThreadPoolMgr::GetThreadCount(), package_count);
             vector<future<void>> futures(task_count);
@@ -421,16 +500,58 @@ namespace apsu {
             for (auto &f : futures) {
                 f.get();
             }
+            APSU_LOG_INFO("shuffle_size"<<shuffle_size<<"init size"<<psi_result_after_shuffle[0].size());
+            for(int i=0;i<block_num;i++){
+                for(int j=0;j<shuffle_size;j++)
+                    psi_result_after_shuffle[i][j] = psi_result_before_shuffle[i][permutation[j]];
+            }
+           
+           
+            vector<uint64_t> random_after_shuffle;
+            for(int i=0;i<shuffle_size;i++){
+                vector<uint64_t> rest;
+                for(int j=0;j<block_num;j++){
+                    auto temp = psi_result_after_shuffle[j][i];
+                    rest.push_back(temp.as<uint32_t>()[0]);
+                    rest.push_back(temp.as<uint32_t>()[1]);
+                    rest.push_back(temp.as<uint32_t>()[2]);
+                    rest.push_back(temp.as<uint32_t>()[3]);
+                }
+                for(int j=0;j<felts_per_item;j++){
+                    random_after_shuffle.push_back(rest[j]);
+                }
+            }
+            APSU_LOG_INFO("random_after_shuffle size"<<random_after_shuffle.size()<<"item size"<<shuffle_size);
+            for(int i=0;i<random_after_shuffle.size();i++){
+                random_after_shuffle[i]^=sender_set[i];
+                //APSU_LOG_INFO(sender_set[i]);
+            }
+            for(int i=0;i<item_cnt;i++)
+                shuffleMessages[i]=sendMessages[permutation[i]];
+            APSU_LOG_INFO("shuffleMessages size"<<shuffleMessages.size()<<"item size"<<sendMessages.size());
+            
+            {
+                auto sop_re = make_unique<plainResponse>();
+                sop_re->bundle_idx = 0;
+                sop_re->pack_idx = 0;
+                sop_re->psi_result.resize(random_after_shuffle.size());
+                copy(
+                    random_after_shuffle.begin(),
+                    random_after_shuffle.end(),
+                    sop_re->psi_result.begin());
+                //for (auto &i : plain_rp.psi_result) {
+                //    cout << i << endl;
+                //}
+                auto sop = to_request(move(sop_re));
+                chl.send(move(sop));
+            }
+            all_timer.setTimePoint("decrypt and unpermute finish");
 
-            APSU_LOG_INFO(
-                "Found " << accumulate(mrs.begin(), mrs.end(), 0, [](auto acc, auto &curr) {
-                    return acc + curr.found;
-                }) << " matches");
-
+            cout<<all_timer<<endl;
             return mrs;
         }
 
-        vector<MatchRecord> Receiver::process_result_part(
+        void Receiver::process_result_part(
         
             const IndexTranslationTable &itt,
             const ResultPart &result_part,
@@ -440,7 +561,7 @@ namespace apsu {
 
             if (!result_part) {
                 APSU_LOG_ERROR("Failed to process result: result_part is null");
-                return {};
+                return ;
             }
 
             // The number of items that were submitted in the query
@@ -451,7 +572,7 @@ namespace apsu {
             {
                 auto sop_re = make_unique<plainResponse>();
                 sop_re->bundle_idx = plain_rp.bundle_idx;
-                sop_re->cache_idx = result_part->cache_idx;
+                sop_re->pack_idx = result_part->pack_idx;
                 sop_re->psi_result.resize(plain_rp.psi_result.size());
                 copy(
                     plain_rp.psi_result.begin(),
@@ -463,108 +584,108 @@ namespace apsu {
                 auto sop = to_request(move(sop_re));
                 chl.send(move(sop));
             }
-            size_t felts_per_item = safe_cast<size_t>(params_.item_params().felts_per_item);
-            size_t items_per_bundle = safe_cast<size_t>(params_.items_per_bundle());
-            size_t bundle_start =
-                mul_safe(safe_cast<size_t>(plain_rp.bundle_idx), items_per_bundle);
+            // size_t felts_per_item = safe_cast<size_t>(params_.item_params().felts_per_item);
+            // size_t items_per_bundle = safe_cast<size_t>(params_.items_per_bundle());
+            // size_t bundle_start =
+            //     mul_safe(safe_cast<size_t>(plain_rp.bundle_idx), items_per_bundle);
 
-            // Check if we are supposed to have label data present but don't have for some reason
+            // // Check if we are supposed to have label data present but don't have for some reason
            
 
-            // Read the nonce byte count and compute the effective label byte count; set the nonce
-            // byte count to zero if no label is expected anyway.
+            // // Read the nonce byte count and compute the effective label byte count; set the nonce
+            // // byte count to zero if no label is expected anyway.
    
-            // If there is a label, then we better have the appropriate label encryption keys
-            // available
+            // // If there is a label, then we better have the appropriate label encryption keys
+            // // available
   
-            // Set up the result vector
-            vector<MatchRecord> mrs(item_count);
+            // // Set up the result vector
+            // vector<MatchRecord> mrs(item_count);
 
-            cout << item_count << endl
-                 << felts_per_item << endl
-                 << plain_rp.psi_result.size() << endl;
-            cout << "start" << endl;
-            cout << bundle_start << endl;
+            // cout << item_count << endl
+            //      << felts_per_item << endl
+            //      << plain_rp.psi_result.size() << endl;
+            // cout << "start" << endl;
+            // cout << bundle_start << endl;
 
        
 
-            // Iterate over the decoded data to find consecutive zeros indicating a match
-            StrideIter<const uint64_t *> plain_rp_iter(plain_rp.psi_result.data(), felts_per_item);
-            seal_for_each_n(iter(plain_rp_iter, size_t(0)), items_per_bundle, [&](auto &&I) {
-                // Find felts_per_item consecutive zeros
-                bool match = has_n_zeros(get<0>(I).ptr(), felts_per_item);
-                if (!match) {
-                    return;
-                }
+            // // Iterate over the decoded data to find consecutive zeros indicating a match
+            // StrideIter<const uint64_t *> plain_rp_iter(plain_rp.psi_result.data(), felts_per_item);
+            // seal_for_each_n(iter(plain_rp_iter, size_t(0)), items_per_bundle, [&](auto &&I) {
+            //     // Find felts_per_item consecutive zeros
+            //     bool match = has_n_zeros(get<0>(I).ptr(), felts_per_item);
+            //     if (!match) {
+            //         return;
+            //     }
 
-                // Compute the cuckoo table index for this item. Then find the corresponding index
-                // in the input items vector so we know where to place the result.
-                size_t table_idx = add_safe(get<1>(I), bundle_start);
-                auto item_idx = itt.find_item_idx(table_idx);
+            //     // Compute the cuckoo table index for this item. Then find the corresponding index
+            //     // in the input items vector so we know where to place the result.
+            //     size_t table_idx = add_safe(get<1>(I), bundle_start);
+            //     auto item_idx = itt.find_item_idx(table_idx);
               
-                cout <<plain_rp.bundle_idx<<' '<<result_part->cache_idx<< "match"<<table_idx << endl;
-                // If this table_idx doesn't match any item_idx, ignore the result no matter what it
-                // is
-                if (item_idx == itt.item_count()) {
-                    return;
-                }
+            //     cout <<plain_rp.bundle_idx<<' '<<result_part->pack_idx<< "match"<<table_idx << endl;
+            //     // If this table_idx doesn't match any item_idx, ignore the result no matter what it
+            //     // is
+            //     if (item_idx == itt.item_count()) {
+            //         return;
+            //     }
 
-                // If a positive MatchRecord is already present, then something is seriously wrong
-                if (mrs[item_idx]) {
-                    APSU_LOG_ERROR("The table index -> item index translation table indicated a "
-                                   "location that was already filled by another match from this "
-                                   "result package; the translation table (query) has probably "
-                                   "been corrupted");
+            //     // // If a positive MatchRecord is already present, then something is seriously wrong
+            //     // if (mrs[item_idx]) {
+            //     //     APSU_LOG_ERROR("The table index -> item index translation table indicated a "
+            //     //                    "location that was already filled by another match from this "
+            //     //                    "result package; the translation table (query) has probably "
+            //     //                    "been corrupted");
 
-                    throw runtime_error(
-                        "found a duplicate positive match; something is seriously wrong");
-                }
+            //     //     throw runtime_error(
+            //     //         "found a duplicate positive match; something is seriously wrong");
+            //     // }
 
-                APSU_LOG_DEBUG(
-                    "Match found for items[" << item_idx << "] at cuckoo table index "
-                                             << table_idx);
+            //     // APSU_LOG_DEBUG(
+            //     //     "Match found for items[" << item_idx << "] at cuckoo table index "
+            //     //                              << table_idx);
 
-                // Create a new MatchRecord
-                MatchRecord mr;
-                mr.found = true;
+            //     // Create a new MatchRecord
+            //     MatchRecord mr;
+            //     mr.found = true;
 
-                // Next, extract the label results, if any
-                //if (label_byte_count) {
-                //    APSU_LOG_DEBUG(
-                //        "Found " << plain_rp.label_result.size() << " label parts for items["
-                //                 << item_idx << "]; expecting " << label_byte_count
-                //                 << "-byte label");
+            //     // Next, extract the label results, if any
+            //     //if (label_byte_count) {
+            //     //    APSU_LOG_DEBUG(
+            //     //        "Found " << plain_rp.label_result.size() << " label parts for items["
+            //     //                 << item_idx << "]; expecting " << label_byte_count
+            //     //                 << "-byte label");
 
-                //    // Collect the entire label into this vector
-                //    AlgLabel alg_label;
+            //     //    // Collect the entire label into this vector
+            //     //    AlgLabel alg_label;
 
-                //    size_t label_offset = mul_safe(get<1>(I), felts_per_item);
-                //    for (auto &label_parts : plain_rp.label_result) {
-                //        gsl::span<felt_t> label_part(
-                //            label_parts.data() + label_offset, felts_per_item);
-                //        copy(label_part.begin(), label_part.end(), back_inserter(alg_label));
-                //    }
+            //     //    size_t label_offset = mul_safe(get<1>(I), felts_per_item);
+            //     //    for (auto &label_parts : plain_rp.label_result) {
+            //     //        gsl::span<felt_t> label_part(
+            //     //            label_parts.data() + label_offset, felts_per_item);
+            //     //        copy(label_part.begin(), label_part.end(), back_inserter(alg_label));
+            //     //    }
 
-                //    // Create the label
-                //    EncryptedLabel encrypted_label = dealgebraize_label(
-                //        alg_label, received_label_bit_count, params_.seal_params().plain_modulus());
+            //     //    // Create the label
+            //     //    EncryptedLabel encrypted_label = dealgebraize_label(
+            //     //        alg_label, received_label_bit_count, params_.seal_params().plain_modulus());
 
-                //    // Resize down to the effective byte count
-                //    encrypted_label.resize(effective_label_byte_count);
+            //     //    // Resize down to the effective byte count
+            //     //    encrypted_label.resize(effective_label_byte_count);
 
-                //    // Decrypt the label
-                //    Label label =
-                //        decrypt_label(encrypted_label, label_keys[item_idx], nonce_byte_count);
+            //     //    // Decrypt the label
+            //     //    Label label =
+            //     //        decrypt_label(encrypted_label, label_keys[item_idx], nonce_byte_count);
 
-                //    // Set the label
-                //    mr.label.set(move(label));
-                //}
+            //     //    // Set the label
+            //     //    mr.label.set(move(label));
+            //     //}
 
-                // We are done with the MatchRecord, so add it to the mrs vector
-                mrs[item_idx] = move(mr);
-            });
+            //     // We are done with the MatchRecord, so add it to the mrs vector
+            //     mrs[item_idx] = move(mr);
+            // });
 
-            return mrs;
+            //return mrs;
         }
 
         //vector<MatchRecord> Receiver::process_result(
@@ -615,15 +736,14 @@ namespace apsu {
         void Receiver::process_result_worker(
             atomic<uint32_t> &package_count,
             vector<MatchRecord> &mrs,
-          
             const IndexTranslationTable &itt,
-            NetworkChannel &chl) const
+            NetworkChannel &chl)
         {
             stringstream sw_ss;
             sw_ss << "Receiver::process_result_worker [" << this_thread::get_id() << "]";
             STOPWATCH(recv_stopwatch, sw_ss.str());
 
-            APSU_LOG_DEBUG("Result worker [" << this_thread::get_id() << "]: starting");
+            APSU_LOG_INFO("Result worker [" << this_thread::get_id() << "]: starting");
 
             auto seal_context = get_seal_context();
 
@@ -647,49 +767,90 @@ namespace apsu {
                 ResultPart result_part;
                 while (!(result_part = chl.receive_result(seal_context)))
                     ;
+                PlainResultPackage plain_rp = result_part->extract(crypto_context_);
+                uint32_t idx = result_part->pack_idx;
+                uint32_t size = plain_rp.psi_result.size();
+                APSU_LOG_INFO("before copy"<<idx<<' '<<size<<' ');
+                uint32_t items_per_bundle = safe_cast<uint32_t>(params_.items_per_bundle());
+                size_t felts_per_item = safe_cast<size_t>(params_.item_params().felts_per_item);
+                int block_num = ((felts_per_item+3)/4);
+                vector<vector<oc::block > > receiver_set(block_num);
 
-                // Process the ResultPart to get the corresponding vector of MatchRecords
-                auto this_mrs = process_result_part( itt, result_part, chl);
-
-                // Merge the new MatchRecords with mrs
-                seal_for_each_n(iter(mrs, this_mrs, size_t(0)), mrs.size(), [](auto &&I) {
-                    if (get<1>(I) && !get<0>(I)) {
-                        // This match needs to be merged into mrs
-                        get<0>(I) = move(get<1>(I));
-                    } else if (get<1>(I) && get<0>(I)) {
-                        // If a positive MatchRecord is already present, then something is seriously
-                        // wrong
-                        APSU_LOG_ERROR(
-                            "Result worker [" << this_thread::get_id()
-                                              << "]: found a match for items[" << get<2>(I)
-                                              << "] but an existing match for this location was "
-                                                 "already found before from a different result "
-                                                 "part");
-
-                        throw runtime_error(
-                            "found a duplicate positive match; something is seriously wrong");
+                for(int i=0;i<items_per_bundle;i++){
+                    vector<uint64_t> rest(block_num*4,0);
+                    for(int j = 0;j<felts_per_item;j++){
+                        rest[j] = plain_rp.psi_result[i*felts_per_item+j];
                     }
-                });
+                    for(int j=0;j<block_num*4;j+=4){
+                        uint64_t l =(uint64_t) (((rest[j+1]&0xffffffff)<<32)|(rest[j+0]&0xffffffff));
+                        uint64_t r =(uint64_t) (((rest[j+3]&0xffffffff)<<32)|(rest[j+2]&0xffffffff));
+                        receiver_set[j/4].push_back(oc::toBlock(r,l));
+                    }
+                }
+
+                for(int j=0;j<block_num;j++){
+                    copy(
+                    receiver_set[j].begin(),
+                    receiver_set[j].end(),
+                    psi_result_before_shuffle[j].begin()+(idx*items_per_bundle));
+                }
+ 
+                
+                APSU_LOG_INFO("after copy"<<idx<<' '<<receiver_set[0].size()<<' ');
+                // Process the ResultPart to get the corresponding vector of MatchRecords
+               // process_result_part( itt, result_part, chl);
+                //auto this_mrs = process_result_part( itt, result_part, chl);
+
+                // // Merge the new MatchRecords with mrs
+                // seal_for_each_n(iter(mrs, this_mrs, size_t(0)), mrs.size(), [](auto &&I) {
+                //     if (get<1>(I) && !get<0>(I)) {
+                //         // This match needs to be merged into mrs
+                //         get<0>(I) = move(get<1>(I));
+                //     } else if (get<1>(I) && get<0>(I)) {
+                //         // If a positive MatchRecord is already present, then something is seriously
+                //         // wrong
+                //         APSU_LOG_ERROR(
+                //             "Result worker [" << this_thread::get_id()
+                //                               << "]: found a match for items[" << get<2>(I)
+                //                               << "] but an existing match for this location was "
+                //                                  "already found before from a different result "
+                //                                  "part");
+
+                //         throw runtime_error(
+                //             "found a duplicate positive match; something is seriously wrong");
+                //     }
+                // });
             }
         }
         void Receiver::ResponseOT(string conn_addr){
-            int numThreads = 5;
-            oc::IOService ios;
-            oc::Session  ep0(ios, "localhost:59999", oc::SessionMode::Client);
-            oc::PRNG prng(oc::sysRandomSeed());
-            std::vector<osuCrypto::Channel> chls(numThreads);
+            all_timer.setTimePoint("response OT start");
 
-            
+            int numThreads = 5;
+      
+            oc::IOService ios;
+            oc::Session recv_session=oc::Session(ios,"localhost:59999",oc::SessionMode::Client);
+            std::vector<oc::Channel> recv_chls(numThreads);
+
+            oc::PRNG prng(oc::sysRandomSeed());            
             for (int i = 0; i < numThreads; ++i)
-                chls[i] = ep0.addChannel();
+                recv_chls[i]=recv_session.addChannel();
             std::vector<oc::IknpOtExtSender> senders(numThreads);
             APSU_LOG_INFO(sendMessages.size());
-            senders[0].sendChosen(sendMessages, prng, chls[0]);
+            senders[0].sendChosen(shuffleMessages, prng, recv_chls[0]);
 
-            int recv_num = chls[0].getTotalDataRecv();
-            int send_num = chls[0].getTotalDataSent();
+            int recv_num = recv_chls[0].getTotalDataRecv();
+            int send_num = recv_chls[0].getTotalDataSent();
 
-            APSU_LOG_INFO((recv_num+send_num)/1024<<"KB");
+            APSU_LOG_INFO("send_com_size ps"<<send_size/1024<<"KB");
+            APSU_LOG_INFO("recv_com_size ps"<<receiver_size/1024<<"KB");
+            APSU_LOG_INFO("OT send_com_size ps"<<send_num/1024<<"KB");
+            APSU_LOG_INFO("OT recv_com_size ps"<<recv_num/1024<<"KB");
+            all_timer.setTimePoint("response OT finish");
+
+            cout<<all_timer<<endl;
+            all_timer.reset();
+        
+            recv_session.stop();
         }
     } // namespace receiver
 } // namespace apsu

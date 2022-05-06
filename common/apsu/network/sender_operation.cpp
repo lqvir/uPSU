@@ -357,7 +357,7 @@ namespace apsu {
             auto psi_res = fbs_builder.CreateVector(
                 reinterpret_cast<const uint64_t *>(psi_result.data()), psi_result.size());
 
-            auto req = fbs::CreateplainResponse(fbs_builder, bundle_idx, psi_res, cache_idx);
+            auto req = fbs::CreateplainResponse(fbs_builder, bundle_idx, psi_res, pack_idx);
 
             fbs::SenderOperationBuilder sop_builder(fbs_builder);
 
@@ -398,7 +398,7 @@ namespace apsu {
 
              const auto &req = *sop->request_as_plainResponse();
              bundle_idx = req.bundle_idx();
-             cache_idx = req.cache_idx();
+             pack_idx = req.pack_idx();
             
 
              const auto &psi_data = req.psi_result();

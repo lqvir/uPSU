@@ -26,7 +26,7 @@ table QueryRequest {
 table plainResponse{
     bundle_idx: uint32;
     psi_result: [uint64] (required);
-    cache_idx:uint32;
+    pack_idx:uint32;
    
 }
 

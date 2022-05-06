@@ -29,9 +29,18 @@
 #include "apsu/requests.h"
 #include "apsu/responses.h"
 #include "apsu/seal_object.h"
-
+#include "apsu/permute/apsu_OSNSender.h"
 // libOTe
-#include <cryptoTools/Common/Defines.h>
+#include <cryptoTools/Network/Session.h>
+#include <cryptoTools/Network/Channel.h>
+#include <cryptoTools/Network/IOService.h>
+#include <cryptoTools/Common/Timer.h>
+#include "cryptoTools/Common/Defines.h"
+#include "cryptoTools/Common/BitVector.h"
+#include "cryptoTools/Network/Channel.h"
+#include "libOTe/TwoChooseOne/IknpOtExtReceiver.h"
+#include "libOTe/TwoChooseOne/IknpOtExtSender.h"
+#include "libOTe/Base/BaseOT.h"
 namespace apsu {
     namespace receiver {
         /**
@@ -202,7 +211,7 @@ namespace apsu {
             result part. Thus, to determine whether there was a match with the sender's data, the
             results for each received ResultPart must be checked.
             */
-            std::vector<MatchRecord> process_result_part(
+            void process_result_part(
                 
                 const IndexTranslationTable &itt,
                 const ResultPart &result_part,
@@ -236,12 +245,16 @@ namespace apsu {
             void process_result_worker(
                 std::atomic<std::uint32_t> &package_count,
                 std::vector<MatchRecord> &mrs,
-        
                 const IndexTranslationTable &itt,
-                network::NetworkChannel &chl) const;
+                network::NetworkChannel &chl);
 
             void initialize();
-
+            // params for permutation 
+            std::vector<int > permutation;
+            std::vector<uint64_t> sender_set;
+            std::vector<std::vector<oc::block > > psi_result_before_shuffle;
+            int send_size=0,receiver_size =0;
+            //std::vector<vector<uint64_t> > psi_result_before_shuffle;
             PSIParams params_;
 
             CryptoContext crypto_context_;
@@ -250,7 +263,10 @@ namespace apsu {
 
             SEALObject<seal::RelinKeys> relin_keys_;
 
+            oc::Timer all_timer;
+
            std::vector<std::array<oc::block, 2>> sendMessages;
+           std::vector<std::array<oc::block, 2>> shuffleMessages;
         }; // class Receiver
     }      // namespace receiver
 } // namespace apsu

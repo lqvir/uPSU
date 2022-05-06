@@ -153,7 +153,7 @@ int remote_query(const CLP &cmd)
         return -1;
     }
 
-    print_intersection_results(orig_items, items_vec, query_result, cmd.output_file());
+    //print_intersection_results(orig_items, items_vec, query_result, cmd.output_file());
     print_transmitted_data(channel);
     print_timing_report(recv_stopwatch);
 
