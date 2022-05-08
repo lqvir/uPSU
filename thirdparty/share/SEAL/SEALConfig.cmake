@@ -5,7 +5,7 @@
 #
 # Creates variables:
 #
-#   SEAL_FOUND : TRUE
+#   SEAL_FOUND : If either a static or a shared Microsoft SEAL was found
 #   SEAL_STATIC_FOUND : If a static Microsoft SEAL library was found
 #   SEAL_SHARED_FOUND : If a shared Microsoft SEAL library was found
 #   SEAL_C_FOUND : If a Microsoft SEAL C export library was found
@@ -74,9 +74,9 @@ macro(seal_find_dependency dep)
     endif()
 endmacro()
 
-set(SEAL_FOUND TRUE)
-set(SEAL_STATIC_FOUND TRUE)
-set(SEAL_SHARED_FOUND TRUE)
+set(SEAL_FOUND FALSE)
+set(SEAL_STATIC_FOUND FALSE)
+set(SEAL_SHARED_FOUND FALSE)
 set(SEAL_C_FOUND FALSE)
 set(SEAL_VERSION 3.7.2)
 set(SEAL_VERSION_MAJOR 3)
