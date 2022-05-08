@@ -10,7 +10,22 @@ set(APSU_SOURCE_FILES ${APSU_SOURCE_FILES}
     ${CMAKE_CURRENT_LIST_DIR}/thread_pool_mgr.cpp
     ${CMAKE_CURRENT_LIST_DIR}/version.cpp
 )
-
+set(APSU_SOURCE_FILES_SENDER ${APSU_SOURCE_FILES_SENDER}
+    ${CMAKE_CURRENT_LIST_DIR}/item.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/log.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/powers.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/psi_params.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/thread_pool_mgr.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/version.cpp
+)
+set(APSU_SOURCE_FILES_RECEIVER ${APSU_SOURCE_FILES_RECEIVER}
+    ${CMAKE_CURRENT_LIST_DIR}/item.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/log.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/powers.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/psi_params.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/thread_pool_mgr.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/version.cpp
+)
 # Add header files for installation
 install(
     FILES
@@ -35,3 +50,5 @@ add_subdirectory(oprf)
 add_subdirectory(util)
 add_subdirectory(permute)
 set(APSU_SOURCE_FILES ${APSU_SOURCE_FILES} PARENT_SCOPE)
+set(APSU_SOURCE_FILES_RECEIVER ${APSU_SOURCE_FILES_RECEIVER} PARENT_SCOPE)
+set(APSU_SOURCE_FILES_SENDER ${APSU_SOURCE_FILES_SENDER} PARENT_SCOPE)

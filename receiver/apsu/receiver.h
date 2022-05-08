@@ -250,7 +250,7 @@ namespace apsu {
 
             void initialize();
             // params for permutation 
-            std::vector<int > permutation;
+            std::vector<uint64_t > permutation;
             std::vector<uint64_t> sender_set;
             std::vector<std::vector<oc::block > > psi_result_before_shuffle;
             int send_size=0,receiver_size =0;

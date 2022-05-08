@@ -113,6 +113,7 @@ namespace apsu {
             receiver.
             */
             std::uint32_t package_count;
+            std::uint32_t alpha_max_cache_count;
         }; // class SenderOperationResponseQuery
     }      // namespace network
 } // namespace apsu

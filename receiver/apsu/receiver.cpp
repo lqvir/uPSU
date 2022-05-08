@@ -28,6 +28,7 @@
 #include "seal/util/common.h"
 #include "seal/util/defines.h"
 
+#include "kunlun/mpc/peqt/peqt_from_ddh.hpp"
 
 using namespace std;
 using namespace seal;
@@ -45,6 +46,54 @@ namespace apsu {
         {
             return all_of(ptr, ptr + count, [](auto a) { return a == T(0); });
         }
+        inline oc::block vec_to_oc_block(const std::vector<uint64_t> &in,size_t felts_per_item,uint64_t plain_modulus){
+            uint32_t plain_modulus_len = 1;
+            while(((1<<plain_modulus_len)-1)<plain_modulus){
+                plain_modulus_len++;
+            }
+            uint64_t plain_modulus_mask = (1<<plain_modulus_len)-1;
+            uint64_t plain_modulus_mask_lower = (1<<(plain_modulus_len>>1))-1;
+            uint64_t plain_modulus_mask_higher = plain_modulus_mask-plain_modulus_mask_lower;
+
+            uint64_t lower=0,higher=0;
+            if(felts_per_item&1){
+                lower = (in[felts_per_item-1] & plain_modulus_mask_lower);
+                higher = ((in[felts_per_item-1] & plain_modulus_mask_higher) >>((plain_modulus_len>>1)-1));
+            }
+            for(int pla = 0;pla < felts_per_item;pla+=2){
+                lower = ((in[pla] & plain_modulus_mask) | (lower<<plain_modulus_len));
+                higher = ((in[pla+1] & plain_modulus_mask) | (higher<<plain_modulus_len));
+            }
+            return oc::toBlock(higher,lower);
+        }
+
+        inline block vec_to_std_block(const std::vector<uint64_t> &in,size_t felts_per_item,uint64_t plain_modulus){
+            uint32_t plain_modulus_len = 1;
+            while(((1<<plain_modulus_len)-1)<plain_modulus){
+                plain_modulus_len++;
+            }
+            uint64_t plain_modulus_mask = (1<<plain_modulus_len)-1;
+            uint64_t plain_modulus_mask_lower = (1<<(plain_modulus_len>>1))-1;
+            uint64_t plain_modulus_mask_higher = plain_modulus_mask-plain_modulus_mask_lower;
+                //  cout<<"masks"<<endl;
+                // cout<<hex<<plain_modulus<<endl;
+                // cout<<hex<<plain_modulus_mask_lower<<endl;
+                // cout<<hex<<plain_modulus_mask_higher<<endl;
+            uint64_t lower=0,higher=0;
+            if(felts_per_item&1){
+                lower = (in[felts_per_item-1] & plain_modulus_mask_lower);
+                higher = ((in[felts_per_item-1] & plain_modulus_mask_higher) >>((plain_modulus_len>>1)-1));
+            }
+            //cout<< lower<<' '<< higher<<endl;
+            for(int pla = 0;pla < felts_per_item-1;pla+=2){
+                lower = ((in[pla] & plain_modulus_mask) | (lower<<plain_modulus_len));
+                higher = ((in[pla+1] & plain_modulus_mask) | (higher<<plain_modulus_len));
+            }
+            return Block::MakeBlock(higher,lower);
+        }
+
+        #define block_oc_to_std(a) (Block::MakeBlock((oc::block)a.as<uint64_t>()[1],(oc::block)a.as<uint64_t>()[0]))
+        std::vector<block> decrypt_randoms_matrix;
     } // namespace
 
     namespace receiver {
@@ -302,6 +351,7 @@ namespace apsu {
                 auto item_loc = cuckoo.query(items[item_idx].get_as<kuku::item_type>().front());
                 auto temp_loc = item_loc.location();
                 itt.table_idx_to_item_idx_[temp_loc] = item_idx;
+               // sendMessages[temp_loc]={oc::ZeroBlock,oc::toBlock((uint8_t*)origin_item[item_idx].data())};
                 sendMessages[temp_loc]={oc::toBlock((uint8_t*)origin_item[item_idx].data()),oc::ZeroBlock};
               //  APSU_LOG_INFO(sendMessages[temp_loc][0].as<char>().data());
                // cout<<(int)sendMessages[temp_loc][0].as<char>()[0]<<endl;
@@ -369,7 +419,7 @@ namespace apsu {
 
             // Set up the return value
             auto sop_query = make_unique<SenderOperationQuery>();
-            sop_query->compr_mode = Serialization::compr_mode_default;
+            sop_query->compr_mode = seal::Serialization::compr_mode_default;
             sop_query->relin_keys = relin_keys_;
             sop_query->data = move(encrypted_powers);
             auto sop = to_request(move(sop_query));
@@ -413,78 +463,85 @@ namespace apsu {
                 size_t felts_per_item = safe_cast<size_t>(params_.item_params().felts_per_item);
                 uint32_t item_cnt = bundle_idx_count* items_per_bundle; 
 
-               int block_num = ((felts_per_item+3)/4);
+        //       int block_num = ((felts_per_item+3)/4);
                int shuffle_size;
 
-            {
+            // {
                 
                
                
-                int numThreads=1;
-                int pack_cnt =response->package_count;
-                oc::IOService ios;
-                oc::Session recv_session=oc::Session(ios,"localhost:59999",oc::SessionMode::Client);
-                std::vector<oc::Channel> recv_chls(numThreads);
+            //     int numThreads=1;
+            //     int pack_cnt =response->package_count;
+            //     oc::IOService ios;
+            //     oc::Session recv_session=oc::Session(ios,"localhost:59999",oc::SessionMode::Client);
+            //     std::vector<oc::Channel> recv_chls(numThreads);
 
-                shuffle_size = pack_cnt * items_per_bundle;
-                APSU_LOG_INFO(pack_cnt);
-                for(int i=0;i<numThreads;i++)
-                    recv_chls[i] = recv_session.addChannel();
-                OSNSender osn;
-                osn.init(shuffle_size, 1, "");
-                APSU_LOG_INFO("??")
-                permutation = osn.dest;
-                oc::Timer timer;
-                osn.setTimer(timer);
+            //     shuffle_size = pack_cnt * items_per_bundle;
+            //     APSU_LOG_INFO(pack_cnt);
+            //     for(int i=0;i<numThreads;i++)
+            //         recv_chls[i] = recv_session.addChannel();
+            //     OSNSender osn;
+            //     osn.init(shuffle_size, 1, "");
+            //     APSU_LOG_INFO("??")
+            //     permutation = osn.dest;
+            //     oc::Timer timer;
+            //     osn.setTimer(timer);
          
-                vector<vector<oc::block> > sendshare(block_num);
+            //     vector<vector<oc::block> > sendshare(block_num);
                 
-                timer.setTimePoint("before osn");
-                for(int i=0;i<block_num;i++){
-                    sendshare[i]=osn.run_osn(recv_chls);
-                }
-                timer.setTimePoint("after osn");
+            //     timer.setTimePoint("before osn");
+            //     for(int i=0;i<block_num;i++){
+            //         sendshare[i]=osn.run_osn(recv_chls);
+            //     }
+            //     timer.setTimePoint("after osn");
                 
-                for(int i=0;i<shuffle_size;i++){
-                    vector<uint64_t> rest;
-                    for(int j=0;j<block_num;j++){
-                        auto temp = sendshare[j][i];
-                        rest.push_back(temp.as<uint32_t>()[0]);
-                        rest.push_back(temp.as<uint32_t>()[1]);
-                        rest.push_back(temp.as<uint32_t>()[2]);
-                        rest.push_back(temp.as<uint32_t>()[3]);
-                    }
-                    for(int j=0;j<felts_per_item;j++){
-                        sender_set.push_back(rest[j]);
-                    }
-                }
-                APSU_LOG_INFO("size"<<sender_set.size()<<"item size"<<shuffle_size);
-                timer.setTimePoint("block -> set");
-                send_size=0,receiver_size =0;
-                for(auto x: recv_chls){
-                    send_size+=x.getTotalDataSent();
-                    receiver_size+=x.getTotalDataRecv();
-                }
-                APSU_LOG_INFO("sender Timer"<<timer);
-                recv_session.stop();
-            }
+            //     for(int i=0;i<shuffle_size;i++){
+            //         vector<uint64_t> rest;
+            //         for(int j=0;j<block_num;j++){
+            //             auto temp = sendshare[j][i];
+            //             rest.push_back(temp.as<uint32_t>()[0]);
+            //             rest.push_back(temp.as<uint32_t>()[1]);
+            //             rest.push_back(temp.as<uint32_t>()[2]);
+            //             rest.push_back(temp.as<uint32_t>()[3]);
+            //         }
+            //         for(int j=0;j<felts_per_item;j++){
+            //             sender_set.push_back(rest[j]);
+            //         }
+            //     }
+            //     APSU_LOG_INFO("size"<<sender_set.size()<<"item size"<<shuffle_size);
+            //     timer.setTimePoint("block -> set");
+            //     send_size=0,receiver_size =0;
+            //     for(auto x: recv_chls){
+            //         send_size+=x.getTotalDataSent();
+            //         receiver_size+=x.getTotalDataRecv();
+            //     }
+            //     APSU_LOG_INFO("sender Timer"<<timer);
+            //     recv_session.stop();
+            // }
 
-            all_timer.setTimePoint("permute finish");
+    //        all_timer.setTimePoint("permute finish");
         
             
            
-            vector<vector<oc::block> > psi_result_after_shuffle(block_num);
-            psi_result_before_shuffle.resize(block_num);
-            for(int i =0;i<block_num;i++){
-                psi_result_before_shuffle[i].resize(shuffle_size);
-                psi_result_after_shuffle[i].resize(shuffle_size);
-            }
+        //    vector<vector<oc::block> > psi_result_after_shuffle(block_num);
+        //     psi_result_before_shuffle.resize(block_num);
+        //     for(int i =0;i<block_num;i++){
+        //         psi_result_before_shuffle[i].resize(shuffle_size);
+        //        psi_result_after_shuffle[i].resize(shuffle_size);
+        //     }
             APSU_LOG_INFO("size"<<shuffle_size);
             // Set up the result
             vector<MatchRecord> mrs(query.second.item_count());
 
             // Get the number of ResultPackages we expect to receive
             atomic<uint32_t> package_count{ response->package_count };
+            
+
+            // prepare decrypt randoms matrix size for copy
+
+            uint32_t alpha_max_cache_count = response->alpha_max_cache_count;
+            decrypt_randoms_matrix.assign(alpha_max_cache_count * item_cnt,Block::zero_block);
+            
             
             // Launch threads to receive ResultPackages and decrypt results
             size_t task_count = min<size_t>(ThreadPoolMgr::GetThreadCount(), package_count);
@@ -500,53 +557,66 @@ namespace apsu {
             for (auto &f : futures) {
                 f.get();
             }
-            APSU_LOG_INFO("shuffle_size"<<shuffle_size<<"init size"<<psi_result_after_shuffle[0].size());
-            for(int i=0;i<block_num;i++){
-                for(int j=0;j<shuffle_size;j++)
-                    psi_result_after_shuffle[i][j] = psi_result_before_shuffle[i][permutation[j]];
-            }
+            // APSU_LOG_INFO("shuffle_size"<<shuffle_size<<"init size"<<psi_result_after_shuffle[0].size());
+            // for(int i=0;i<block_num;i++){
+            //     for(int j=0;j<shuffle_size;j++)
+            //         psi_result_after_shuffle[i][j] = psi_result_before_shuffle[i][permutation[j]];
+            // }
            
            
-            vector<uint64_t> random_after_shuffle;
-            for(int i=0;i<shuffle_size;i++){
-                vector<uint64_t> rest;
-                for(int j=0;j<block_num;j++){
-                    auto temp = psi_result_after_shuffle[j][i];
-                    rest.push_back(temp.as<uint32_t>()[0]);
-                    rest.push_back(temp.as<uint32_t>()[1]);
-                    rest.push_back(temp.as<uint32_t>()[2]);
-                    rest.push_back(temp.as<uint32_t>()[3]);
-                }
-                for(int j=0;j<felts_per_item;j++){
-                    random_after_shuffle.push_back(rest[j]);
-                }
-            }
-            APSU_LOG_INFO("random_after_shuffle size"<<random_after_shuffle.size()<<"item size"<<shuffle_size);
-            for(int i=0;i<random_after_shuffle.size();i++){
-                random_after_shuffle[i]^=sender_set[i];
-                //APSU_LOG_INFO(sender_set[i]);
-            }
-            for(int i=0;i<item_cnt;i++)
-                shuffleMessages[i]=sendMessages[permutation[i]];
-            APSU_LOG_INFO("shuffleMessages size"<<shuffleMessages.size()<<"item size"<<sendMessages.size());
+            // vector<uint64_t> random_after_shuffle;
+            // for(int i=0;i<shuffle_size;i++){
+            //     vector<uint64_t> rest;
+            //     for(int j=0;j<block_num;j++){
+            //         auto temp = psi_result_after_shuffle[j][i];
+            //         rest.push_back(temp.as<uint32_t>()[0]);
+            //         rest.push_back(temp.as<uint32_t>()[1]);
+            //         rest.push_back(temp.as<uint32_t>()[2]);
+            //         rest.push_back(temp.as<uint32_t>()[3]);
+            //     }
+            //     for(int j=0;j<felts_per_item;j++){
+            //         random_after_shuffle.push_back(rest[j]);
+            //     }
+            // }
+            // APSU_LOG_INFO("random_after_shuffle size"<<random_after_shuffle.size()<<"item size"<<shuffle_size);
+            // for(int i=0;i<random_after_shuffle.size();i++){
+            //     random_after_shuffle[i]^=sender_set[i];
+            //     //APSU_LOG_INFO(sender_set[i]);
+            // }
+            // for(int i=0;i<item_cnt;i++)
+            //     shuffleMessages[i]=sendMessages[permutation[i]];
+            // // APSU_LOG_INFO("shuffleMessages size"<<shuffleMessages.size()<<"item size"<<sendMessages.size());
             
-            {
-                auto sop_re = make_unique<plainResponse>();
-                sop_re->bundle_idx = 0;
-                sop_re->pack_idx = 0;
-                sop_re->psi_result.resize(random_after_shuffle.size());
-                copy(
-                    random_after_shuffle.begin(),
-                    random_after_shuffle.end(),
-                    sop_re->psi_result.begin());
-                //for (auto &i : plain_rp.psi_result) {
-                //    cout << i << endl;
-                //}
-                auto sop = to_request(move(sop_re));
-                chl.send(move(sop));
-            }
-            all_timer.setTimePoint("decrypt and unpermute finish");
+            // {
+            //     auto sop_re = make_unique<plainResponse>();
+            //     sop_re->bundle_idx = 0;
+            //     sop_re->cache_idx = 0;
+            //     sop_re->psi_result.resize(random_after_shuffle.size());
+            //     copy(
+            //         random_after_shuffle.begin(),
+            //         random_after_shuffle.end(),
+            //         sop_re->psi_result.begin());
+            //     //for (auto &i : plain_rp.psi_result) {
+            //     //    cout << i << endl;
+            //     //}
+            //     auto sop = to_request(move(sop_re));
+            //     chl.send(move(sop));
+            // }
+           // Block::PrintBlocks(decrypt_randoms_matrix);
+            Global_Setup(); 
+            Context_Initialize(); 
+            ECGroup_Initialize(NID_X9_62_prime256v1); 
 
+            NetIO client("client", "127.0.0.1", 59999);
+            APSU_LOG_INFO(decrypt_randoms_matrix.size()<<item_cnt<<alpha_max_cache_count);
+            all_timer.setTimePoint("decrypt and unpermute finish");
+            
+            permutation = DDHPEQT::Send(client, decrypt_randoms_matrix,  alpha_max_cache_count,item_cnt);
+            ECGroup_Finalize(); 
+            Context_Finalize();
+            APSU_LOG_INFO("permute"<<permutation.size())   
+            for(int i=0;i<item_cnt;i++)
+                shuffleMessages[permutation[i]]=sendMessages[i];
             cout<<all_timer<<endl;
             return mrs;
         }
@@ -566,24 +636,42 @@ namespace apsu {
 
             // The number of items that were submitted in the query
             size_t item_count = itt.item_count();
-
+            
             // Decrypt and decode the result; the result vector will have full batch size
             PlainResultPackage plain_rp = result_part->extract(crypto_context_);
-            {
-                auto sop_re = make_unique<plainResponse>();
-                sop_re->bundle_idx = plain_rp.bundle_idx;
-                sop_re->pack_idx = result_part->pack_idx;
-                sop_re->psi_result.resize(plain_rp.psi_result.size());
-                copy(
-                    plain_rp.psi_result.begin(),
-                    plain_rp.psi_result.end(),
-                    sop_re->psi_result.begin());
-                //for (auto &i : plain_rp.psi_result) {
-                //    cout << i << endl;
-                //}
-                auto sop = to_request(move(sop_re));
-                chl.send(move(sop));
+            uint32_t items_per_bundle = safe_cast<uint32_t>(params_.items_per_bundle());
+            size_t felts_per_item = safe_cast<size_t>(params_.item_params().felts_per_item);
+            vector<block> decrypt_res(items_per_bundle);
+            uint64_t plain_modulus=crypto_context_.seal_context()->last_context_data()->parms().plain_modulus().value();
+            for(uint32_t item_idx=0;item_idx<items_per_bundle;item_idx++){
+                vector<uint64_t> all_felts_one_item(felts_per_item,0);
+                for(size_t felts_idx = 0;felts_idx<felts_per_item;felts_idx++){
+                    all_felts_one_item[felts_idx] = plain_rp.psi_result[item_idx*felts_per_item+felts_idx];
+                }
+                decrypt_res[item_idx]= vec_to_std_block(all_felts_one_item,felts_per_item,plain_modulus);
             }
+            uint32_t cache_idx = result_part->cache_idx;
+            copy(
+                decrypt_res.begin(),
+                decrypt_res.end(),
+                decrypt_randoms_matrix.begin()+(cache_idx*item_count+cache_idx*items_per_bundle)
+            );
+            
+            // {
+            //     auto sop_re = make_unique<plainResponse>();
+            //     sop_re->bundle_idx = plain_rp.bundle_idx;
+               
+            //     sop_re->psi_result.resize(plain_rp.psi_result.size());
+            //     copy(
+            //         plain_rp.psi_result.begin(),
+            //         plain_rp.psi_result.end(),
+            //         sop_re->psi_result.begin());
+            //     //for (auto &i : plain_rp.psi_result) {
+            //     //    cout << i << endl;
+            //     //}
+            //     auto sop = to_request(move(sop_re));
+            //     chl.send(move(sop));
+            // }
             // size_t felts_per_item = safe_cast<size_t>(params_.item_params().felts_per_item);
             // size_t items_per_bundle = safe_cast<size_t>(params_.items_per_bundle());
             // size_t bundle_start =
@@ -767,36 +855,65 @@ namespace apsu {
                 ResultPart result_part;
                 while (!(result_part = chl.receive_result(seal_context)))
                     ;
-                PlainResultPackage plain_rp = result_part->extract(crypto_context_);
-                uint32_t idx = result_part->pack_idx;
-                uint32_t size = plain_rp.psi_result.size();
-                APSU_LOG_INFO("before copy"<<idx<<' '<<size<<' ');
-                uint32_t items_per_bundle = safe_cast<uint32_t>(params_.items_per_bundle());
-                size_t felts_per_item = safe_cast<size_t>(params_.item_params().felts_per_item);
-                int block_num = ((felts_per_item+3)/4);
-                vector<vector<oc::block > > receiver_set(block_num);
+                // PlainResultPackage plain_rp = result_part->extract(crypto_context_);
+                // uint32_t idx = result_part->cache_idx;
+                // uint32_t size = plain_rp.psi_result.size();
+                // APSU_LOG_INFO("before copy"<<idx<<' '<<size<<' ');
+                // uint32_t items_per_bundle = safe_cast<uint32_t>(params_.items_per_bundle());
+                // size_t felts_per_item = safe_cast<size_t>(params_.item_params().felts_per_item);
+                // int block_num = ((felts_per_item+3)/4);
+                // vector<vector<oc::block > > receiver_set(block_num);
 
-                for(int i=0;i<items_per_bundle;i++){
-                    vector<uint64_t> rest(block_num*4,0);
-                    for(int j = 0;j<felts_per_item;j++){
-                        rest[j] = plain_rp.psi_result[i*felts_per_item+j];
-                    }
-                    for(int j=0;j<block_num*4;j+=4){
-                        uint64_t l =(uint64_t) (((rest[j+1]&0xffffffff)<<32)|(rest[j+0]&0xffffffff));
-                        uint64_t r =(uint64_t) (((rest[j+3]&0xffffffff)<<32)|(rest[j+2]&0xffffffff));
-                        receiver_set[j/4].push_back(oc::toBlock(r,l));
-                    }
-                }
+                // for(int i=0;i<items_per_bundle;i++){
+                //     vector<uint64_t> rest(block_num*4,0);
+                //     for(int j = 0;j<felts_per_item;j++){
+                //         rest[j] = plain_rp.psi_result[i*felts_per_item+j];
+                //     }
+                //     for(int j=0;j<block_num*4;j+=4){
+                //         uint64_t l =(uint64_t) (((rest[j+1]&0xffffffff)<<32)|(rest[j+0]&0xffffffff));
+                //         uint64_t r =(uint64_t) (((rest[j+3]&0xffffffff)<<32)|(rest[j+2]&0xffffffff));
+                //         receiver_set[j/4].push_back(oc::toBlock(r,l));
+                //     }
+                // }
 
-                for(int j=0;j<block_num;j++){
+                // for(int j=0;j<block_num;j++){
+                //     copy(
+                //     receiver_set[j].begin(),
+                //     receiver_set[j].end(),
+                //     psi_result_before_shuffle[j].begin()+(idx*items_per_bundle));
+                // }
+            // Decrypt and decode the result; the result vector will have full batch size
+                     
+                    PlainResultPackage plain_rp = result_part->extract(crypto_context_);
+                    uint32_t items_per_bundle = safe_cast<uint32_t>(params_.items_per_bundle());
+                    uint32_t bundle_idx_count = safe_cast<uint32_t>(params_.bundle_idx_count());
+                    size_t felts_per_item = safe_cast<size_t>(params_.item_params().felts_per_item);
+                    vector<block> decrypt_res(items_per_bundle);
+                    uint64_t plain_modulus=crypto_context_.seal_context()->last_context_data()->parms().plain_modulus().value();
+                    // for(int i =0 ;i<plain_rp.psi_result.size();i++){
+                    //     plain_rp.psi_result[i] = 124u;
+                    // }
+                  
+                    for(uint32_t item_idx=0;item_idx<items_per_bundle;item_idx++){
+                        vector<uint64_t> all_felts_one_item(felts_per_item,0);
+                        for(size_t felts_idx = 0;felts_idx<felts_per_item;felts_idx++){
+                            all_felts_one_item[felts_idx] = plain_rp.psi_result[item_idx*felts_per_item+felts_idx];
+                        }
+                        decrypt_res[item_idx]= vec_to_std_block(all_felts_one_item,felts_per_item,plain_modulus);
+                    }
+                    uint32_t cache_idx = result_part->cache_idx;
+                    uint32_t bundle_idx = result_part->bundle_idx;
+
                     copy(
-                    receiver_set[j].begin(),
-                    receiver_set[j].end(),
-                    psi_result_before_shuffle[j].begin()+(idx*items_per_bundle));
-                }
- 
-                
-                APSU_LOG_INFO("after copy"<<idx<<' '<<receiver_set[0].size()<<' ');
+                        decrypt_res.begin(),
+                        decrypt_res.end(),
+                        decrypt_randoms_matrix.begin()+(cache_idx*items_per_bundle*bundle_idx_count+bundle_idx*items_per_bundle)
+                    );
+                // APSU_LOG_INFO("cbp_idx"<<cache_idx<<' '<<bundle_idx);
+                // APSU_LOG_INFO("items_per_bundle"<<items_per_bundle);
+                // APSU_LOG_INFO("bundle_idx_count"<<bundle_idx_count);
+                // //APSU_LOG_INFO("bundle_idx_count"<<bundle_idx_count);
+                // APSU_LOG_INFO(' '<<cache_idx*items_per_bundle*bundle_idx_count+bundle_idx*items_per_bundle);
                 // Process the ResultPart to get the corresponding vector of MatchRecords
                // process_result_part( itt, result_part, chl);
                 //auto this_mrs = process_result_part( itt, result_part, chl);
@@ -841,8 +958,8 @@ namespace apsu {
             int recv_num = recv_chls[0].getTotalDataRecv();
             int send_num = recv_chls[0].getTotalDataSent();
 
-            APSU_LOG_INFO("send_com_size ps"<<send_size/1024<<"KB");
-            APSU_LOG_INFO("recv_com_size ps"<<receiver_size/1024<<"KB");
+         //   APSU_LOG_INFO("send_com_size ps"<<send_size/1024<<"KB");
+         //   APSU_LOG_INFO("recv_com_size ps"<<receiver_size/1024<<"KB");
             APSU_LOG_INFO("OT send_com_size ps"<<send_num/1024<<"KB");
             APSU_LOG_INFO("OT recv_com_size ps"<<recv_num/1024<<"KB");
             all_timer.setTimePoint("response OT finish");

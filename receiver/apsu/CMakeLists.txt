@@ -6,6 +6,10 @@ set(APSU_SOURCE_FILES ${APSU_SOURCE_FILES}
     ${CMAKE_CURRENT_LIST_DIR}/plaintext_powers.cpp
     ${CMAKE_CURRENT_LIST_DIR}/receiver.cpp
 )
+set(APSU_SOURCE_FILES_RECEIVER ${APSU_SOURCE_FILES_RECEIVER}
+${CMAKE_CURRENT_LIST_DIR}/plaintext_powers.cpp
+${CMAKE_CURRENT_LIST_DIR}/receiver.cpp
+)
 
 # Add header files for installation
 install(
@@ -17,4 +21,5 @@ install(
         ${APSU_INCLUDES_INSTALL_DIR}/apsu
 )
 
+set(APSU_SOURCE_FILES_RECEIVER ${APSU_SOURCE_FILES_RECEIVER} PARENT_SCOPE)
 set(APSU_SOURCE_FILES ${APSU_SOURCE_FILES} PARENT_SCOPE)

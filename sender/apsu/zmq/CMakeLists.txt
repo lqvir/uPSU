@@ -5,7 +5,9 @@
 set(APSU_SOURCE_FILES ${APSU_SOURCE_FILES}
     ${CMAKE_CURRENT_LIST_DIR}/sender_dispatcher.cpp
 )
-
+set(APSU_SOURCE_FILES_SENDER ${APSU_SOURCE_FILES_SENDER}
+    ${CMAKE_CURRENT_LIST_DIR}/sender_dispatcher.cpp
+)
 # Add header files for installation
 install(
     FILES
@@ -15,3 +17,4 @@ install(
 )
 
 set(APSU_SOURCE_FILES ${APSU_SOURCE_FILES} PARENT_SCOPE)
+set(APSU_SOURCE_FILES_SENDER ${APSU_SOURCE_FILES_SENDER} PARENT_SCOPE)

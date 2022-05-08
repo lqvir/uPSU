@@ -10,6 +10,22 @@ set(APSU_SOURCE_FILES ${APSU_SOURCE_FILES}
     ${CMAKE_CURRENT_LIST_DIR}/hash_to_curve.c
     ${CMAKE_CURRENT_LIST_DIR}/random.c
 )
+set(APSU_SOURCE_FILES_SENDER ${APSU_SOURCE_FILES_SENDER}
+    ${CMAKE_CURRENT_LIST_DIR}/crypto_util.c
+    ${CMAKE_CURRENT_LIST_DIR}/eccp2_core.c
+    ${CMAKE_CURRENT_LIST_DIR}/eccp2_no_endo.c
+    ${CMAKE_CURRENT_LIST_DIR}/eccp2.c
+    ${CMAKE_CURRENT_LIST_DIR}/hash_to_curve.c
+    ${CMAKE_CURRENT_LIST_DIR}/random.c
+)
+set(APSU_SOURCE_FILES_RECEIVER ${APSU_SOURCE_FILES_RECEIVER}
+    ${CMAKE_CURRENT_LIST_DIR}/crypto_util.c
+    ${CMAKE_CURRENT_LIST_DIR}/eccp2_core.c
+    ${CMAKE_CURRENT_LIST_DIR}/eccp2_no_endo.c
+    ${CMAKE_CURRENT_LIST_DIR}/eccp2.c
+    ${CMAKE_CURRENT_LIST_DIR}/hash_to_curve.c
+    ${CMAKE_CURRENT_LIST_DIR}/random.c
+)
 
 # Add header files for installation
 install(
@@ -32,3 +48,7 @@ else()
     add_subdirectory(generic)
 endif()
 set(APSU_SOURCE_FILES ${APSU_SOURCE_FILES} PARENT_SCOPE)
+set(APSU_SOURCE_FILES_SENDER ${APSU_SOURCE_FILES_SENDER} PARENT_SCOPE)
+
+set(APSU_SOURCE_FILES_RECEIVER ${APSU_SOURCE_FILES_RECEIVER} PARENT_SCOPE)
+

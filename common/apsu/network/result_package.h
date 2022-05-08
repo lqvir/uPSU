@@ -55,7 +55,7 @@ namespace apsu {
 
             std::uint32_t bundle_idx;
 
-            std::uint32_t pack_idx;
+            std::uint32_t cache_idx;
 
             seal::compr_mode_type compr_mode = seal::Serialization::compr_mode_default;
 

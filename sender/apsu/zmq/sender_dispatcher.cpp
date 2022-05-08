@@ -109,6 +109,7 @@ namespace apsu {
                 case SenderOperationType::sop_query:
                     APSU_LOG_INFO("Received query");
                     dispatch_query(move(sop), chl);
+                    return ;
                     break;
                 case SenderOperationType::sop_response:
                     APSU_LOG_INFO("Received response");

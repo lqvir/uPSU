@@ -32,13 +32,18 @@
 #include "libOTe/TwoChooseOne/IknpOtExtReceiver.h"
 #include "libOTe/TwoChooseOne/IknpOtExtSender.h"
 #include "libOTe/Base/BaseOT.h"
+
+
+
 namespace apsu {
     namespace sender {
+        
         // An alias to denote the powers of a receiver's ciphertext. At index i, holds Cⁱ, where C
         // is the ciphertext. The 0th index is always a dummy value.
         using CiphertextPowers = std::vector<seal::Ciphertext>;
 
         namespace {
+            
             template <typename T>
             inline void hash_combine(std::size_t &seed, const T &val)
             {
@@ -220,7 +225,8 @@ namespace apsu {
                 std::uint32_t bundle_idx,
                 seal::compr_mode_type compr_mode,
                 seal::MemoryPoolHandle &pool,
-                std::uint32_t cache_idx
+                std::uint32_t cache_idx,
+                std::uint32_t pack_idx
                 );
             //static std::unordered_map<std::pair<std::uint32_t, std::uint32_t>, std::vector<uint64_t>, pair_hash > random_map;
             std::uint32_t pack_cnt;
@@ -231,6 +237,7 @@ namespace apsu {
             std::vector<std::vector<uint64_t> > random_map;
             std::vector<seal::Plaintext > random_plain_list;
             std::vector<uint64_t > random_after_permute_map;
+            //std::vector<std::vector<oc::block> > random_map_block;
             //static std::vector<uint64_t> match_record;
         }; // class Sender
        
