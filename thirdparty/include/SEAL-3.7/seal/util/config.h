@@ -27,15 +27,15 @@
 
 // Intrinsics
 #define SEAL_USE_INTRIN
-#define SEAL_USE__UMUL128
-#define SEAL_USE__BITSCANREVERSE64
-/* #undef SEAL_USE___BUILTIN_CLZLL */
-/* #undef SEAL_USE___INT128 */
+/* #undef SEAL_USE__UMUL128 */
+/* #undef SEAL_USE__BITSCANREVERSE64 */
+#define SEAL_USE___BUILTIN_CLZLL
+#define SEAL_USE___INT128
 #define SEAL_USE__ADDCARRY_U64
 #define SEAL_USE__SUBBORROW_U64
 
 // Zero memory functions
-/* #undef SEAL_USE_EXPLICIT_BZERO */
+#define SEAL_USE_EXPLICIT_BZERO
 /* #undef SEAL_USE_EXPLICIT_MEMSET */
 /* #undef SEAL_USE_MEMSET_S */
 
