@@ -80,10 +80,10 @@
 /** AMD64-compatible 64-bit architecture. */
 #define X64      5
 /** Architecture. */
-/* #undef ARCH */
+#define ARCH	 X64
 
 /** Size of word in this architecture. */
-#define WSIZE    32
+#define WSIZE    64
 
 /** Byte boundary to align digit vectors. */
 #define ALIGN    1
@@ -664,7 +664,7 @@
 /** Use Windows' CryptGenRandom. */
 #define WCGR     4
 /** Chosen random generator seeder. */
-#define SEED     WCGR
+#define SEED     UDEV
 
 /** GNU/Linux operating system. */
 #define LINUX    1
@@ -679,14 +679,14 @@
 /* Arduino platform. */
 #define DUINO    6
 /** Detected operation system. */
-/* #undef OPSYS */
+#define OPSYS    LINUX
 
 /** OpenMP multithreading support. */
 #define OPENMP   1
 /** POSIX multithreading support. */
 #define PTHREAD  2
 /** Chosen multithreading API. */
-#define MULTI    OPENMP
+#define MULTI    PTHREAD
 
 /** Per-process high-resolution timer. */
 #define HREAL    1
@@ -701,7 +701,7 @@
 /** Cycle-counting timer. */
 #define CYCLE    6
 /** Chosen timer. */
-#define TIMER    ANSI
+#define TIMER    HPROC
 
 /** Prefix to identity this build of the library. */
 /* #undef LABEL */

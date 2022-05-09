@@ -22,7 +22,7 @@
 #define ENABLE_MR ON
 
 // build the library with Masney Rindal Kyber Base OT enabled
-/* #undef ENABLE_MR_KYBER */
+#define ENABLE_MR_KYBER ON
 
 // build the library with Naor Pinkas Base OT enabled
 #define ENABLE_NP ON

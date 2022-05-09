@@ -41,6 +41,52 @@ namespace apsu {
             {
                 return all_of(ptr, ptr + count, [](auto a) { return a == T(0); });
             }
+
+
+            inline oc::block vec_to_oc_block(const std::vector<uint64_t> &in,size_t felts_per_item,uint64_t plain_modulus){
+                uint32_t plain_modulus_len = 1;
+                while(((1<<plain_modulus_len)-1)<plain_modulus){
+                    plain_modulus_len++;
+                }
+                uint64_t plain_modulus_mask = (1<<plain_modulus_len)-1;
+                uint64_t plain_modulus_mask_lower = (1<<(plain_modulus_len>>1))-1;
+                uint64_t plain_modulus_mask_higher = plain_modulus_mask-plain_modulus_mask_lower;
+
+                uint64_t lower=0,higher=0;
+                if(felts_per_item&1){
+                    lower = (in[felts_per_item-1] & plain_modulus_mask_lower);
+                    higher = ((in[felts_per_item-1] & plain_modulus_mask_higher) >>((plain_modulus_len>>1)-1));
+                }
+                for(int pla = 0;pla < felts_per_item;pla+=2){
+                    lower = ((in[pla] & plain_modulus_mask) | (lower<<plain_modulus_len));
+                    higher = ((in[pla+1] & plain_modulus_mask) | (higher<<plain_modulus_len));
+                }
+                return oc::toBlock(higher,lower);
+            }
+
+            inline block vec_to_std_block(const std::vector<uint64_t> &in,size_t felts_per_item,uint64_t plain_modulus){
+                uint32_t plain_modulus_len = 1;
+                while(((1<<plain_modulus_len)-1)<plain_modulus){
+                    plain_modulus_len++;
+                }
+                uint64_t plain_modulus_mask = (1<<plain_modulus_len)-1;
+                uint64_t plain_modulus_mask_lower = (1<<(plain_modulus_len>>1))-1;
+                uint64_t plain_modulus_mask_higher = plain_modulus_mask-plain_modulus_mask_lower;
+                // cout<<"masks"<<endl;
+                // cout<<hex<<plain_modulus<<endl;
+                // cout<<hex<<plain_modulus_mask_lower<<endl;
+                // cout<<hex<<plain_modulus_mask_higher<<endl;
+                uint64_t lower=0,higher=0;
+                if(felts_per_item&1){
+                    lower = (in[felts_per_item-1] & plain_modulus_mask_lower);
+                    higher = ((in[felts_per_item-1] & plain_modulus_mask_higher) >>((plain_modulus_len>>1)-1));
+                }
+                for(int pla = 0;pla < felts_per_item-1;pla+=2){
+                    lower = ((in[pla] & plain_modulus_mask) | (lower<<plain_modulus_len));
+                    higher = ((in[pla+1] & plain_modulus_mask) | (higher<<plain_modulus_len));
+                }
+                return Block::MakeBlock(higher,lower);
+            }
         } // namespace
         oc::Timer all_timer;
         void Sender::RunParams(
