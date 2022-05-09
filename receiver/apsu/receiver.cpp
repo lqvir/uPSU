@@ -609,7 +609,7 @@ namespace apsu {
 
             NetIO client("client", "127.0.0.1", 59999);
             APSU_LOG_INFO(decrypt_randoms_matrix.size()<<item_cnt<<alpha_max_cache_count);
-            all_timer.setTimePoint("decrypt and unpermute finish");
+            all_timer.setTimePoint("decrypt finish");
             
             permutation = DDHPEQT::Send(client, decrypt_randoms_matrix,  alpha_max_cache_count,item_cnt);
             ECGroup_Finalize(); 
@@ -617,7 +617,8 @@ namespace apsu {
             APSU_LOG_INFO("permute"<<permutation.size())   
             for(int i=0;i<item_cnt;i++)
                 shuffleMessages[permutation[i]]=sendMessages[i];
-            cout<<all_timer<<endl;
+            all_timer.setTimePoint("decrypt and unpermute finish");
+         //   cout<<all_timer<<endl;
             return mrs;
         }
 
