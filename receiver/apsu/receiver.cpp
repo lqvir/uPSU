@@ -561,8 +561,8 @@ namespace apsu {
             size_t padding = 128-mpoprf_in.size()%128;
             for(int i = 0;i<padding;i++)
                 mpoprf_in.emplace_back(Block::all_one_block);
-            APSU_LOG_INFO("padding size"<<mpoprf_in.size());
-            Block::PrintBlocks(mpoprf_in);
+            //APSU_LOG_INFO("padding size"<<mpoprf_in.size());
+           // Block::PrintBlocks(mpoprf_in);
             {
             
             Global_Setup(); 
@@ -580,7 +580,7 @@ namespace apsu {
             std::cout<<log_set_size<<std::endl;
             std::string pp_filename = "MPOPRF.pp"; 
             MPOPRF::PP pp; 
-            cout<<set_size<<endl;
+           // cout<<set_size<<endl;
             pp = MPOPRF::Setup(log_set_size);
             // if(!FileExist(pp_filename)){
             //     pp = MPOPRF::Setup(log_set_size); // 40 is the statistical parameter
@@ -590,11 +590,11 @@ namespace apsu {
             //     MPOPRF::FetchPP(pp, pp_filename); 
             // }
             cout<<pp.log_matrix_height<<endl;
-            APSU_LOG_INFO("test");
+           // APSU_LOG_INFO("test");
             auto mpoprf_key = MPOPRF::Send(client,pp);
-            APSU_LOG_INFO("test1");
+           // APSU_LOG_INFO("test1");
             std::vector<std::string> mpoprf_out = MPOPRF::EvaluateOPRFValues(pp,mpoprf_key,mpoprf_in);
-            APSU_LOG_INFO("test2");
+            //APSU_LOG_INFO("test2");
  
             //APSU_LOG_INFO(mpoprf_out.size());
             for(int i = 0;i<shuffle_size;i++){

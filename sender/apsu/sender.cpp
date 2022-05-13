@@ -481,7 +481,7 @@ namespace apsu {
                     mpoprf_in.emplace_back(Block::zero_block);
             }
             // mp-oprf 
-            Block::PrintBlocks(mpoprf_in);
+           // Block::PrintBlocks(mpoprf_in);
             std::vector<std::string> mpoprf_recv;
             {
              
@@ -535,9 +535,9 @@ namespace apsu {
                 }
             }
             APSU_LOG_INFO("ans size"<<ans.size());
-            for(auto x: ans)
-                cout<<x<<endl;
-            }
+            // for(auto x: ans)
+            //     cout<<x<<endl;
+            // }
 
             cout<<"pack_cnt"<<pack_cnt<<endl;
             all_timer.setTimePoint("ProcessBinBundleCache finished");
@@ -782,12 +782,16 @@ namespace apsu {
             for(auto i:messages){
 
                 if(i == oc::ZeroBlock) continue;
+               
                 stringstream ss;
                 ss<<i.as<char>().data();
-                fout<<ss.str().substr(1,15)<<endl;
+                auto x = ss.str();
+                for(int i = 0;i<16;i++)
+                    fout<<x[i];
+                fout<<endl;
+                //fout<<ss.str().substr(0,15)<<endl;
             }
-            
-           
+            fout.close();
             all_timer.setTimePoint("RunOT finish");
             cout<<all_timer<<endl;
             //APSU_LOG_INFO("send_com_size ps"<<send_size/1024<<"KB");
