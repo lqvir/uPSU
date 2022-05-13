@@ -210,7 +210,7 @@ namespace apsu {
             Method that processes a single Bin Bundle cache.
             Sends a result package through the given channel.
             */
-             void ProcessBinBundleCache(
+            void ProcessBinBundleCache(
                 const std::shared_ptr<SenderDB> &sender_db,
                 const CryptoContext &crypto_context,
                 std::reference_wrapper<const BinBundleCache> cache,
@@ -220,7 +220,8 @@ namespace apsu {
                 std::uint32_t bundle_idx,
                 seal::compr_mode_type compr_mode,
                 seal::MemoryPoolHandle &pool,
-                std::uint32_t cache_idx
+                std::uint32_t cache_idx,
+                std::uint32_t pack_idx
                 );
             //static std::unordered_map<std::pair<std::uint32_t, std::uint32_t>, std::vector<uint64_t>, pair_hash > random_map;
             std::uint32_t pack_cnt;

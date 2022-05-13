@@ -197,29 +197,44 @@ OSNSender::OSNSender(size_t size, int ot_type) : size(size), ot_type(ot_type)
 
 }
 
-void OSNSender::init(size_t size, int ot_type, const string& osn_cache)
+void OSNSender::init(size_t Row_num, size_t Col_num,int ot_type, const string& osn_cache)
 {
-	this->size = size;
+	this->size = Row_num * Col_num ;
 	this->ot_type = ot_type;
 
 	int values = size;
+	
 	int N = int(ceil(log2(values)));
 	int levels = 2 * N - 1;
 
 	dest.resize(size);
+	cols_premutation.resize(Col_num);
+	rows_permutation.resize(Row_num);
 	benes.initialize(values, levels);
 
 	std::vector<int> src(values);
-	for (int i = 0; i < src.size(); ++i)
-		src[i] = dest[i] = i;
+	
 
-	osuCrypto::PRNG prng(_mm_set_epi32(4253233465, 334565, 0, 235)); // we need to modify this seed
 
-	for (int i = size - 1; i > 0; i--)
-	{
-		int loc = prng.get<uint64_t>() % (i + 1); //  pick random location in the array
-		std::swap(dest[i], dest[loc]);
+	for(int i = 0;i<Col_num;i++){
+		cols_premutation[i] = i;
 	}
+	for(int j = 0;j<Row_num;j++){
+		rows_permutation[j] = j;
+	}
+	// random seed
+	//std::srand(std::time(NULL));
+	//random()
+	std::random_shuffle(cols_premutation.begin(),cols_premutation.end());
+	std::random_shuffle(rows_permutation.begin(),rows_permutation.end());
+
+	for (int i = 0; i < Row_num; ++i){
+		for(int j = 0;j<Col_num;j++){
+			src[i*Col_num+j]  = i*Col_num+j;
+			dest[i*Col_num+j] = rows_permutation[i]*Col_num + cols_premutation[j];
+		}
+	}
+		
 	if (osn_cache != "")
 	{
 		string file = osn_cache + "_" + to_string(size);

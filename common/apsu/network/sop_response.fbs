@@ -13,6 +13,7 @@ table OPRFResponse {
 
 table QueryResponse {
     package_count:uint32;
+    alpha_max_cache_count:uint32;
 }
 
 union Response { ParmsResponse, OPRFResponse, QueryResponse }

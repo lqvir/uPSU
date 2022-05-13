@@ -184,6 +184,7 @@ int start_sender(const CLP &cmd)
 
     // The dispatcher will run until stopped.
     dispatcher.run(stop, cmd.net_port());
+    print_timing_report(sender_stopwatch);
 
     return 0;
 }

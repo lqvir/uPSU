@@ -170,7 +170,7 @@ namespace apsu {
 
             std::vector<std::uint64_t> psi_result;
 
-            std::uint32_t pack_idx;
+            std::uint32_t cache_idx;
 
           
            

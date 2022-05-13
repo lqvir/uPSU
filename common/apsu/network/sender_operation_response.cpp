@@ -145,7 +145,7 @@ namespace apsu {
         {
             flatbuffers::FlatBufferBuilder fbs_builder(128);
 
-            auto resp = fbs::CreateQueryResponse(fbs_builder, package_count);
+            auto resp = fbs::CreateQueryResponse(fbs_builder, package_count,alpha_max_cache_count);
 
             fbs::SenderOperationResponseBuilder sop_response_builder(fbs_builder);
             sop_response_builder.add_response_type(fbs::Response_QueryResponse);
@@ -180,7 +180,7 @@ namespace apsu {
 
             // Load the query response
             package_count = sop_response->response_as_QueryResponse()->package_count();
-
+            alpha_max_cache_count = sop_response->response_as_QueryResponse()->alpha_max_cache_count();
             return in_data.size();
         }
     } // namespace network

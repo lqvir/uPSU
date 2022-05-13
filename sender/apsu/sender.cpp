@@ -24,6 +24,7 @@
 
 #include "kunlun/mpc/oprf/mp_oprf.hpp"
 
+
 using namespace std;
 using namespace seal;
 using namespace seal::util;
@@ -36,12 +37,16 @@ namespace apsu {
     namespace sender {
 
         namespace {
+            vector<oc::block> random_matrix;
+            std::vector<std::string> mpoprf_out;
             template <typename T>
             bool has_n_zeros(T *ptr, size_t count)
             {
                 return all_of(ptr, ptr + count, [](auto a) { return a == T(0); });
             }
-
+            inline block block_oc_to_std(oc::block in){
+                return Block::MakeBlock(in.as<uint64_t>()[1],in.as<uint64_t>()[0]);
+            }
 
             inline oc::block vec_to_oc_block(const std::vector<uint64_t> &in,size_t felts_per_item,uint64_t plain_modulus){
                 uint32_t plain_modulus_len = 1;
@@ -51,19 +56,27 @@ namespace apsu {
                 uint64_t plain_modulus_mask = (1<<plain_modulus_len)-1;
                 uint64_t plain_modulus_mask_lower = (1<<(plain_modulus_len>>1))-1;
                 uint64_t plain_modulus_mask_higher = plain_modulus_mask-plain_modulus_mask_lower;
-
+                // cout<<"masks"<<endl;
+                // cout<<hex<<plain_modulus<<endl;
+                // cout<<hex<<plain_modulus_mask_lower<<endl;
+                // cout<<hex<<plain_modulus_mask_higher<<endl;
                 uint64_t lower=0,higher=0;
                 if(felts_per_item&1){
                     lower = (in[felts_per_item-1] & plain_modulus_mask_lower);
                     higher = ((in[felts_per_item-1] & plain_modulus_mask_higher) >>((plain_modulus_len>>1)-1));
                 }
-                for(int pla = 0;pla < felts_per_item;pla+=2){
+                for(int pla = 0;pla < felts_per_item-1;pla+=2){
                     lower = ((in[pla] & plain_modulus_mask) | (lower<<plain_modulus_len));
                     higher = ((in[pla+1] & plain_modulus_mask) | (higher<<plain_modulus_len));
                 }
+                // auto temp = oc::toBlock(higher,lower);
+                // auto h = temp.as<uint64_t>()[0];
+                // auto l = temp.as<uint64_t>()[1];
+                // cout<<higher<<endl<<lower<<endl<<h<<endl<<l<<endl;
+                // Block::PrintBlock(Block::MakeBlock(higher,lower));
+                // Block::PrintBlock(block_oc_to_std(temp));
                 return oc::toBlock(higher,lower);
             }
-
             inline block vec_to_std_block(const std::vector<uint64_t> &in,size_t felts_per_item,uint64_t plain_modulus){
                 uint32_t plain_modulus_len = 1;
                 while(((1<<plain_modulus_len)-1)<plain_modulus){
@@ -85,10 +98,15 @@ namespace apsu {
                     lower = ((in[pla] & plain_modulus_mask) | (lower<<plain_modulus_len));
                     higher = ((in[pla+1] & plain_modulus_mask) | (higher<<plain_modulus_len));
                 }
+           
+
                 return Block::MakeBlock(higher,lower);
             }
+
+            // #define block_oc_to_std(a) (Block::MakeBlock(a.as<uint64_t>()[1],a.as<uint64_t>()[0]))
+            oc::Timer all_timer;
         } // namespace
-        oc::Timer all_timer;
+       
         void Sender::RunParams(
             const ParamsRequest &params_request,
             shared_ptr<SenderDB> sender_db,
@@ -212,6 +230,19 @@ namespace apsu {
             uint32_t bundle_idx_count = safe_cast<uint32_t>(params.bundle_idx_count());
             uint32_t max_items_per_bin = safe_cast<uint32_t>(params.table_params().max_items_per_bin);
 
+            
+            
+            
+            size_t max_bin_bundle_conut_alpha = 0;
+            std::vector<size_t> cache_cnt_per_bundle;
+            for (size_t bundle_idx = 0; bundle_idx < bundle_idx_count; bundle_idx++) {
+                cache_cnt_per_bundle.emplace_back(sender_db->get_bin_bundle_count(static_cast<uint32_t>(bundle_idx)));
+                max_bin_bundle_conut_alpha = std::max(max_bin_bundle_conut_alpha,
+                    cache_cnt_per_bundle[bundle_idx]);
+            }
+            
+            
+            
             // Extract the PowersDag
             PowersDag pd = query.pd();
 
@@ -219,6 +250,7 @@ namespace apsu {
             uint32_t package_count = safe_cast<uint32_t>(sender_db->get_bin_bundle_count());
             QueryResponse response_query = make_unique<QueryResponse::element_type>();
             response_query->package_count = package_count;
+            response_query->alpha_max_cache_count = max_bin_bundle_conut_alpha;
             APSU_LOG_INFO(package_count);
             item_cnt = bundle_idx_count * safe_cast<uint32_t>(params.items_per_bundle());
             APSU_LOG_INFO(item_cnt);
@@ -232,8 +264,8 @@ namespace apsu {
             }
             // generate random number
             {
-                 all_timer.setTimePoint("random gen start");
-                vector<uint64_t> random_num;
+                all_timer.setTimePoint("random gen start");
+                std::vector<uint64_t> random_num;
                 prng_seed_type newseed;
                 random_bytes(reinterpret_cast<seal_byte *>(newseed.data()), prng_seed_byte_count);
                 UniformRandomGeneratorInfo myGEN(prng_type::blake2xb, newseed);
@@ -242,124 +274,62 @@ namespace apsu {
                 // cout << "mod q" << endl;
                 // random mod q
                 //cout << context_data->parms().coeff_modulus().back().value() << endl;
-                uint64_t small_q = context_data->parms().plain_modulus().value();
+                uint64_t plain_modulus = context_data->parms().plain_modulus().value();
                 auto encoder = crypto_context.encoder();
                 int slot_count = encoder->slot_count();
 
                 size_t felts_per_item = safe_cast<size_t>(params.item_params().felts_per_item);
                 size_t items_per_bundle = safe_cast<size_t>(params.items_per_bundle());
-                int block_num = ((felts_per_item+3)/4);
-                vector<vector<oc::block > > receiver_set(block_num);
-                vector<vector<oc::block > > receiver_share(block_num);
+ 
 
-                for(int j = 0;j<package_count;j++){
-                    Plaintext random_plain(pool);
-                    random_num.clear();
-                    for (int i = 0; i < slot_count; i++)
+                for(size_t cache_idx = 0;cache_idx < max_bin_bundle_conut_alpha;cache_idx++)
+                 {
+                    for (size_t bundle_idx = 0; bundle_idx < bundle_idx_count; bundle_idx++){
+                        // judge need to padding the cache
+                        bool padding_to_max_cache_size=(cache_idx>=cache_cnt_per_bundle[bundle_idx]);
+                //        APSU_LOG_INFO("error"<<cache_idx<<' '<<cache_cnt_per_bundle[bundle_idx]);
+                        if(padding_to_max_cache_size){  
+                            
+                            for(size_t i = 0;i< items_per_bundle;i++)
+                                random_matrix.emplace_back(oc::AllOneBlock);
+                            continue;
+                        }
+                        
+                        Plaintext random_plain(pool);
+                        random_num.clear();
+                        for (int i = 0; i < slot_count; i++)
                         {
-                            random_num.push_back(myprng->generate() % small_q);
-                            //random_num.push_back(i % small_q);
-                            //random_num.push_back(0);
+                            random_num.emplace_back(myprng->generate() % plain_modulus);
+                            //random_num.emplace_back(0);
+                                    //random_num.push_back(i % small_q);
+                                    //random_num.push_back(0);
                         }
-            // gsl::span<uint64_t> random_mem = { random_num.data(), random_num.size() };
-                    for(int i=0;i<items_per_bundle;i++){
-                        vector<uint64_t> rest(block_num*4,0);
-                        for(int j = 0;j<felts_per_item;j++){
-                            rest[j] = random_num[i*felts_per_item+j];
+                        // gsl::span<uint64_t> random_mem = { random_num.data(), random_num.size() };
+                        for(size_t i=0;i<items_per_bundle;i++){
+                            vector<uint64_t> rest(felts_per_item,0);
+                            for(size_t j = 0;j<felts_per_item;j++){
+                                rest[j] = random_num[i*felts_per_item+j];
+                            }
+                            //random_map_block[bundle_idx].emplace_back(vec_to_std_block(move(rest),felts_per_item,plain_modulus));
+                            random_matrix.emplace_back(vec_to_oc_block(rest,felts_per_item,plain_modulus));
+                            
+                            
                         }
-                        for(int j=0;j<block_num*4;j+=4){
-                            uint64_t l =(uint64_t) (((rest[j+1]&0xffffffff)<<32)|(rest[j+0]&0xffffffff));
-                            uint64_t r =(uint64_t) (((rest[j+3]&0xffffffff)<<32)|(rest[j+2]&0xffffffff));
-                            receiver_set[j/4].push_back(oc::toBlock(r,l));
-                        }
+
+                      //  APSU_LOG_INFO("cbp_idx"<<cache_idx<<' '<<bundle_idx<<' '<<random_plain_list.size());
+
+                        encoder->encode(random_num, random_plain);
+                        random_plain_list.emplace_back(random_plain);
+                        random_map.emplace_back(random_num);
+                      
+                        // for(auto x :  random_map[0])
+                        //     std::cout<<x<<endl;
                     }
-                    encoder->encode(random_num, random_plain);
-                    random_plain_list.push_back(random_plain);
-                    random_map.push_back(random_num);
+                                  
                 }
      
-                size_t shuffle_size = receiver_set[0].size();
-                APSU_LOG_INFO("size"<<shuffle_size<<"==============");
-                // vector<uint64_t> temp0;
-                // for(int i=0;i<shuffle_size;i++){
-                //     vector<uint64_t> rest;
-                //     for(int j=0;j<block_num;j++){
-                //         auto temp = receiver_set[j][i];
-                //         rest.push_back(temp.as<uint32_t>()[0]);
-                //         rest.push_back(temp.as<uint32_t>()[1]);
-                //         rest.push_back(temp.as<uint32_t>()[2]);
-                //         rest.push_back(temp.as<uint32_t>()[3]);
-                //     }
-                //     for(int j=0;j<felts_per_item;j++){
-                //         temp0.push_back(rest[j]);
-                //     }
-                // // }
-                // for(int x=0,cnt=0;x<temp0.size();x++){
-                //     if(temp0[x]!=random_map[cnt][x%(int)(items_per_bundle*felts_per_item)]) 
-                //         APSU_LOG_INFO("change error");
-                //     if(x%(int)(items_per_bundle*felts_per_item)==0&&x)
-                //         cnt++;
-                // }
-                all_timer.setTimePoint("random gen finish");
-                int numThreads=1;
-                osuCrypto::IOService ios;
-                
-                oc::Session send_session=oc::Session(ios,"localhost:59999",oc::SessionMode::Server);
-                std::vector<oc::Channel> send_chls(numThreads);
-                for(int i=0;i<numThreads;i++)
-                    send_chls[i]=send_session.addChannel();
 
-                OSNReceiver osn;
-                osn.init(shuffle_size,1);
-                oc::Timer timer;
-	            osn.setTimer(timer);
-
-	            timer.setTimePoint("set -> block_set");
-                all_timer.setTimePoint("set -> block_set");
-                
-                // for(int sets=0;sets<receiver_set_size1;sets++){
-                //     for(int i=0;i<package_count;i++){
-                //         uint64_t l =(uint64_t) (((random_map[i][4*sets+1]&0xffffffff)<<32)|(random_map[i][4*sets]&0xffffffff));
-                //         uint64_t r =(uint64_t) (((random_map[i][4*sets+3]&0xffffffff)<<32)|(random_map[i][4*sets+2]&0xffffffff));
-                //         receiver_set[sets].push_back(oc::toBlock(r,l));
-                //     }
-                // }
-                // for(int i=0,len=0;i<package_count;i++,len=0){
-                //     uint64_t rest[4];
-                //     rest[0] = len++<receiver_set_size2?random_map[i][len]:0;
-                //     rest[1] = len++<receiver_set_size2?random_map[i][len]:0;
-                //     rest[2] = len++<receiver_set_size2?random_map[i][len]:0;
-                //     rest[3] = len++<receiver_set_size2?random_map[i][len]:0;
-                //     uint64_t l =(uint64_t) (((rest[1]&0xffffffff)<<32)|(rest[0]&0xffffffff));
-                //     uint64_t r =(uint64_t) (((rest[3]&0xffffffff)<<32)|(rest[2]&0xffffffff));
-                //     receiver_set[receiver_set_size1].push_back(oc::toBlock(r,l));
-                // }
-                APSU_LOG_INFO(receiver_set.size()<<"per change"<<receiver_set[0].size());
-                all_timer.setTimePoint("before run_osn");
-	            timer.setTimePoint("before run_osn");
-                for(int i=0;i<block_num;i++){
-                  
-                    receiver_share[i] = osn.run_osn(receiver_set[i],send_chls);
-                    APSU_LOG_INFO(receiver_share[i].size());
-                }
-                
-                timer.setTimePoint("after run_osn");
-                all_timer.setTimePoint("after run_osn");
-
-                for(int i=0;i<shuffle_size;i++){
-                    vector<uint64_t> rest;
-                    for(int j=0;j<block_num;j++){
-                        auto temp = receiver_share[j][i];
-                        rest.push_back(temp.as<uint32_t>()[0]);
-                        rest.push_back(temp.as<uint32_t>()[1]);
-                        rest.push_back(temp.as<uint32_t>()[2]);
-                        rest.push_back(temp.as<uint32_t>()[3]);
-                    }
-                    for(int j=0;j<felts_per_item;j++){
-                        random_after_permute_map.push_back(rest[j]);
-                    }
-                }
-                APSU_LOG_INFO("size"<<random_after_permute_map.size()<<"item size"<<shuffle_size);
+               
                 // for(int i=0;i<package_count;i++){
                 //     for(int j=0;j<receiver_set_size1;i++){
                 //         auto temp = receiver_share[i][j];
@@ -373,15 +343,7 @@ namespace apsu {
                 //         random_after_permute_map[i].push_back(temp.as<uint32_t>()[j]);
                 //     }
                 // }
-                timer.setTimePoint("block_set -> set");
-                APSU_LOG_INFO("receiver"<<timer);
-                all_timer.setTimePoint("block_set -> set");
-                send_size=0,receiver_size =0;
-                for(auto x: send_chls){
-                    send_size+=x.getTotalDataSent();
-                    receiver_size+=x.getTotalDataRecv();
-                }
-                send_session.stop();
+              
 
             }
 
@@ -436,11 +398,12 @@ namespace apsu {
             vector<future<void>> futures;
             for (size_t bundle_idx = 0; bundle_idx < bundle_idx_count; bundle_idx++) {
                 auto bundle_caches = sender_db->get_cache_at(static_cast<uint32_t>(bundle_idx));
-                uint32_t pack_num = 0;
-                
+                size_t cache_idx = 0;
+               // APSU_LOG_INFO(cache_idx);
                 for (auto &cache : bundle_caches) {
                     pack_cnt++;
-                    futures.push_back(tpm.thread_pool().enqueue([&, bundle_idx, cache]() {
+                    size_t pack_idx = bundle_idx+cache_idx*bundle_idx_count;
+                    futures.push_back(tpm.thread_pool().enqueue([&, bundle_idx, cache,cache_idx,pack_idx]() {
                         ProcessBinBundleCache(
                             sender_db,
                             crypto_context,
@@ -451,9 +414,11 @@ namespace apsu {
                             static_cast<uint32_t>(bundle_idx),
                             query.compr_mode(),
                             pool,
-                            pack_num++
+                            cache_idx,
+                            pack_idx
                             );
                     }));
+                    cache_idx++;
                 }
             }
 
@@ -461,9 +426,123 @@ namespace apsu {
             for (auto &f : futures) {
                 f.get();
             }
+
+            vector<block> mpoprf_in;
+           size_t shuffle_size = random_matrix.size();
+            // permute and share on matrix 
+            {
+                
+                
+                vector<oc::block> receiver_share;
+
+                
+                APSU_LOG_INFO("size"<<shuffle_size<<"==============");
+               
+                all_timer.setTimePoint("random gen finish");
+                int numThreads=1;
+                osuCrypto::IOService ios;
+                
+                oc::Session send_session=oc::Session(ios,"localhost:59999",oc::SessionMode::Server);
+                std::vector<oc::Channel> send_chls(numThreads);
+                for(int i=0;i<numThreads;i++)
+                    send_chls[i]=send_session.addChannel();
+
+                OSNReceiver osn;
+                osn.init(shuffle_size,1);
+                oc::Timer timer;
+	            osn.setTimer(timer);
+
+	            timer.setTimePoint("set -> block_set");
+                all_timer.setTimePoint("set -> block_set");
+                
+                APSU_LOG_INFO("per change"<<random_matrix.size());
+                all_timer.setTimePoint("before run_osn");
+	            timer.setTimePoint("before run_osn");
+
+                receiver_share =osn.run_osn(random_matrix,send_chls);
+                
+                timer.setTimePoint("after run_osn");
+                all_timer.setTimePoint("after run_osn");
+// block change   timer.setTimePoint("block_set -> set");
+                APSU_LOG_INFO("receiver"<<timer);
+                all_timer.setTimePoint("block_set -> set");
+                send_size=0,receiver_size =0;
+                for(auto x: send_chls){
+                    send_size+=x.getTotalDataSent();
+                    receiver_size+=x.getTotalDataRecv();
+                }
+                send_session.stop();
+                
+                for(auto x: receiver_share){
+                    mpoprf_in.emplace_back(block_oc_to_std(x));
+                }
+                size_t padding = 128-mpoprf_in.size()%128;
+                for(int i = 0;i<padding;i++)
+                    mpoprf_in.emplace_back(Block::zero_block);
+            }
+            // mp-oprf 
+            Block::PrintBlocks(mpoprf_in);
+            std::vector<std::string> mpoprf_recv;
+            {
+             
+                Global_Setup(); 
+        	    Context_Initialize(); 
+                ECGroup_Initialize(NID_X9_62_prime256v1); 
+                NetIO server("server", "", 59999);
+                size_t set_size = mpoprf_in.size();
+                size_t log_set_size=int(log2(set_size)+1);
+
+                std::cout<<set_size<<std::endl;
+                std::cout<<log_set_size<<std::endl;
+                std::string pp_filename = "MPOPRF.pp"; 
+                MPOPRF::PP pp; 
+                
+                pp = MPOPRF::Setup(log_set_size);
+                // if(!FileExist(pp_filename)){
+                //     pp = MPOPRF::Setup(log_set_size); // 40 is the statistical parameter
+                //     MPOPRF::SavePP(pp, pp_filename); 
+                // }
+                // else{
+                //     MPOPRF::FetchPP(pp, pp_filename); 
+                // }
+                
+                
+              //  NetIO server("server", "", 59998);
+
+                mpoprf_out = MPOPRF::Receive(server,pp,mpoprf_in);
+               // APSU_LOG_INFO(pp.H2_OUTPUT_LEN);
+                mpoprf_recv.assign(shuffle_size,std::string(pp.H2_OUTPUT_LEN,'0'));
+               
+                for(int i = 0;i<shuffle_size;i++){
+                    //  APSU_LOG_INFO(i);
+                    server.ReceiveString(mpoprf_recv[i]);
+                    //  APSU_LOG_INFO(mpoprf_recv[i]);
+
+                }
+                ECGroup_Finalize(); 
+                Context_Finalize();
+            }
+            
+            // generate ans;
+            {
+
+            for(size_t cache_idx = 0;cache_idx<max_bin_bundle_conut_alpha;cache_idx++){
+                for(size_t item_idx = 0;item_idx<item_cnt;item_idx++){
+                    // cout<<mpoprf_out[cache_idx*item_cnt+item_idx].length()<<endl;
+                    // cout<<mpoprf_recv[cache_idx*item_cnt+item_idx].length()<<endl;
+
+                    if(mpoprf_out[cache_idx*item_cnt+item_idx].compare(mpoprf_recv[cache_idx*item_cnt+item_idx])==0) ans.emplace_back(item_idx);
+                }
+            }
+            APSU_LOG_INFO("ans size"<<ans.size());
+            for(auto x: ans)
+                cout<<x<<endl;
+            }
+
             cout<<"pack_cnt"<<pack_cnt<<endl;
             all_timer.setTimePoint("ProcessBinBundleCache finished");
             APSU_LOG_INFO("Finished processing query request");
+            RunOT();
         }
 
         void Sender::ComputePowers(
@@ -571,6 +650,7 @@ namespace apsu {
             uint32_t bundle_idx,
             compr_mode_type compr_mode,
             MemoryPoolHandle &pool,
+            uint32_t cache_idx,
             uint32_t pack_idx
             )
         {
@@ -579,7 +659,7 @@ namespace apsu {
             // Package for the result data
             auto rp = make_unique<ResultPackage>();
             rp->compr_mode = compr_mode;
-            rp->pack_idx = pack_idx;
+            rp->cache_idx = cache_idx;
             rp->bundle_idx = bundle_idx;
             rp->nonce_byte_count = safe_cast<uint32_t>(sender_db->get_nonce_byte_count());
             rp->label_byte_count = safe_cast<uint32_t>(sender_db->get_label_byte_count());
@@ -656,8 +736,8 @@ namespace apsu {
                 size_t table_idx = add_safe(get<1>(I), bundle_start);
              
               //  cout  << " " <<"match" << table_idx << endl;
-                ans.push_back(table_idx);
-                //APSU_LOG_INFO(ans.size());
+               // ans.push_back(table_idx);
+                APSU_LOG_INFO(ans.size());
             });
             all_timer.setTimePoint("RunResponse finish");
              cout<<all_timer<<endl;
@@ -673,8 +753,6 @@ namespace apsu {
             oc::Session send_session=oc::Session(ios,"localhost:59999",oc::SessionMode::Server);
             std::vector<oc::Channel> send_chls(numThreads);
             
-
-            
             osuCrypto::PRNG prng(osuCrypto::sysRandomSeed());
             
             for (int i = 0; i < numThreads; ++i)
@@ -688,6 +766,7 @@ namespace apsu {
             cout<<"++++++++++++++"<<endl;
             cout<<hex<<item_cnt<<endl;
             osuCrypto::BitVector choices(item_cnt);
+            APSU_LOG_INFO(ans.size());
             for(auto i : ans){
                 choices[i] = 1;
             }
@@ -704,15 +783,15 @@ namespace apsu {
 
                 if(i == oc::ZeroBlock) continue;
                 stringstream ss;
-                ss<<i.as<uint8_t>().data();
-                fout<<ss.str().substr(0,16)<<endl;
+                ss<<i.as<char>().data();
+                fout<<ss.str().substr(1,15)<<endl;
             }
             
            
             all_timer.setTimePoint("RunOT finish");
             cout<<all_timer<<endl;
-            APSU_LOG_INFO("send_com_size ps"<<send_size/1024<<"KB");
-            APSU_LOG_INFO("recv_com_size ps"<<receiver_size/1024<<"KB");
+            //APSU_LOG_INFO("send_com_size ps"<<send_size/1024<<"KB");
+            //APSU_LOG_INFO("recv_com_size ps"<<receiver_size/1024<<"KB");
             APSU_LOG_INFO("OT send_com_size ps"<<send_chls[0].getTotalDataSent()/1024<<"KB");
             APSU_LOG_INFO("OT recv_com_size ps"<<send_chls[0].getTotalDataRecv()/1024<<"KB");
             all_timer.reset();

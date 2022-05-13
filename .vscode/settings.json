@@ -104,7 +104,13 @@
         "typeindex": "cpp",
         "valarray": "cpp",
         "variant": "cpp",
-        "fourq_internal.h": "c"
+        "fourq_internal.h": "c",
+        "*.tcc": "cpp",
+        "string_view": "cpp",
+        "rope": "cpp",
+        "slist": "cpp",
+        "numbers": "cpp",
+        "semaphore": "cpp"
     },
     "C_Cpp.errorSquiggles": "Enabled"
 }

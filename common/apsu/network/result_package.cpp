@@ -60,7 +60,7 @@ namespace apsu {
 
             fbs::ResultPackageBuilder rp_builder(fbs_builder);
             rp_builder.add_bundle_idx(bundle_idx);
-            rp_builder.add_pack_idx(pack_idx);
+            rp_builder.add_cache_idx(cache_idx);
             rp_builder.add_psi_result(psi_ct);
             rp_builder.add_label_byte_count(label_byte_count);
             rp_builder.add_nonce_byte_count(nonce_byte_count);
@@ -104,7 +104,7 @@ namespace apsu {
             auto rp = fbs::GetSizePrefixedResultPackage(in_data.data());
 
             bundle_idx = rp->bundle_idx();
-            pack_idx = rp->pack_idx();
+            cache_idx = rp->cache_idx();
             // Load psi_result
             const auto &psi_ct = *rp->psi_result();
             gsl::span<const unsigned char> psi_ct_span(
