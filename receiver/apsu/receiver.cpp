@@ -359,7 +359,7 @@ namespace apsu {
                 itt.table_idx_to_item_idx_[temp_loc] = item_idx;
                // sendMessages[temp_loc]={oc::ZeroBlock,oc::toBlock((uint8_t*)origin_item[item_idx].data())};
                 sendMessages[temp_loc]={oc::toBlock((uint8_t*)origin_item[item_idx].data()),oc::ZeroBlock};
-                APSU_LOG_INFO(sendMessages[temp_loc][0].as<char>().data());
+              //  APSU_LOG_INFO(sendMessages[temp_loc][0].as<char>().data());
                // cout<<(int)sendMessages[temp_loc][0].as<char>()[0]<<endl;
             }
 
@@ -528,7 +528,7 @@ namespace apsu {
             }
             vector<int> col_permutation;
             {
-                int numThreads=1;
+                int numThreads=2;
                 oc::IOService ios;
                 oc::Session recv_session=oc::Session(ios,"localhost:59999",oc::SessionMode::Client);
                 std::vector<oc::Channel> recv_chls(numThreads);
@@ -601,7 +601,7 @@ namespace apsu {
               //  APSU_LOG_INFO(mpoprf_out[i].size());
                 client.SendString(mpoprf_out[i]);
             }
-            APSU_LOG_INFO("test3");
+           // APSU_LOG_INFO("test3");
             ECGroup_Finalize(); 
             Context_Finalize();
 
@@ -956,16 +956,18 @@ namespace apsu {
             int recv_num = recv_chls[0].getTotalDataRecv();
             int send_num = recv_chls[0].getTotalDataSent();
 
-         //   APSU_LOG_INFO("send_com_size ps"<<send_size/1024<<"KB");
-         //   APSU_LOG_INFO("recv_com_size ps"<<receiver_size/1024<<"KB");
+            APSU_LOG_INFO("send_com_size ps"<<send_size/1024<<"KB");
+            APSU_LOG_INFO("recv_com_size ps"<<receiver_size/1024<<"KB");
             APSU_LOG_INFO("OT send_com_size ps"<<send_num/1024<<"KB");
             APSU_LOG_INFO("OT recv_com_size ps"<<recv_num/1024<<"KB");
             all_timer.setTimePoint("response OT finish");
 
             cout<<all_timer<<endl;
+            cout<<0<<endl;
             all_timer.reset();
-        
+            cout<<1<<endl;
             recv_session.stop();
+            cout<<2<<endl;
         }
     } // namespace receiver
 } // namespace apsu

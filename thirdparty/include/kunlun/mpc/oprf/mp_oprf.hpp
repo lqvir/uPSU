@@ -24,7 +24,7 @@
 
 #ifndef KUNLUN_MPOPRF_HPP_
 #define KUNLUN_MPOPRF_HPP_
-
+#define THREAD_NUM 4
 #include "../ot/naor_pinkas_ot.hpp"
 
 namespace MPOPRF{
@@ -124,7 +124,7 @@ namespace MPOPRF{
         std::vector<std::vector<uint8_t>> hash_output(set_size, std::vector<uint8_t>(H1_OUTPUT_LEN));
         std::vector<block> temp_block(set_size);
 
-        #pragma omp parallel for
+        #pragma omp parallel for num_threads(THREAD_NUM) 
 		for (auto i = 0; i < set_size; i++) {
 			BasicHash((uint8_t*)(set.data() + i), sizeof(block), hash_output[i].data());
 			// H(x) = (x_0 || x_1)		
@@ -137,7 +137,7 @@ namespace MPOPRF{
         AES::FastECBEnc(seed.aes_key, temp_block.data(), set_size);
 
         // compute [G(x_0) xor x_1]
-        #pragma omp parallel for
+        #pragma omp parallel for num_threads(THREAD_NUM) 
         for (auto i = 0; i < set_size; i++)
         {
             hash_set[i] = temp_block[i] ^ set[i];
@@ -210,7 +210,7 @@ namespace MPOPRF{
             std::vector<uint8_t> rev_matrix_B(split_bucket_size * matrix_height_byte);
             io.ReceiveBytes(rev_matrix_B.data(), bucket_size * matrix_height_byte);
 
-            #pragma omp parallel for
+            #pragma omp parallel for num_threads(THREAD_NUM) 
 			for (auto i = 0; i < bucket_size; i++)
 			{
                 PRG::ReSeed(temp_seed[i], &vec_K[left_index + i], 0);
@@ -218,7 +218,7 @@ namespace MPOPRF{
 
 				if (vec_selection_bit[left_index + i])
 				{
-                    #pragma omp parallel for
+                    #pragma omp parallel for num_threads(THREAD_NUM) 
 					for (auto j = 0; j < matrix_height_byte; j++)
 					{
 						matrix_C[left_index + i][j] ^= rev_matrix_B[i * matrix_height_byte + j];
@@ -281,7 +281,7 @@ namespace MPOPRF{
 			}
 
             // compute mapping values from the oprfkey (compute (C1[v[1]] || ... || Cw[v[w]]) in page 9 figure 3 item3-(b))
-            #pragma omp parallel for
+            #pragma omp parallel for num_threads(THREAD_NUM) 
             for (auto i = 0; i < bucket_size; i++)
 			{
 				for (auto j = 0; j < set_size; j++)
@@ -365,7 +365,7 @@ namespace MPOPRF{
 			}
 
             // initialize a all one matrix_D
-            #pragma omp parallel for
+            #pragma omp parallel for num_threads(THREAD_NUM) 
             for (auto i = 0; i < split_bucket_size; i++)
 			{
 				memset(matrix_D[i].data(), 255, matrix_height_byte);
@@ -409,7 +409,7 @@ namespace MPOPRF{
 
             
             /* step3-4: compute mapping values from matrix A (compute (A1[v[1]] || ... || Aw[v[w]]) in page 9 figure 3 item3-(c)) */ 
-            #pragma omp parallel for
+            #pragma omp parallel for num_threads(THREAD_NUM) 
             for (auto i = 0; i < bucket_size; i++)
 			{
 				for (auto j = 0; j < set_size; j++)
