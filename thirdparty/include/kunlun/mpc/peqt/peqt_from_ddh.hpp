@@ -9,7 +9,7 @@
 #include "../../utility/serialization.hpp"
 #include "../../netio/stream_channel.hpp"
 
-
+#define THREAD_NUM 4
 /*
 ** implement DDH-based PEQT based on DDH-based OPRF
 */
@@ -27,7 +27,7 @@ std::vector<uint64_t> Send(NetIO &io, std::vector<block> &vec_Y, size_t ROW_NUM,
     }
 
     BigInt k = GenRandomBigIntLessThan(order); // pick a key k
- std::cout<<"??????"<<std::endl;
+
     std::vector<uint64_t> row_map(ROW_NUM);
     for(auto i = 0; i < ROW_NUM; i++) row_map[i] = i; 
     std::random_shuffle(row_map.begin(), row_map.end()); 
@@ -45,7 +45,7 @@ std::vector<uint64_t> Send(NetIO &io, std::vector<block> &vec_Y, size_t ROW_NUM,
     }
 
     std::vector<ECPoint> vec_Fk_permuted_Y(LEN);
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(THREAD_NUM)
     for(auto i = 0; i < LEN; i++){
         vec_Fk_permuted_Y[permutation_map[i]] = Hash::ThreadSafeBlockToECPoint(vec_Y[i]).ThreadSafeMul(k); 
     }
@@ -63,7 +63,7 @@ std::vector<uint64_t> Send(NetIO &io, std::vector<block> &vec_Y, size_t ROW_NUM,
 
 
     std::vector<ECPoint> vec_Fk_permuted_mask_X(LEN);
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(THREAD_NUM)
     for(auto i = 0; i < LEN; i++){
         vec_Fk_permuted_mask_X[permutation_map[i]] = vec_mask_X[i].ThreadSafeMul(k); 
     }
@@ -98,9 +98,9 @@ std::vector<uint8_t> Receive(NetIO &io, std::vector<block> &vec_X, size_t ROW_NU
     auto start_time = std::chrono::steady_clock::now(); 
 
     BigInt r = GenRandomBigIntLessThan(order); // pick a key
-std::cout<<"??????"<<std::endl;
+
     std::vector<ECPoint> vec_mask_X(LEN); 
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(THREAD_NUM)
     for(auto i = 0; i < LEN; i++){
         vec_mask_X[i] = Hash::ThreadSafeBlockToECPoint(vec_X[i]).ThreadSafeMul(r); 
     } 
@@ -122,7 +122,7 @@ std::cout<<"??????"<<std::endl;
 
     std::vector<uint8_t> vec_result(LEN);
     BigInt r_inverse = r.ModInverse(order); 
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(THREAD_NUM)
     for(auto i = 0; i < LEN; i++){
         vec_result[i] = vec_Fk_permuted_Y[i].ThreadSafeCompareTo(vec_Fk_permuted_mask_X[i].ThreadSafeMul(r_inverse)); 
     }
