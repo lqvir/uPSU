@@ -24,7 +24,7 @@
 
 #ifndef KUNLUN_MPOPRF_HPP_
 #define KUNLUN_MPOPRF_HPP_
-#define THREAD_NUM 4
+#define THREAD_NUM 8
 #include "../ot/naor_pinkas_ot.hpp"
 
 namespace MPOPRF{

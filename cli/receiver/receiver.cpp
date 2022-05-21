@@ -142,8 +142,8 @@ int remote_query(const CLP &cmd)
         APSU_LOG_WARNING("Failed sending APSU query: " << ex.what());
         return -1;
     }
-   // print_transmitted_data(channel);
-   // print_timing_report(recv_stopwatch);
+   print_transmitted_data(channel);
+   print_timing_report(recv_stopwatch);
     try {
         APSU_LOG_INFO("Sending OT response");
         receiver.ResponseOT(cmd.net_addr());
@@ -157,11 +157,11 @@ int remote_query(const CLP &cmd)
     }
 
     //print_intersection_results(orig_items, items_vec, query_result, cmd.output_file());
-    cout<<3<<endl;
+
     print_transmitted_data(channel);
-    cout<<4<<endl;
+  
     print_timing_report(recv_stopwatch);
-    cout<<5<<endl;
+   
     return 0;
 }
 
