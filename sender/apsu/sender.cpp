@@ -439,7 +439,7 @@ namespace apsu {
                 APSU_LOG_INFO("size"<<shuffle_size<<"==============");
                
                 all_timer.setTimePoint("random gen finish");
-                int numThreads=2;
+                int numThreads=1;
                 osuCrypto::IOService ios;
                 
                 oc::Session send_session=oc::Session(ios,"localhost:59999",oc::SessionMode::Server);
@@ -794,14 +794,13 @@ namespace apsu {
             fout.close();
             all_timer.setTimePoint("RunOT finish");
             cout<<all_timer<<endl;
-            APSU_LOG_INFO("send_com_size ps"<<send_size/1024<<"KB");
-            APSU_LOG_INFO("recv_com_size ps"<<receiver_size/1024<<"KB");
+            //APSU_LOG_INFO("send_com_size ps"<<send_size/1024<<"KB");
+            //APSU_LOG_INFO("recv_com_size ps"<<receiver_size/1024<<"KB");
             APSU_LOG_INFO("OT send_com_size ps"<<send_chls[0].getTotalDataSent()/1024<<"KB");
             APSU_LOG_INFO("OT recv_com_size ps"<<send_chls[0].getTotalDataRecv()/1024<<"KB");
             all_timer.reset();
-            send_chls.clear();
+             send_chls.clear();
             send_session.stop();
-            cout<<1<<endl;
         }
 
     } // namespace sender

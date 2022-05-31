@@ -23,7 +23,7 @@
 #include "common/csv_reader.h"
 #include "sender/clp.h"
 #include "sender/sender_utils.h"
-
+#include <chrono>
 
 using namespace std;
 #if defined(__GNUC__) && (__GNUC__ < 8) && !defined(__clang__)
@@ -140,6 +140,7 @@ bool try_save_sender_db(const CLP &cmd, shared_ptr<SenderDB> sender_db)
 
 int start_sender(const CLP &cmd)
 {
+    auto start_time = std::chrono::steady_clock::now();
     ThreadPoolMgr::SetThreadCount(cmd.threads());
     APSU_LOG_INFO("Setting thread count to " << ThreadPoolMgr::GetThreadCount());
     signal(SIGINT, sigint_handler);
@@ -181,7 +182,9 @@ int start_sender(const CLP &cmd)
     atomic<bool> stop = false;
     Sender sender;
     ZMQSenderDispatcher dispatcher(sender_db, sender);
-
+    auto end_time = std::chrono::steady_clock::now();
+    auto running_time = end_time-start_time;
+	std::cout<<"\n\n\nall time"<<std::chrono::duration<double,std::milli> (running_time).count()<<std::endl<<std::endl<<std::endl;
     // The dispatcher will run until stopped.
     dispatcher.run(stop, cmd.net_port());
     print_timing_report(sender_stopwatch);

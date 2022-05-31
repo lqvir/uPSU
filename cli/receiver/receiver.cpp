@@ -77,6 +77,8 @@ int main(int argc, char *argv[])
 
 int remote_query(const CLP &cmd)
 {
+
+    auto start_time = std::chrono::steady_clock::now();
     // Connect to the network
     ZMQReceiverChannel channel;
 
@@ -156,11 +158,9 @@ int remote_query(const CLP &cmd)
         return -1;
     }
 
-    //print_intersection_results(orig_items, items_vec, query_result, cmd.output_file());
-
-    print_transmitted_data(channel);
-  
-    print_timing_report(recv_stopwatch);
+    auto end_time = std::chrono::steady_clock::now();
+    auto running_time = end_time-start_time;
+	std::cout<<"\n\n\nall time"<<std::chrono::duration<double,std::milli> (running_time).count()<<std::endl;
    
     return 0;
 }
