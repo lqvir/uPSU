@@ -13,8 +13,8 @@
 // APSU
 #include "apsu/network/network_channel.h"
 #include "apsu/network/result_package.h"
-#include "apsu/network/sender_operation.h"
-#include "apsu/network/sender_operation_response.h"
+#include "apsu/network/receiver_operation.h"
+#include "apsu/network/receiver_operation_response.h"
 
 namespace zmq {
     class socket_t;
@@ -28,19 +28,19 @@ enum class socket_type;
 namespace apsu {
     namespace network {
         /**
-        Encapsulates a SenderOperation and a client identifier used internally by ZeroMQ.
+        Encapsulates a ReceiverOperation and a client identifier used internally by ZeroMQ.
         */
-        struct ZMQSenderOperation {
-            std::unique_ptr<SenderOperation> sop;
+        struct ZMQReceiverOperation {
+            std::unique_ptr<ReceiverOperation> rop;
 
             std::vector<unsigned char> client_id;
         };
 
         /**
-        Encapsulates a SenderOperationResponse and a client identifier used internally by ZeroMQ.
+        Encapsulates a ReceiverOperationResponse and a client identifier used internally by ZeroMQ.
         */
-        struct ZMQSenderOperationResponse {
-            std::unique_ptr<SenderOperationResponse> sop_response;
+        struct ZMQReceiverOperationResponse {
+            std::unique_ptr<ReceiverOperationResponse> rop_response;
 
             std::vector<unsigned char> client_id;
         };
@@ -56,12 +56,12 @@ namespace apsu {
 
         /**
         ZMQChannel is a communication channel between a sender and a receiver implemented using
-        ZeroMQ. All receives are synchronous, except for receiving a SenderOperation. All sends are
+        ZeroMQ. All receives are synchronous, except for receiving a ReceiverOperation. All sends are
         asynchronous.
 
         ZeroMQ uses an identifier number for internal package routing, which is why the ZMQChannel
-        operates on custom ZMQSenderOperation, ZMQSenderOperationResponse, and ZMQResultPackage
-        objects rather than the underlying SenderOperation, SenderOperationResponse, and
+        operates on custom ZMQReceiverOperation, ZMQReceiverOperationResponse, and ZMQResultPackage
+        objects rather than the underlying ReceiverOperation, ReceiverOperationResponse, and
         ResultPackage.
 
         ZMQChannel is an interface class and is implemented by the ZMQSenderChannel and
@@ -109,58 +109,58 @@ namespace apsu {
             }
 
             /**
-            Send a SenderOperation from a receiver to a sender. These operations represent either a
+            Send a ReceiverOperation from a receiver to a sender. These operations represent either a
             parameter request, an OPRF request, or a query request. The function throws an exception
             on failure.
             */
-            void send(std::unique_ptr<SenderOperation> sop) override;
+            void send(std::unique_ptr<ReceiverOperation> rop) override;
 
             /**
-            Receive a ZMQSenderOperation from a receiver. Operations of type sop_query and
-            sop_unknown require a valid seal::SEALContext to be provided. For operations of type
-            sop_parms and sop_oprf the context can be set as nullptr. The function returns nullptr
+            Receive a ZMQReceiverOperation from a receiver. Operations of type rop_query and
+            rop_unknown require a valid seal::SEALContext to be provided. For operations of type
+            rop_parms and rop_oprf the context can be set as nullptr. The function returns nullptr
             on failure. This call does not block if wait_for_message is false: if there is no
             operation pending, it will immediately return nullptr.
             */
-            virtual std::unique_ptr<ZMQSenderOperation> receive_network_operation(
+            virtual std::unique_ptr<ZMQReceiverOperation> receive_network_operation(
                 std::shared_ptr<seal::SEALContext> context,
                 bool wait_for_message,
-                SenderOperationType expected = SenderOperationType::sop_unknown);
+                ReceiverOperationType expected = ReceiverOperationType::rop_unknown);
 
             /**
-            Receive a ZMQSenderOperation from a receiver. Operations of type sop_query and
-            sop_unknown require a valid seal::SEALContext to be provided. For operations of type
-            sop_parms and sop_oprf the context can be set as nullptr. The function returns nullptr
+            Receive a ZMQReceiverOperation from a receiver. Operations of type rop_query and
+            rop_unknown require a valid seal::SEALContext to be provided. For operations of type
+            rop_parms and rop_oprf the context can be set as nullptr. The function returns nullptr
             on failure. This call does not block: if there is no operation pending, it will
             immediately return nullptr.
             */
-            virtual std::unique_ptr<ZMQSenderOperation> receive_network_operation(
+            virtual std::unique_ptr<ZMQReceiverOperation> receive_network_operation(
                 std::shared_ptr<seal::SEALContext> context,
-                SenderOperationType expected = SenderOperationType::sop_unknown)
+                ReceiverOperationType expected = ReceiverOperationType::rop_unknown)
             {
                 return receive_network_operation(std::move(context), false, expected);
             }
 
             /**
-            Send a ZMQSenderOperationResponse from a sender to a receiver. These operations
+            Send a ZMQReceiverOperationResponse from a sender to a receiver. These operations
             represent a response to either a parameter request, an OPRF request, or a query request.
             The function throws and exception on failure. The sender is expected to manually read
-            the client identifier from the received ZMQSenderOperation and use the same client
-            identifier in the ZMQSenderOperationResponse.
+            the client identifier from the received ZMQReceiverOperation and use the same client
+            identifier in the ZMQReceiverOperationResponse.
             */
-            virtual void send(std::unique_ptr<ZMQSenderOperationResponse> sop_response);
+            virtual void send(std::unique_ptr<ZMQReceiverOperationResponse> rop_response);
 
             /**
-            Receive a SenderOperationResponse from a sender. The function returns nullptr on
+            Receive a ReceiverOperationResponse from a sender. The function returns nullptr on
             failure.
             */
-            std::unique_ptr<SenderOperationResponse> receive_response(
-                SenderOperationType expected = SenderOperationType::sop_unknown) override;
+            std::unique_ptr<ReceiverOperationResponse> receive_response(
+                ReceiverOperationType expected = ReceiverOperationType::rop_unknown) override;
 
             /**
             Send a ZMQResultPackage to a receiver. The function throws and exception on failure. The
             sender is expected to manually read the client identifier from the received
-            ZMQSenderOperation and use the same client identifier in the ZMQResultPackage.
+            ZMQReceiverOperation and use the same client identifier in the ZMQResultPackage.
             */
             virtual void send(std::unique_ptr<ZMQResultPackage> rp);
 
@@ -174,15 +174,15 @@ namespace apsu {
             /**
             Do not use this function. Use ZMQChannel::receive_network_operation instead.
             */
-            std::unique_ptr<SenderOperation> receive_operation(
+            std::unique_ptr<ReceiverOperation> receive_operation(
                 std::shared_ptr<seal::SEALContext> context,
-                SenderOperationType expected = SenderOperationType::sop_unknown) override;
+                ReceiverOperationType expected = ReceiverOperationType::rop_unknown) override;
 
             /**
             Do not use this function. Use
-            ZMQChannel::send(std::unique_ptr<ZMQSenderOperationResponse>) instead.
+            ZMQChannel::send(std::unique_ptr<ZMQReceiverOperationResponse>) instead.
             */
-            void send(std::unique_ptr<SenderOperationResponse> sop_response) override;
+            void send(std::unique_ptr<ReceiverOperationResponse> rop_response) override;
 
             /**
             Do not use this function. Use ZMQChannel::send(std::unique_ptr<ZMQResultPackage>)

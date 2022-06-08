@@ -11,8 +11,8 @@
 #include "apsu/fourq/random.h"
 #include "apsu/log.h"
 #include "apsu/network/result_package_generated.h"
-#include "apsu/network/sop_generated.h"
-#include "apsu/network/sop_header_generated.h"
+#include "apsu/network/rop_generated.h"
+#include "apsu/network/rop_header_generated.h"
 #include "apsu/network/zmq/zmq_channel.h"
 #include "apsu/util/utils.h"
 
@@ -156,49 +156,52 @@ namespace apsu {
             }
         }
 
-        void ZMQChannel::send(unique_ptr<SenderOperation> sop)
+        void ZMQChannel::send(unique_ptr<ReceiverOperation> rop)
         {
             throw_if_not_connected();
 
-            // Need to have the SenderOperation package
-            if (!sop) {
+            // Need to have the ReceiverOperation package
+            if (!rop) {
                 APSU_LOG_ERROR("Failed to send operation: operation data is missing");
                 throw invalid_argument("operation data is missing");
             }
 
             // Construct the header
-            SenderOperationHeader sop_header;
-            sop_header.type = sop->type();
+            ReceiverOperationHeader rop_header;
+            rop_header.type = rop->type();
             APSU_LOG_DEBUG(
-                "Sending operation of type " << sender_operation_type_str(sop_header.type));
+                "Sending operation of type " << receiver_operation_type_str(rop_header.type));
 
             size_t bytes_sent = 0;
 
             multipart_t msg;
+            
+            bytes_sent += save_to_message(rop_header, msg);
+            
 
-            bytes_sent += save_to_message(sop_header, msg);
-            bytes_sent += save_to_message(*sop, msg);
+            bytes_sent += save_to_message(*rop, msg);
+            
 
             send_message(msg);
             bytes_sent_ += bytes_sent;
 
             APSU_LOG_DEBUG(
-                "Sent an operation of type " << sender_operation_type_str(sop_header.type) << " ("
+                "Sent an operation of type " << receiver_operation_type_str(rop_header.type) << " ("
                                              << bytes_sent << " bytes)");
         }
 
-        unique_ptr<ZMQSenderOperation> ZMQChannel::receive_network_operation(
-            shared_ptr<SEALContext> context, bool wait_for_message, SenderOperationType expected)
+        unique_ptr<ZMQReceiverOperation> ZMQChannel::receive_network_operation(
+            shared_ptr<SEALContext> context, bool wait_for_message, ReceiverOperationType expected)
         {
             throw_if_not_connected();
 
             bool valid_context = context && context->parameters_set();
-            if (!valid_context && (expected == SenderOperationType::sop_unknown ||
-                                   expected == SenderOperationType::sop_query)) {
+            if (!valid_context && (expected == ReceiverOperationType::rop_unknown ||
+                                   expected == ReceiverOperationType::rop_query)) {
                 // Cannot receive unknown or query operations without a valid SEALContext
                 APSU_LOG_ERROR(
                     "Cannot receive an operation of type "
-                    << sender_operation_type_str(expected)
+                    << receiver_operation_type_str(expected)
                     << "; SEALContext is missing or invalid");
                 return nullptr;
             }
@@ -210,8 +213,8 @@ namespace apsu {
                 // No message yet. Don't log anything.
                 return nullptr;
             }
-
-            // Should have client_id, SenderOperationHeader, and SenderOperation.
+           
+            // Should have client_id, ReceiverOperationHeader, and ReceiverOperation.
             if (msg.size() != 3) {
                 APSU_LOG_ERROR(
                     "ZeroMQ received a message with " << msg.size()
@@ -222,31 +225,31 @@ namespace apsu {
             // First extract the client_id; this is the first part of the message
             vector<unsigned char> client_id = get_client_id(msg);
 
-            // Second part is the SenderOperationHeader
-            SenderOperationHeader sop_header;
+            // Second part is the ReceiverOperationHeader
+            ReceiverOperationHeader rop_header;
             try {
-                bytes_received_ += load_from_string(msg[1].to_string(), sop_header);
+                bytes_received_ += load_from_string(msg[1].to_string(), rop_header);
             } catch (const runtime_error &) {
                 // Invalid header
                 APSU_LOG_ERROR("Failed to receive a valid header");
                 return nullptr;
             }
 
-            if (!same_serialization_version(sop_header.version)) {
+            if (!same_serialization_version(rop_header.version)) {
                 // Check that the serialization version numbers match
                 APSU_LOG_ERROR(
                     "Received header indicates a serialization version number ("
-                    << sop_header.version
+                    << rop_header.version
                     << ") incompatible with the current serialization version number ("
                     << apsu_serialization_version << ")");
                 return nullptr;
             }
 
-            if (expected != SenderOperationType::sop_unknown && expected != sop_header.type) {
+            if (expected != ReceiverOperationType::rop_unknown && expected != rop_header.type) {
                 // Unexpected operation
                 APSU_LOG_ERROR(
                     "Received header indicates an unexpected operation type "
-                    << sender_operation_type_str(sop_header.type));
+                    << receiver_operation_type_str(rop_header.type));
                 return nullptr;
             }
 
@@ -254,35 +257,35 @@ namespace apsu {
             size_t bytes_received = 0;
 
             // Return value
-            unique_ptr<SenderOperation> sop = nullptr;
+            unique_ptr<ReceiverOperation> rop = nullptr;
 
             try {
-                switch (static_cast<SenderOperationType>(sop_header.type)) {
-                case SenderOperationType::sop_parms:
-                    sop = make_unique<SenderOperationParms>();
-                    bytes_received = load_from_string(msg[2].to_string(), *sop);
+                switch (static_cast<ReceiverOperationType>(rop_header.type)) {
+                case ReceiverOperationType::rop_parms:
+                    rop = make_unique<ReceiverOperationParms>();
+                    bytes_received = load_from_string(msg[2].to_string(), *rop);
                     bytes_received_ += bytes_received;
                     break;
-                case SenderOperationType::sop_oprf:
-                    sop = make_unique<SenderOperationOPRF>();
-                    bytes_received = load_from_string(msg[2].to_string(), *sop);
+                case ReceiverOperationType::rop_oprf:
+                    rop = make_unique<ReceiverOperationOPRF>();
+                    bytes_received = load_from_string(msg[2].to_string(), *rop);
                     bytes_received_ += bytes_received;
                     break;
-                case SenderOperationType::sop_query:
-                    sop = make_unique<SenderOperationQuery>();
-                    bytes_received = load_from_string(msg[2].to_string(), move(context), *sop);
+                case ReceiverOperationType::rop_query:
+                    rop = make_unique<ReceiverOperationQuery>();
+                    bytes_received = load_from_string(msg[2].to_string(), move(context), *rop);
                     bytes_received_ += bytes_received;
                     break;
-                case SenderOperationType::sop_response:
-                    sop = make_unique<plainResponse>();
-                    bytes_received = load_from_string(msg[2].to_string(), *sop);
+                case ReceiverOperationType::rop_response:
+                    rop = make_unique<plainResponse>();
+                    bytes_received = load_from_string(msg[2].to_string(), *rop);
                     bytes_received_ += bytes_received;
                     break;
                 default:
                     // Invalid operation
                     APSU_LOG_ERROR(
                         "Received header indicates an invalid operation type "
-                        << sender_operation_type_str(sop_header.type));
+                        << receiver_operation_type_str(rop_header.type));
                     return nullptr;
                 }
             } catch (const invalid_argument &ex) {
@@ -293,71 +296,71 @@ namespace apsu {
                 return nullptr;
             }
 
-            // Loaded successfully; set up ZMQSenderOperation package
-            auto n_sop = make_unique<ZMQSenderOperation>();
-            n_sop->client_id = move(client_id);
-            n_sop->sop = move(sop);
+            // Loaded successfully; set up ZMQReceiverOperation package
+            auto n_rop = make_unique<ZMQReceiverOperation>();
+            n_rop->client_id = move(client_id);
+            n_rop->rop = move(rop);
 
             APSU_LOG_DEBUG(
-                "Received an operation of type " << sender_operation_type_str(sop_header.type)
+                "Received an operation of type " << receiver_operation_type_str(rop_header.type)
                                                  << " (" << bytes_received_ - old_bytes_received
                                                  << " bytes)");
 
-            return n_sop;
+            return n_rop;
         }
 
-        unique_ptr<SenderOperation> ZMQChannel::receive_operation(
-            shared_ptr<SEALContext> context, SenderOperationType expected)
+        unique_ptr<ReceiverOperation> ZMQChannel::receive_operation(
+            shared_ptr<SEALContext> context, ReceiverOperationType expected)
         {
             // Ignore the client_id
-            return move(receive_network_operation(move(context), expected)->sop);
+            return move(receive_network_operation(move(context), expected)->rop);
         }
 
-        void ZMQChannel::send(unique_ptr<ZMQSenderOperationResponse> sop_response)
+        void ZMQChannel::send(unique_ptr<ZMQReceiverOperationResponse> rop_response)
         {
             throw_if_not_connected();
 
-            // Need to have the SenderOperationResponse package
-            if (!sop_response) {
+            // Need to have the ReceiverOperationResponse package
+            if (!rop_response) {
                 APSU_LOG_ERROR("Failed to send response: response data is missing");
                 throw invalid_argument("response data is missing");
             }
 
             // Construct the header
-            SenderOperationHeader sop_header;
-            sop_header.type = sop_response->sop_response->type();
+            ReceiverOperationHeader rop_header;
+            rop_header.type = rop_response->rop_response->type();
             APSU_LOG_DEBUG(
-                "Sending response of type " << sender_operation_type_str(sop_header.type));
+                "Sending response of type " << receiver_operation_type_str(rop_header.type));
 
             size_t bytes_sent = 0;
 
             multipart_t msg;
 
             // Add the client_id as the first part
-            save_to_message(sop_response->client_id, msg);
+            save_to_message(rop_response->client_id, msg);
 
-            bytes_sent += save_to_message(sop_header, msg);
-            bytes_sent += save_to_message(*sop_response->sop_response, msg);
+            bytes_sent += save_to_message(rop_header, msg);
+            bytes_sent += save_to_message(*rop_response->rop_response, msg);
 
             send_message(msg);
             bytes_sent_ += bytes_sent;
 
             APSU_LOG_DEBUG(
-                "Sent an operation of type " << sender_operation_type_str(sop_header.type) << " ("
+                "Sent an operation of type " << receiver_operation_type_str(rop_header.type) << " ("
                                              << bytes_sent << " bytes)");
         }
 
-        void ZMQChannel::send(unique_ptr<SenderOperationResponse> sop_response)
+        void ZMQChannel::send(unique_ptr<ReceiverOperationResponse> rop_response)
         {
             // Leave the client_id empty
-            auto n_sop_response = make_unique<ZMQSenderOperationResponse>();
-            n_sop_response->sop_response = move(sop_response);
+            auto n_rop_response = make_unique<ZMQReceiverOperationResponse>();
+            n_rop_response->rop_response = move(rop_response);
 
-            send(move(n_sop_response));
+            send(move(n_rop_response));
         }
 
-        unique_ptr<SenderOperationResponse> ZMQChannel::receive_response(
-            SenderOperationType expected)
+        unique_ptr<ReceiverOperationResponse> ZMQChannel::receive_response(
+            ReceiverOperationType expected)
         {
             throw_if_not_connected();
 
@@ -369,7 +372,7 @@ namespace apsu {
                 return nullptr;
             }
 
-            // Should have SenderOperationHeader and SenderOperationResponse.
+            // Should have ReceiverOperationHeader and ReceiverOperationResponse.
             if (msg.size() != 2) {
                 APSU_LOG_ERROR(
                     "ZeroMQ received a message with " << msg.size()
@@ -377,31 +380,31 @@ namespace apsu {
                 throw runtime_error("invalid message received");
             }
 
-            // First part is the SenderOperationHeader
-            SenderOperationHeader sop_header;
+            // First part is the ReceiverOperationHeader
+            ReceiverOperationHeader rop_header;
             try {
-                bytes_received_ += load_from_string(msg[0].to_string(), sop_header);
+                bytes_received_ += load_from_string(msg[0].to_string(), rop_header);
             } catch (const runtime_error &) {
                 // Invalid header
                 APSU_LOG_ERROR("Failed to receive a valid header");
                 return nullptr;
             }
 
-            if (!same_serialization_version(sop_header.version)) {
+            if (!same_serialization_version(rop_header.version)) {
                 // Check that the serialization version numbers match
                 APSU_LOG_ERROR(
                     "Received header indicates a serialization version number "
-                    << sop_header.version
+                    << rop_header.version
                     << " incompatible with the current serialization version number "
                     << apsu_serialization_version);
                 return nullptr;
             }
 
-            if (expected != SenderOperationType::sop_unknown && expected != sop_header.type) {
+            if (expected != ReceiverOperationType::rop_unknown && expected != rop_header.type) {
                 // Unexpected operation
                 APSU_LOG_ERROR(
                     "Received header indicates an unexpected operation type "
-                    << sender_operation_type_str(sop_header.type));
+                    << receiver_operation_type_str(rop_header.type));
                 return nullptr;
             }
 
@@ -409,30 +412,30 @@ namespace apsu {
             size_t bytes_received = 0;
 
             // Return value
-            unique_ptr<SenderOperationResponse> sop_response = nullptr;
+            unique_ptr<ReceiverOperationResponse> rop_response = nullptr;
 
             try {
-                switch (static_cast<SenderOperationType>(sop_header.type)) {
-                case SenderOperationType::sop_parms:
-                    sop_response = make_unique<SenderOperationResponseParms>();
-                    bytes_received = load_from_string(msg[1].to_string(), *sop_response);
+                switch (static_cast<ReceiverOperationType>(rop_header.type)) {
+                case ReceiverOperationType::rop_parms:
+                    rop_response = make_unique<ReceiverOperationResponseParms>();
+                    bytes_received = load_from_string(msg[1].to_string(), *rop_response);
                     bytes_received_ += bytes_received;
                     break;
-                case SenderOperationType::sop_oprf:
-                    sop_response = make_unique<SenderOperationResponseOPRF>();
-                    bytes_received = load_from_string(msg[1].to_string(), *sop_response);
+                case ReceiverOperationType::rop_oprf:
+                    rop_response = make_unique<ReceiverOperationResponseOPRF>();
+                    bytes_received = load_from_string(msg[1].to_string(), *rop_response);
                     bytes_received_ += bytes_received;
                     break;
-                case SenderOperationType::sop_query:
-                    sop_response = make_unique<SenderOperationResponseQuery>();
-                    bytes_received = load_from_string(msg[1].to_string(), *sop_response);
+                case ReceiverOperationType::rop_query:
+                    rop_response = make_unique<ReceiverOperationResponseQuery>();
+                    bytes_received = load_from_string(msg[1].to_string(), *rop_response);
                     bytes_received_ += bytes_received;
                     break;
                 default:
                     // Invalid operation
                     APSU_LOG_ERROR(
                         "Received header indicates an invalid operation type "
-                        << sender_operation_type_str(sop_header.type));
+                        << receiver_operation_type_str(rop_header.type));
                     return nullptr;
                 }
             } catch (const runtime_error &ex) {
@@ -442,11 +445,11 @@ namespace apsu {
 
             // Loaded successfully
             APSU_LOG_DEBUG(
-                "Received a response of type " << sender_operation_type_str(sop_header.type) << " ("
+                "Received a response of type " << receiver_operation_type_str(rop_header.type) << " ("
                                                << bytes_received_ - old_bytes_received
                                                << " bytes)");
 
-            return sop_response;
+            return rop_response;
         }
 
         void ZMQChannel::send(unique_ptr<ZMQResultPackage> rp)
@@ -461,7 +464,7 @@ namespace apsu {
 
             APSU_LOG_DEBUG(
                 "Sending result package ("
-                << "has matching data: " << (rp->rp->psi_result ? "yes" : "no") << "; "
+                << "has matching data: " << (rp->rp->psu_result ? "yes" : "no") << "; "
                 << "label byte count: " << rp->rp->label_byte_count << "; "
                 << "nonce byte count: " << rp->rp->nonce_byte_count << "; "
                 << "has label data: " << (rp->rp->label_result.size() ? "yes" : "no") << ")");
@@ -549,6 +552,7 @@ namespace apsu {
                 APSU_LOG_ERROR("ZeroMQ failed to receive a message")
                 throw runtime_error("failed to receive message");
             }
+           
 
             return received;
         }
@@ -559,6 +563,8 @@ namespace apsu {
 
             send_result_t result = send_multipart(*get_socket(), msg, send_flags::none);
             bool sent = result.has_value();
+
+            
             if (!sent) {
                 throw runtime_error("failed to send message");
             }
@@ -574,12 +580,12 @@ namespace apsu {
             return socket_;
         }
 
-        zmq::socket_type ZMQReceiverChannel::get_socket_type()
+        zmq::socket_type ZMQSenderChannel::get_socket_type()
         {
             return zmq::socket_type::dealer;
         }
 
-        void ZMQReceiverChannel::set_socket_options(socket_t *socket)
+        void ZMQSenderChannel::set_socket_options(socket_t *socket)
         {
             // Ensure messages are not dropped
             socket->set(sockopt::rcvhwm, 70000);
@@ -593,12 +599,12 @@ namespace apsu {
             socket->set(sockopt::routing_id, buf);
         }
 
-        zmq::socket_type ZMQSenderChannel::get_socket_type()
+        zmq::socket_type ZMQReceiverChannel::get_socket_type()
         {
             return zmq::socket_type::router;
         }
 
-        void ZMQSenderChannel::set_socket_options(socket_t *socket)
+        void ZMQReceiverChannel::set_socket_options(socket_t *socket)
         {
             // Ensure messages are not dropped
             socket->set(sockopt::sndhwm, 70000);

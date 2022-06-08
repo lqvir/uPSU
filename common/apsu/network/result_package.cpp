@@ -11,7 +11,7 @@
 #include "apsu/log.h"
 #include "apsu/network/result_package.h"
 #include "apsu/network/result_package_generated.h"
-#include "apsu/network/sender_operation.h"
+#include "apsu/network/receiver_operation.h"
 #include "apsu/util/utils.h"
 
 // SEAL
@@ -35,11 +35,11 @@ namespace apsu {
             }
 
             vector<unsigned char> temp;
-            temp.resize(psi_result.save_size(compr_mode));
-            auto size = psi_result.save(temp, compr_mode);
-            auto psi_ct_data =
+            temp.resize(psu_result.save_size(compr_mode));
+            auto size = psu_result.save(temp, compr_mode);
+            auto psu_ct_data =
                 fbs_builder.CreateVector(reinterpret_cast<const uint8_t *>(temp.data()), size);
-            auto psi_ct = fbs::CreateCiphertext(fbs_builder, psi_ct_data);
+            auto psu_ct = fbs::CreateCiphertext(fbs_builder, psu_ct_data);
 
             // There may or may not be label data
             auto label_cts = fbs_builder.CreateVector([&]() {
@@ -61,7 +61,7 @@ namespace apsu {
             fbs::ResultPackageBuilder rp_builder(fbs_builder);
             rp_builder.add_bundle_idx(bundle_idx);
             rp_builder.add_cache_idx(cache_idx);
-            rp_builder.add_psi_result(psi_ct);
+            rp_builder.add_psu_result(psu_ct);
             rp_builder.add_label_byte_count(label_byte_count);
             rp_builder.add_nonce_byte_count(nonce_byte_count);
             rp_builder.add_label_result(label_cts);
@@ -89,7 +89,7 @@ namespace apsu {
             }
 
             // Clear the current data
-            psi_result.clear();
+            psu_result.clear();
             label_result.clear();
 
             vector<unsigned char> in_data(util::read_from_stream(in));
@@ -105,21 +105,21 @@ namespace apsu {
 
             bundle_idx = rp->bundle_idx();
             cache_idx = rp->cache_idx();
-            // Load psi_result
-            const auto &psi_ct = *rp->psi_result();
-            gsl::span<const unsigned char> psi_ct_span(
-                reinterpret_cast<const unsigned char *>(psi_ct.data()->data()),
-                psi_ct.data()->size());
+            // Load psu_result
+            const auto &psu_ct = *rp->psu_result();
+            gsl::span<const unsigned char> psu_ct_span(
+                reinterpret_cast<const unsigned char *>(psu_ct.data()->data()),
+                psu_ct.data()->size());
             try {
-                psi_result.load(context, psi_ct_span);
+                psu_result.load(context, psu_ct_span);
             } catch (const logic_error &ex) {
                 stringstream ss;
-                ss << "failed to load PSI ciphertext: ";
+                ss << "failed to load PSU ciphertext: ";
                 ss << ex.what();
                 throw runtime_error(ss.str());
             } catch (const runtime_error &ex) {
                 stringstream ss;
-                ss << "failed to load PSI ciphertext: ";
+                ss << "failed to load PSU ciphertext: ";
                 ss << ex.what();
                 throw runtime_error(ss.str());
             }
@@ -178,17 +178,17 @@ namespace apsu {
                 throw runtime_error("decryptor is not configured in CryptoContext");
             }
 
-            Ciphertext psi_result_ct = psi_result.extract(crypto_context.seal_context());
-            Plaintext psi_result_pt;
-            crypto_context.decryptor()->decrypt(psi_result_ct, psi_result_pt);
+            Ciphertext psu_result_ct = psu_result.extract(crypto_context.seal_context());
+            Plaintext psu_result_pt;
+            crypto_context.decryptor()->decrypt(psu_result_ct, psu_result_pt);
             APSU_LOG_DEBUG(
                 "Matching result noise budget: "
-                << crypto_context.decryptor()->invariant_noise_budget(psi_result_ct) << " bits ["
+                << crypto_context.decryptor()->invariant_noise_budget(psu_result_ct) << " bits ["
                 << this_thread::get_id() << "]");
 
             PlainResultPackage plain_rp;
             plain_rp.bundle_idx = bundle_idx;
-            crypto_context.encoder()->decode(psi_result_pt, plain_rp.psi_result);
+            crypto_context.encoder()->decode(psu_result_pt, plain_rp.psu_result);
 
             plain_rp.label_byte_count = label_byte_count;
             plain_rp.nonce_byte_count = nonce_byte_count;

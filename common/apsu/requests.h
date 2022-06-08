@@ -8,79 +8,79 @@
 #include <utility>
 
 // APSU
-#include "apsu/network/sender_operation.h"
+#include "apsu/network/receiver_operation.h"
 #include "apsu/util/utils.h"
 
 namespace apsu {
     /**
     A type representing a parameter, an OPRF, or a query request message to be sent.
     */
-    using Request = std::unique_ptr<network::SenderOperation>;
+    using Request = std::unique_ptr<network::ReceiverOperation>;
 
     /**
     A type representing a request to a parameter request.
     */
-    using ParamsRequest = std::unique_ptr<network::SenderOperationParms>;
+    using ParamsRequest = std::unique_ptr<network::ReceiverOperationParms>;
 
     /**
     A type representing a request to an OPRF request.
     */
-    using OPRFRequest = std::unique_ptr<network::SenderOperationOPRF>;
+    using OPRFRequest = std::unique_ptr<network::ReceiverOperationOPRF>;
 
     /**
     A type representing a request to a query request.
     */
-    using QueryRequest = std::unique_ptr<network::SenderOperationQuery>;
+    using QueryRequest = std::unique_ptr<network::ReceiverOperationQuery>;
 
     using plainRequest = std::unique_ptr<network::plainResponse>;
 
     inline ParamsRequest to_params_request(Request &request)
     {
-        if (request == nullptr || request->type() != apsu::network::SenderOperationType::sop_parms)
+        if (request == nullptr || request->type() != apsu::network::ReceiverOperationType::rop_parms)
             return nullptr;
-        return ParamsRequest(static_cast<apsu::network::SenderOperationParms *>(request.release()));
+        return ParamsRequest(static_cast<apsu::network::ReceiverOperationParms *>(request.release()));
     }
 
     inline ParamsRequest to_params_request(Request &&request)
     {
-        if (request == nullptr || request->type() != apsu::network::SenderOperationType::sop_parms)
+        if (request == nullptr || request->type() != apsu::network::ReceiverOperationType::rop_parms)
             return nullptr;
-        return ParamsRequest(static_cast<apsu::network::SenderOperationParms *>(request.release()));
+        return ParamsRequest(static_cast<apsu::network::ReceiverOperationParms *>(request.release()));
     }
 
     inline OPRFRequest to_oprf_request(Request &request)
     {
-        if (request == nullptr || request->type() != apsu::network::SenderOperationType::sop_oprf)
+        if (request == nullptr || request->type() != apsu::network::ReceiverOperationType::rop_oprf)
             return nullptr;
-        return OPRFRequest(static_cast<apsu::network::SenderOperationOPRF *>(request.release()));
+        return OPRFRequest(static_cast<apsu::network::ReceiverOperationOPRF *>(request.release()));
     }
 
     inline OPRFRequest to_oprf_request(Request &&request)
     {
-        if (request == nullptr || request->type() != apsu::network::SenderOperationType::sop_oprf)
+        if (request == nullptr || request->type() != apsu::network::ReceiverOperationType::rop_oprf)
             return nullptr;
-        return OPRFRequest(static_cast<apsu::network::SenderOperationOPRF *>(request.release()));
+        return OPRFRequest(static_cast<apsu::network::ReceiverOperationOPRF *>(request.release()));
     }
 
     inline QueryRequest to_query_request(Request &request)
     {
-        if (request == nullptr || request->type() != apsu::network::SenderOperationType::sop_query)
+        if (request == nullptr || request->type() != apsu::network::ReceiverOperationType::rop_query)
             return nullptr;
-        return QueryRequest(static_cast<apsu::network::SenderOperationQuery *>(request.release()));
+        return QueryRequest(static_cast<apsu::network::ReceiverOperationQuery *>(request.release()));
     }
 
     inline QueryRequest to_query_request(Request &&request)
     {
-        if (request == nullptr || request->type() != apsu::network::SenderOperationType::sop_query)
+        if (request == nullptr || request->type() != apsu::network::ReceiverOperationType::rop_query)
             return nullptr;
-        return QueryRequest(static_cast<apsu::network::SenderOperationQuery *>(request.release()));
+        return QueryRequest(static_cast<apsu::network::ReceiverOperationQuery *>(request.release()));
     }
 
 
     inline plainRequest to_plain_request(Request& request)
     {
         if (request == nullptr ||
-            request->type() != apsu::network::SenderOperationType::sop_response)
+            request->type() != apsu::network::ReceiverOperationType::rop_response)
             return nullptr;
         return plainRequest(static_cast<apsu::network::plainResponse *>(request.release()));
 
@@ -89,7 +89,7 @@ namespace apsu {
     inline plainRequest to_plain_request(Request &&request)
     {
         if (request == nullptr ||
-            request->type() != apsu::network::SenderOperationType::sop_response)
+            request->type() != apsu::network::ReceiverOperationType::rop_response)
             return nullptr;
         return plainRequest(static_cast<apsu::network::plainResponse *>(request.release()));
     }

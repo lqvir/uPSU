@@ -9,8 +9,8 @@
 // APSU
 #include "apsu/log.h"
 #include "apsu/network/result_package_generated.h"
-#include "apsu/network/sop_generated.h"
-#include "apsu/network/sop_header_generated.h"
+#include "apsu/network/rop_generated.h"
+#include "apsu/network/rop_header_generated.h"
 #include "apsu/network/stream_channel.h"
 
 using namespace std;
@@ -18,41 +18,41 @@ using namespace seal;
 
 namespace apsu {
     namespace network {
-        void StreamChannel::send(unique_ptr<SenderOperation> sop)
+        void StreamChannel::send(unique_ptr<ReceiverOperation> rop)
         {
-            // Need to have the SenderOperation package
-            if (!sop) {
+            // Need to have the ReceiverOperation package
+            if (!rop) {
                 APSU_LOG_ERROR("Failed to send operation: operation data is missing");
                 throw invalid_argument("operation data is missing");
             }
 
             // Construct the header
-            SenderOperationHeader sop_header;
-            sop_header.type = sop->type();
+            ReceiverOperationHeader rop_header;
+            rop_header.type = rop->type();
             APSU_LOG_DEBUG(
-                "Sending operation of type " << sender_operation_type_str(sop_header.type));
+                "Sending operation of type " << receiver_operation_type_str(rop_header.type));
 
             lock_guard<mutex> lock(send_mutex_);
             size_t old_bytes_sent = bytes_sent_;
 
-            bytes_sent_ += sop_header.save(out_);
-            bytes_sent_ += sop->save(out_);
+            bytes_sent_ += rop_header.save(out_);
+            bytes_sent_ += rop->save(out_);
 
             APSU_LOG_DEBUG(
-                "Sent an operation of type " << sender_operation_type_str(sop_header.type) << " ("
+                "Sent an operation of type " << receiver_operation_type_str(rop_header.type) << " ("
                                              << bytes_sent_ - old_bytes_sent << " bytes)");
         }
 
-        unique_ptr<SenderOperation> StreamChannel::receive_operation(
-            shared_ptr<SEALContext> context, SenderOperationType expected)
+        unique_ptr<ReceiverOperation> StreamChannel::receive_operation(
+            shared_ptr<SEALContext> context, ReceiverOperationType expected)
         {
             bool valid_context = context && context->parameters_set();
-            if (!valid_context && (expected == SenderOperationType::sop_unknown ||
-                                   expected == SenderOperationType::sop_query)) {
+            if (!valid_context && (expected == ReceiverOperationType::rop_unknown ||
+                                   expected == ReceiverOperationType::rop_query)) {
                 // Cannot receive unknown or query operations without a valid SEALContext
                 APSU_LOG_ERROR(
                     "Cannot receive an operation of type "
-                    << sender_operation_type_str(expected)
+                    << receiver_operation_type_str(expected)
                     << "; SEALContext is missing or invalid");
                 return nullptr;
             }
@@ -60,55 +60,55 @@ namespace apsu {
             lock_guard<mutex> lock(receive_mutex_);
             size_t old_bytes_received = bytes_received_;
 
-            SenderOperationHeader sop_header;
+            ReceiverOperationHeader rop_header;
             try {
-                bytes_received_ += sop_header.load(in_);
+                bytes_received_ += rop_header.load(in_);
             } catch (const runtime_error &) {
                 // Invalid header
                 APSU_LOG_ERROR("Failed to receive a valid header");
                 return nullptr;
             }
 
-            if (!same_serialization_version(sop_header.version)) {
+            if (!same_serialization_version(rop_header.version)) {
                 // Check that the serialization version numbers match
                 APSU_LOG_ERROR(
                     "Received header indicates a serialization version number ("
-                    << sop_header.version
+                    << rop_header.version
                     << ") incompatible with the current serialization version number ("
                     << apsu_serialization_version << ")");
                 return nullptr;
             }
 
-            if (expected != SenderOperationType::sop_unknown && expected != sop_header.type) {
+            if (expected != ReceiverOperationType::rop_unknown && expected != rop_header.type) {
                 // Unexpected operation
                 APSU_LOG_ERROR(
                     "Received header indicates an unexpected operation type "
-                    << sender_operation_type_str(sop_header.type));
+                    << receiver_operation_type_str(rop_header.type));
                 return nullptr;
             }
 
             // Return value
-            unique_ptr<SenderOperation> sop = nullptr;
+            unique_ptr<ReceiverOperation> rop = nullptr;
 
             try {
-                switch (static_cast<SenderOperationType>(sop_header.type)) {
-                case SenderOperationType::sop_parms:
-                    sop = make_unique<SenderOperationParms>();
-                    bytes_received_ += sop->load(in_);
+                switch (static_cast<ReceiverOperationType>(rop_header.type)) {
+                case ReceiverOperationType::rop_parms:
+                    rop = make_unique<ReceiverOperationParms>();
+                    bytes_received_ += rop->load(in_);
                     break;
-                case SenderOperationType::sop_oprf:
-                    sop = make_unique<SenderOperationOPRF>();
-                    bytes_received_ += sop->load(in_);
+                case ReceiverOperationType::rop_oprf:
+                    rop = make_unique<ReceiverOperationOPRF>();
+                    bytes_received_ += rop->load(in_);
                     break;
-                case SenderOperationType::sop_query:
-                    sop = make_unique<SenderOperationQuery>();
-                    bytes_received_ += sop->load(in_, move(context));
+                case ReceiverOperationType::rop_query:
+                    rop = make_unique<ReceiverOperationQuery>();
+                    bytes_received_ += rop->load(in_, move(context));
                     break;
                 default:
                     // Invalid operation
                     APSU_LOG_ERROR(
                         "Received header indicates an invalid operation type "
-                        << sender_operation_type_str(sop_header.type));
+                        << receiver_operation_type_str(rop_header.type));
                     return nullptr;
                 }
             } catch (const invalid_argument &ex) {
@@ -121,93 +121,93 @@ namespace apsu {
 
             // Loaded successfully
             APSU_LOG_DEBUG(
-                "Received an operation of type " << sender_operation_type_str(sop_header.type)
+                "Received an operation of type " << receiver_operation_type_str(rop_header.type)
                                                  << " (" << bytes_received_ - old_bytes_received
                                                  << " bytes)");
 
-            return sop;
+            return rop;
         }
 
-        void StreamChannel::send(unique_ptr<SenderOperationResponse> sop_response)
+        void StreamChannel::send(unique_ptr<ReceiverOperationResponse> rop_response)
         {
-            // Need to have the SenderOperationResponse package
-            if (!sop_response) {
+            // Need to have the ReceiverOperationResponse package
+            if (!rop_response) {
                 APSU_LOG_ERROR("Failed to send response: response data is missing");
                 throw invalid_argument("response data is missing");
             }
 
             // Construct the header
-            SenderOperationHeader sop_header;
-            sop_header.type = sop_response->type();
+            ReceiverOperationHeader rop_header;
+            rop_header.type = rop_response->type();
             APSU_LOG_DEBUG(
-                "Sending response of type " << sender_operation_type_str(sop_header.type));
+                "Sending response of type " << receiver_operation_type_str(rop_header.type));
 
             lock_guard<mutex> lock(send_mutex_);
             size_t old_bytes_sent = bytes_sent_;
 
-            bytes_sent_ += sop_header.save(out_);
-            bytes_sent_ += sop_response->save(out_);
+            bytes_sent_ += rop_header.save(out_);
+            bytes_sent_ += rop_response->save(out_);
 
             APSU_LOG_DEBUG(
-                "Sent a response of type " << sender_operation_type_str(sop_header.type) << " ("
+                "Sent a response of type " << receiver_operation_type_str(rop_header.type) << " ("
                                            << bytes_sent_ - old_bytes_sent << " bytes)");
         }
 
-        unique_ptr<SenderOperationResponse> StreamChannel::receive_response(
-            SenderOperationType expected)
+        unique_ptr<ReceiverOperationResponse> StreamChannel::receive_response(
+            ReceiverOperationType expected)
         {
             lock_guard<mutex> lock(receive_mutex_);
             size_t old_bytes_received = bytes_received_;
 
-            SenderOperationHeader sop_header;
+            ReceiverOperationHeader rop_header;
             try {
-                bytes_received_ += sop_header.load(in_);
+                bytes_received_ += rop_header.load(in_);
             } catch (const runtime_error &) {
                 // Invalid header
                 APSU_LOG_ERROR("Failed to receive a valid header");
                 return nullptr;
             }
 
-            if (!same_serialization_version(sop_header.version)) {
+            if (!same_serialization_version(rop_header.version)) {
                 // Check that the serialization version numbers match
                 APSU_LOG_ERROR(
                     "Received header indicates a serialization version number "
-                    << sop_header.version
+                    << rop_header.version
                     << " incompatible with the current serialization version number "
                     << apsu_serialization_version);
                 return nullptr;
             }
 
-            if (expected != SenderOperationType::sop_unknown && expected != sop_header.type) {
+            if (expected != ReceiverOperationType::rop_unknown && expected != rop_header.type) {
                 // Unexpected operation
                 APSU_LOG_ERROR(
                     "Received header indicates an unexpected operation type "
-                    << sender_operation_type_str(sop_header.type));
+                    << receiver_operation_type_str(rop_header.type));
                 return nullptr;
             }
 
             // Return value
-            unique_ptr<SenderOperationResponse> sop_response = nullptr;
+            unique_ptr<ReceiverOperationResponse> rop_response = nullptr;
 
             try {
-                switch (static_cast<SenderOperationType>(sop_header.type)) {
-                case SenderOperationType::sop_parms:
-                    sop_response = make_unique<SenderOperationResponseParms>();
-                    bytes_received_ += sop_response->load(in_);
+                switch (static_cast<ReceiverOperationType>(rop_header.type)) {
+                case ReceiverOperationType::rop_parms:
+                    rop_response = make_unique<ReceiverOperationResponseParms>();
+                    bytes_received_ += rop_response->load(in_);
                     break;
-                case SenderOperationType::sop_oprf:
-                    sop_response = make_unique<SenderOperationResponseOPRF>();
-                    bytes_received_ += sop_response->load(in_);
+                case ReceiverOperationType::rop_oprf:
+                    rop_response = make_unique<ReceiverOperationResponseOPRF>();
+                    bytes_received_ += rop_response->load(in_);
                     break;
-                case SenderOperationType::sop_query:
-                    sop_response = make_unique<SenderOperationResponseQuery>();
-                    bytes_received_ += sop_response->load(in_);
+                case ReceiverOperationType::rop_query:
+                    rop_response = make_unique<ReceiverOperationResponseQuery>();
+                    bytes_received_ += rop_response->load(in_);
                     break;
                 default:
                     // Invalid operation
                     APSU_LOG_ERROR(
                         "Received header indicates an invalid operation type "
-                        << sender_operation_type_str(sop_header.type));
+                        << receiver_operation_type_str(rop_header.type));
                     return nullptr;
                 }
             } catch (const runtime_error &ex) {
@@ -217,11 +217,11 @@ namespace apsu {
 
             // Loaded successfully
             APSU_LOG_DEBUG(
-                "Received a response of type " << sender_operation_type_str(sop_header.type) << " ("
+                "Received a response of type " << receiver_operation_type_str(rop_header.type) << " ("
                                                << bytes_received_ - old_bytes_received
                                                << " bytes)");
 
-            return sop_response;
+            return rop_response;
         }
 
         void StreamChannel::send(unique_ptr<ResultPackage> rp)
@@ -234,7 +234,7 @@ namespace apsu {
 
             APSU_LOG_DEBUG(
                 "Sending result package ("
-                << "has matching data: " << (rp->psi_result ? "yes" : "no") << "; "
+                << "has matching data: " << (rp->psu_result ? "yes" : "no") << "; "
                 << "label byte count: " << rp->label_byte_count << "; "
                 << "nonce byte count: " << rp->nonce_byte_count << "; "
                 << "has label data: " << (rp->label_result.size() ? "yes" : "no") << ")");

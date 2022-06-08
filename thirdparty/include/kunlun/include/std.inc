@@ -33,5 +33,3 @@ this file includes commonly used head files
 #include <assert.h>
 #include <immintrin.h>
 
-#include <cstring>
-

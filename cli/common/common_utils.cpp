@@ -17,7 +17,7 @@
 
 // APSU
 #include "apsu/log.h"
-#include "apsu/psi_params.h"
+#include "apsu/psu_params.h"
 #include "apsu/util/utils.h"
 #include "common/base_clp.h"
 

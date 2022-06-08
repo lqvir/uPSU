@@ -407,7 +407,11 @@ class multipart_t
                 return false;
 #endif
             more = message.more();
+             //APSU_LOG_INFO(size());
+
             add(std::move(message));
+          
+            
         }
         return true;
     }

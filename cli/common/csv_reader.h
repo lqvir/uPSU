@@ -13,7 +13,7 @@
 
 // APSU
 #include "apsu/item.h"
-#include "apsu/psi_params.h"
+#include "apsu/psu_params.h"
 #include "apsu/util/db_encoding.h"
 
 /**

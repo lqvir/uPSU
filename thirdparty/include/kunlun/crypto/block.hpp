@@ -2,7 +2,7 @@
 ** Modified from the following project
 ** 1. https://github.com/emp-toolkit/
 */
-#pragma once
+
 #ifndef KUNLUN_CRYPTO_BLOCK_HPP_
 #define KUNLUN_CRYPTO_BLOCK_HPP_
 

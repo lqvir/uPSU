@@ -2,7 +2,7 @@
 # Licensed under the MIT license.
 
 execute_process(
-    COMMAND ${FLATBUFFERS_FLATC_PATH} --cpp -o "${APSU_BUILD_DIR}/common/apsu" "${APSU_SOURCE_DIR}/common/apsu/psi_params.fbs"
+    COMMAND ${FLATBUFFERS_FLATC_PATH} --cpp -o "${APSU_BUILD_DIR}/common/apsu" "${APSU_SOURCE_DIR}/common/apsu/psu_params.fbs"
     OUTPUT_QUIET
     RESULT_VARIABLE result)
 if(result)
@@ -18,7 +18,7 @@ if(result)
 endif()
 
 execute_process(
-    COMMAND ${FLATBUFFERS_FLATC_PATH} --cpp --include-prefix "apsu/network/" -o "${APSU_BUILD_DIR}/common/apsu/network" "${APSU_SOURCE_DIR}/common/apsu/network/sop.fbs"
+    COMMAND ${FLATBUFFERS_FLATC_PATH} --cpp --include-prefix "apsu/network/" -o "${APSU_BUILD_DIR}/common/apsu/network" "${APSU_SOURCE_DIR}/common/apsu/network/rop.fbs"
     OUTPUT_QUIET
     RESULT_VARIABLE result)
 if(result)
@@ -26,7 +26,7 @@ if(result)
 endif()
 
 execute_process(
-    COMMAND ${FLATBUFFERS_FLATC_PATH} --cpp -o "${APSU_BUILD_DIR}/common/apsu/network" "${APSU_SOURCE_DIR}/common/apsu/network/sop_header.fbs"
+    COMMAND ${FLATBUFFERS_FLATC_PATH} --cpp -o "${APSU_BUILD_DIR}/common/apsu/network" "${APSU_SOURCE_DIR}/common/apsu/network/rop_header.fbs"
     OUTPUT_QUIET
     RESULT_VARIABLE result)
 if(result)
@@ -34,7 +34,7 @@ if(result)
 endif()
 
 execute_process(
-    COMMAND ${FLATBUFFERS_FLATC_PATH} --cpp --include-prefix "apsu/network/" -o "${APSU_BUILD_DIR}/common/apsu/network" "${APSU_SOURCE_DIR}/common/apsu/network/sop_response.fbs"
+    COMMAND ${FLATBUFFERS_FLATC_PATH} --cpp --include-prefix "apsu/network/" -o "${APSU_BUILD_DIR}/common/apsu/network" "${APSU_SOURCE_DIR}/common/apsu/network/rop_response.fbs"
     OUTPUT_QUIET
     RESULT_VARIABLE result)
 if(result)
@@ -50,7 +50,7 @@ if(result)
 endif()
 
 execute_process(
-    COMMAND ${FLATBUFFERS_FLATC_PATH} --cpp --include-prefix "apsu/" -o "${APSU_BUILD_DIR}/sender/apsu" "${APSU_SOURCE_DIR}/sender/apsu/bin_bundle.fbs"
+    COMMAND ${FLATBUFFERS_FLATC_PATH} --cpp --include-prefix "apsu/" -o "${APSU_BUILD_DIR}/receiver/apsu" "${APSU_SOURCE_DIR}/receiver/apsu/bin_bundle.fbs"
     OUTPUT_QUIET
     RESULT_VARIABLE result)
 if(result)
@@ -58,7 +58,7 @@ if(result)
 endif()
 
 execute_process(
-    COMMAND ${FLATBUFFERS_FLATC_PATH} --cpp --include-prefix "apsu/" -I "${APSU_SOURCE_DIR}/common/apsu" -o "${APSU_BUILD_DIR}/sender/apsu" "${APSU_SOURCE_DIR}/sender/apsu/sender_db.fbs"
+    COMMAND ${FLATBUFFERS_FLATC_PATH} --cpp --include-prefix "apsu/" -I "${APSU_SOURCE_DIR}/common/apsu" -o "${APSU_BUILD_DIR}/receiver/apsu" "${APSU_SOURCE_DIR}/receiver/apsu/receiver_db.fbs"
     OUTPUT_QUIET
     RESULT_VARIABLE result)
 if(result)

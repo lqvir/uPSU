@@ -2,11 +2,11 @@
 // Licensed under the MIT license.
 
 // STD
+#include <csignal>
 #include <fstream>
-#include <iomanip>
+#include <functional>
 #include <iostream>
 #include <string>
-#include <vector>
 #if defined(__GNUC__) && (__GNUC__ < 8) && !defined(__clang__)
 #include <experimental/filesystem>
 #else
@@ -15,13 +15,15 @@
 
 // APSU
 #include "apsu/log.h"
-#include "apsu/network/zmq/zmq_channel.h"
-#include "apsu/receiver.h"
+#include "apsu/oprf/oprf_sender.h"
 #include "apsu/thread_pool_mgr.h"
 #include "apsu/version.h"
+#include "apsu/zmq/receiver_dispatcher.h"
 #include "common/common_utils.h"
 #include "common/csv_reader.h"
 #include "receiver/clp.h"
+#include "receiver/receiver_utils.h"
+
 
 using namespace std;
 #if defined(__GNUC__) && (__GNUC__ < 8) && !defined(__clang__)
@@ -30,210 +32,216 @@ namespace fs = std::experimental::filesystem;
 namespace fs = std::filesystem;
 #endif
 using namespace apsu;
-using namespace apsu::util;
 using namespace apsu::receiver;
 using namespace apsu::network;
+using namespace apsu::oprf;
 
-namespace {
-    struct Colors {
-        static const string Red;
-        static const string Green;
-        static const string RedBold;
-        static const string GreenBold;
-        static const string Reset;
-    };
+int start_receiver(const CLP &cmd);
 
-    const string Colors::Red = "\033[31m";
-    const string Colors::Green = "\033[32m";
-    const string Colors::RedBold = "\033[1;31m";
-    const string Colors::GreenBold = "\033[1;32m";
-    const string Colors::Reset = "\033[0m";
-} // namespace
+unique_ptr<CSVReader::DBData> load_db(const string &db_file);
 
-int remote_query(const CLP &cmd);
-
-string get_conn_addr(const CLP &cmd);
-
-pair<unique_ptr<CSVReader::DBData>, vector<string>> load_db(const string &db_file);
-
-void print_intersection_results(
-    const vector<string> &orig_items,
-    const vector<Item> &items,
-    const vector<MatchRecord> &intersection,
-    const string &out_file);
-
-void print_transmitted_data(Channel &channel);
+shared_ptr<ReceiverDB> create_receiver_db(
+    const CSVReader::DBData &db_data,
+    unique_ptr<PSUParams> psu_params,
+ 
+    size_t nonce_byte_count,
+    bool compress);
 
 int main(int argc, char *argv[])
 {
+    prepare_console();
+
     CLP cmd("Example of a Receiver implementation", APSU_VERSION);
     if (!cmd.parse_args(argc, argv)) {
         APSU_LOG_ERROR("Failed parsing command line arguments");
         return -1;
     }
 
-    return remote_query(cmd);
+    return start_receiver(cmd);
 }
 
-int remote_query(const CLP &cmd)
+void sigint_handler(int param [[maybe_unused]])
 {
-    // Connect to the network
-    ZMQReceiverChannel channel;
+    APSU_LOG_WARNING("Receiver interrupted");
+    print_timing_report(recv_stopwatch);
+    exit(0);
+}
 
-    string conn_addr = get_conn_addr(cmd);
-    APSU_LOG_INFO("Connecting to " << conn_addr);
-    channel.connect(conn_addr);
-    if (channel.is_connected()) {
-        APSU_LOG_INFO("Successfully connected to " << conn_addr);
-    } else {
-        APSU_LOG_WARNING("Failed to connect to " << conn_addr);
-        return -1;
-    }
+shared_ptr<ReceiverDB> try_load_receiver_db(const CLP &cmd)
+{
+    shared_ptr<ReceiverDB> result = nullptr;
 
-    unique_ptr<PSIParams> params;
+    ifstream fs(cmd.db_file(), ios::binary);
+    fs.exceptions(ios_base::badbit | ios_base::failbit);
     try {
-        APSU_LOG_INFO("Sending parameter request");
-        params = make_unique<PSIParams>(Receiver::RequestParams(channel));
-        APSU_LOG_INFO("Received valid parameters");
-    } catch (const exception &ex) {
-        APSU_LOG_WARNING("Failed to receive valid parameters: " << ex.what());
-        return -1;
+        auto [data, size] = ReceiverDB::Load(fs);
+        APSU_LOG_INFO("Loaded ReceiverDB (" << size << " bytes) from " << cmd.db_file());
+        if (!cmd.params_file().empty()) {
+            APSU_LOG_WARNING(
+                "PSU parameters were loaded with the ReceiverDB; ignoring given PSU parameters");
+        }
+        result = make_shared<ReceiverDB>(move(data));
+
+        // Load also the OPRF key
+        //oprf_key.load(fs);
+        //APSU_LOG_INFO("Loaded OPRF key (" << oprf_key_size << " bytes) from " << cmd.db_file());
+    } catch (const exception &e) {
+        // Failed to load ReceiverDB
+        APSU_LOG_DEBUG("Failed to load ReceiverDB: " << e.what());
     }
 
+    return result;
+}
+
+shared_ptr<ReceiverDB> try_load_csv_db(const CLP &cmd)
+{
+    unique_ptr<PSUParams> params = build_psu_params(cmd);
+    if (!params) {
+        // We must have valid parameters given
+        APSU_LOG_ERROR("Failed to set PSU parameters");
+        return nullptr;
+    }
+
+    unique_ptr<CSVReader::DBData> db_data;
+    if (cmd.db_file().empty() || !(db_data = load_db(cmd.db_file()))) {
+        // Failed to read db file
+        APSU_LOG_DEBUG("Failed to load data from a CSV file");
+        return nullptr;
+    }
+
+    return create_receiver_db( *db_data, move(params), cmd.nonce_byte_count(), cmd.compress());
+}
+
+bool try_save_receiver_db(const CLP &cmd, shared_ptr<ReceiverDB> receiver_db)
+{
+    if (!receiver_db) {
+        return false;
+    }
+
+    ofstream fs(cmd.sdb_out_file(), ios::binary);
+    fs.exceptions(ios_base::badbit | ios_base::failbit);
+    try {
+        size_t size = receiver_db->save(fs);
+        APSU_LOG_INFO("Saved ReceiverDB (" << size << " bytes) to " << cmd.sdb_out_file());
+
+        // Save also the OPRF key (fixed size: oprf_key_size bytes)
+    
+        APSU_LOG_INFO("Saved OPRF key (" << oprf_key_size << " bytes) to " << cmd.sdb_out_file());
+
+    } catch (const exception &e) {
+        APSU_LOG_WARNING("Failed to save ReceiverDB: " << e.what());
+        return false;
+    }
+
+
+
+    return true;
+}
+
+int start_receiver(const CLP &cmd)
+{
+    auto start_time = std::chrono::steady_clock::now();
     ThreadPoolMgr::SetThreadCount(cmd.threads());
     APSU_LOG_INFO("Setting thread count to " << ThreadPoolMgr::GetThreadCount());
+    signal(SIGINT, sigint_handler);
 
-    Receiver receiver(*params);
+    // Check that the database file is valid
+    throw_if_file_invalid(cmd.db_file());
 
-    auto [query_data, orig_items] = load_db(cmd.query_file());
-    if (!query_data || !holds_alternative<CSVReader::UnlabeledData>(*query_data)) {
-        // Failed to read query file
-        APSU_LOG_ERROR("Failed to read query file: terminating");
+    // Try loading first as a ReceiverDB, then as a CSV file
+    shared_ptr<ReceiverDB> receiver_db;
+  //  OPRFKey oprf_key;
+    if (!(receiver_db = try_load_receiver_db(cmd)) &&
+        !(receiver_db = try_load_csv_db(cmd))) {
+        APSU_LOG_ERROR("Failed to create ReceiverDB: terminating");
         return -1;
     }
 
-    auto &items = get<CSVReader::UnlabeledData>(*query_data);
-    vector<Item> items_vec(items.begin(), items.end());
-    vector<HashedItem> oprf_items;
-   
-    // try {
-    //     APSU_LOG_INFO("Sending OPRF request for " << items_vec.size() << " items");
-    //     tie(oprf_items, label_keys) = Receiver::RequestOPRF(items_vec, channel);
-    //     APSU_LOG_INFO("Received OPRF request for " << items_vec.size() << " items");
-    // } catch (const exception &ex) {
-    //     APSU_LOG_WARNING("OPRF request failed: " << ex.what());
-    //     return -1;
-    // }
-
-    
-    vector<HashedItem> items_without_OPRF;
-    for(auto i:items_vec)
-        items_without_OPRF.emplace_back(i.get_as<uint64_t>()[0],i.get_as<uint64_t>()[1]);
- 
-
-    
-
-    vector<MatchRecord> query_result;
-    try {
-        APSU_LOG_INFO("Sending APSU query");
-        query_result = receiver.request_query(items_without_OPRF,  channel, orig_items);
-        APSU_LOG_INFO("Received APSU query response");
-    } catch (const exception &ex) {
-        APSU_LOG_WARNING("Failed sending APSU query: " << ex.what());
-        return -1;
+    // Print the total number of bin bundles and the largest number of bin bundles for any bundle
+    // index
+    uint32_t max_bin_bundles_per_bundle_idx = 0;
+    for (uint32_t bundle_idx = 0; bundle_idx < receiver_db->get_params().bundle_idx_count();
+         bundle_idx++) {
+        max_bin_bundles_per_bundle_idx =
+            max(max_bin_bundles_per_bundle_idx,
+                static_cast<uint32_t>(receiver_db->get_bin_bundle_count(bundle_idx)));
     }
-    print_transmitted_data(channel);
-    print_timing_report(recv_stopwatch);
-    try {
-        APSU_LOG_INFO("Sending OT response");
-        receiver.ResponseOT(cmd.net_addr());
-        APSU_LOG_INFO("Finish OT proceed");
-    } catch (const exception &ex) {
-        APSU_LOG_WARNING("Failed sending APSU query: " << ex.what());
+    APSU_LOG_INFO(
+        "ReceiverDB holds a total of " << receiver_db->get_bin_bundle_count() << " bin bundles across "
+                                     << receiver_db->get_params().bundle_idx_count()
+                                     << " bundle indices");
+    APSU_LOG_INFO(
+        "The largest bundle index holds " << max_bin_bundles_per_bundle_idx << " bin bundles");
+
+    // Try to save the ReceiverDB if a save file was given
+    if (!cmd.sdb_out_file().empty() && !try_save_receiver_db(cmd, receiver_db)) {
         return -1;
     }
 
-    //print_intersection_results(orig_items, items_vec, query_result, cmd.output_file());
-    print_transmitted_data(channel);
-    print_timing_report(recv_stopwatch);
+    // Run the dispatcher
+    atomic<bool> stop = false;
+    Receiver receiver;
+    ZMQReceiverDispatcher dispatcher(receiver_db, receiver);
+  	auto end_time = std::chrono::steady_clock::now();
+    auto running_time = end_time-start_time;
+    std::cout<<"\n\n\n\n receiver offline time"<<std::chrono::duration<double,std::milli> (running_time).count()<<std::endl<<std::endl<<std::endl;
+    // The dispatcher will run until stopped.
+    dispatcher.run(stop, cmd.net_port());
 
     return 0;
 }
 
-pair<unique_ptr<CSVReader::DBData>, vector<string>> load_db(const string &db_file)
+unique_ptr<CSVReader::DBData> load_db(const string &db_file)
 {
     CSVReader::DBData db_data;
-    vector<string> orig_items;
     try {
         CSVReader reader(db_file);
-        tie(db_data, orig_items) = reader.read();
+        tie(db_data, ignore) = reader.read();
     } catch (const exception &ex) {
         APSU_LOG_WARNING("Could not open or read file `" << db_file << "`: " << ex.what());
-        return { nullptr, orig_items };
+        return nullptr;
     }
 
-    return { make_unique<CSVReader::DBData>(move(db_data)), move(orig_items) };
+    return make_unique<CSVReader::DBData>(move(db_data));
 }
 
-void print_intersection_results(
-    const vector<string> &orig_items,
-    const vector<Item> &items,
-    const vector<MatchRecord> &intersection,
-    const string &out_file)
+shared_ptr<ReceiverDB> create_receiver_db(
+    const CSVReader::DBData &db_data,
+    unique_ptr<PSUParams> psu_params,
+    size_t nonce_byte_count,
+    bool compress)
 {
-    if (orig_items.size() != items.size()) {
-        throw invalid_argument("orig_items must have same size as items");
+    if (!psu_params) {
+        APSU_LOG_ERROR("No PSU parameters were given");
+        return nullptr;
     }
 
-    stringstream csv_output;
-    for (size_t i = 0; i < orig_items.size(); i++) {
-        stringstream msg;
-        if (intersection[i].found) {
-            msg << Colors::GreenBold << orig_items[i] << Colors::Reset << " (FOUND)";
-            csv_output << orig_items[i];
-            if (intersection[i].label) {
-                msg << ": ";
-                msg << Colors::GreenBold << intersection[i].label.to_string() << Colors::Reset;
-                csv_output << "," << intersection[i].label.to_string();
-            }
-            csv_output << endl;
-            APSU_LOG_INFO(msg.str());
-        } else {
-            // msg << Colors::RedBold << orig_items[i] << Colors::Reset << " (NOT FOUND)";
-            // APSU_LOG_INFO(msg.str());
+    shared_ptr<ReceiverDB> receiver_db;
+    if (holds_alternative<CSVReader::UnlabeledData>(db_data)) {
+        try {
+            receiver_db = make_shared<ReceiverDB>(*psu_params, 0, 0, compress);
+            receiver_db->set_data(get<CSVReader::UnlabeledData>(db_data));
+
+            APSU_LOG_INFO(
+                "Created unlabeled ReceiverDB with " << receiver_db->get_item_count() << " items");
+        } catch (const exception &ex) {
+            APSU_LOG_ERROR("Failed to create ReceiverDB: " << ex.what());
+            return nullptr;
         }
+    }  else {
+        // Should never reach this point
+        APSU_LOG_ERROR("Loaded database is in an invalid state");
+        return nullptr;
     }
 
-    if (!out_file.empty()) {
-        ofstream ofs(out_file);
-        ofs << csv_output.str();
-        APSU_LOG_INFO("Wrote output to " << out_file);
+    if (compress) {
+        APSU_LOG_INFO("Using in-memory compression to reduce memory footprint");
     }
-}
 
-void print_transmitted_data(Channel &channel)
-{
-    auto nice_byte_count = [](uint64_t bytes) -> string {
-        stringstream ss;
-        if (bytes >= 10 * 1024) {
-            ss << bytes / 1024 << " KB";
-        } else {
-            ss << bytes << " B";
-        }
-        return ss.str();
-    };
+    // Read the OPRFKey and strip the ReceiverDB to reduce memory use
+    receiver_db->strip();
 
-    APSU_LOG_INFO("Communication R->S: " << nice_byte_count(channel.bytes_sent()));
-    APSU_LOG_INFO("Communication S->R: " << nice_byte_count(channel.bytes_received()));
-    APSU_LOG_INFO(
-        "Communication total: " << nice_byte_count(
-            channel.bytes_sent() + channel.bytes_received()));
-}
+    APSU_LOG_INFO("ReceiverDB packing rate: " << receiver_db->get_packing_rate());
 
-string get_conn_addr(const CLP &cmd)
-{
-    stringstream ss;
-    ss << "tcp://" << cmd.net_addr() << ":" << cmd.net_port();
-
-    return ss.str();
+    return receiver_db;
 }

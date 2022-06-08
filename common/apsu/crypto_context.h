@@ -11,7 +11,7 @@
 #include <utility>
 
 // APSU
-#include "apsu/psi_params.h"
+#include "apsu/psu_params.h"
 
 // SEAL
 #include "seal/batchencoder.h"
@@ -29,7 +29,7 @@ namespace apsu {
     public:
         CryptoContext() = default;
 
-        CryptoContext(const PSIParams &parms)
+        CryptoContext(const PSUParams &parms)
             : seal_context_(std::make_shared<seal::SEALContext>(
                   parms.seal_params(), true, seal::sec_level_type::tc128))
         {

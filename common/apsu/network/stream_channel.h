@@ -11,8 +11,8 @@
 // APSU
 #include "apsu/network/channel.h"
 #include "apsu/network/result_package.h"
-#include "apsu/network/sender_operation.h"
-#include "apsu/network/sender_operation_response.h"
+#include "apsu/network/receiver_operation.h"
+#include "apsu/network/receiver_operation_response.h"
 
 namespace apsu {
     namespace network {
@@ -45,34 +45,34 @@ namespace apsu {
             {}
 
             /**
-            Send a SenderOperation from a receiver to a sender. These operations represent either a
+            Send a ReceiverOperation from a receiver to a sender. These operations represent either a
             parameter request, an OPRF request, or a query request. The function throws an exception
             on failure.
             */
-            void send(std::unique_ptr<SenderOperation> sop) override;
+            void send(std::unique_ptr<ReceiverOperation> rop) override;
 
             /**
-            Receive a SenderOperation from a receiver. Operations of type sop_query and sop_unknown
-            require a valid seal::SEALContext to be provided. For operations of type sop_parms and
-            sop_oprf the context can be set as nullptr. The function returns nullptr on failure.
+            Receive a ReceiverOperation from a receiver. Operations of type rop_query and rop_unknown
+            require a valid seal::SEALContext to be provided. For operations of type rop_parms and
+            rop_oprf the context can be set as nullptr. The function returns nullptr on failure.
             */
-            std::unique_ptr<SenderOperation> receive_operation(
+            std::unique_ptr<ReceiverOperation> receive_operation(
                 std::shared_ptr<seal::SEALContext> context,
-                SenderOperationType expected = SenderOperationType::sop_unknown) override;
+                ReceiverOperationType expected = ReceiverOperationType::rop_unknown) override;
 
             /**
-            Send a SenderOperationResponse from a sender to a receiver. These operations represent a
+            Send a ReceiverOperationResponse from a sender to a receiver. These operations represent a
             response to either a parameter request, an OPRF request, or a query request. The
             function throws and exception on failure.
             */
-            void send(std::unique_ptr<SenderOperationResponse> sop_response) override;
+            void send(std::unique_ptr<ReceiverOperationResponse> rop_response) override;
 
             /**
-            Receive a SenderOperationResponse from a sender. The function returns nullptr on
+            Receive a ReceiverOperationResponse from a sender. The function returns nullptr on
             failure.
             */
-            std::unique_ptr<SenderOperationResponse> receive_response(
-                SenderOperationType expected = SenderOperationType::sop_unknown) override;
+            std::unique_ptr<ReceiverOperationResponse> receive_response(
+                ReceiverOperationType expected = ReceiverOperationType::rop_unknown) override;
 
             /**
             Send a ResultPackage to a receiver. The function throws and exception on failure.
