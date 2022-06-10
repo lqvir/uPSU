@@ -19,19 +19,10 @@ cmake_minimum_required(VERSION 3.13)
 # Most generators recognize these and can set the compiler flags accordingly. We set
 # the build type here before creating the project to prevent the CMake generator from
 # overriding our default of "Release".
-list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_LIST_DIR}/thirdparty/share/SEAL)
-list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_LIST_DIR}/thirdparty/share/Microsoft.GSL)
-list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_LIST_DIR}/thirdparty/share/kuku)
-list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_LIST_DIR}/thirdparty/share/flatbuffers)
-list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_LIST_DIR}/thirdparty/share/jsoncpp)
-list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_LIST_DIR}/thirdparty/share/log4cplus)
-list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_LIST_DIR}/thirdparty/share/cppzmq)
-list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_LIST_DIR}/thirdparty/share/zstd)
-list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_LIST_DIR}/thirdparty/share/zeromq)
 
-set(ZLIB_LIBRARY "${CMAKE_CURRENT_LIST_DIR}/thirdparty/lib/libz.a")
-set(ZLIB_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/thirdparty/include")
-set(TCLAP_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/thirdparty/include")
+
+set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/../vcpkg/scripts/buildsystems/vcpkg.cmake")
+
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY
@@ -234,16 +225,29 @@ endif()
 ####################
 # libOTe build     #
 ####################
-
-
-include_directories(${CMAKE_SOURCE_DIR}/thirdparty/include)
-
-link_directories(${CMAKE_SOURCE_DIR}/thirdparty/lib)
+if(NOT LIBOTE_PATH)
+    set(LIBOTE_PATH "${CMAKE_SOURCE_DIR}/thirdparty")
+endif()
+#set(LIBOTE_PATH "${CMAKE_SOURCE_DIR}/thirdparty")
+message(STATUS "LIBOTE_PATH :${LIBOTE_PATH}")
+include_directories(${LIBOTE_PATH}/include)
+link_directories(${LIBOTE_PATH}/lib)
 option(BUILD_LIBOTE_FRONTEND "Compile libOTe frontend" OFF)
 if (BUILD_LIBOTE_FRONTEND)
     add_subdirectory(frontend)
 endif()
 
+####################
+# Kunlun build     #
+####################
+
+if(NOT KUNLUN_PATH)
+    set(KUNLUN_PATH "${CMAKE_SOURCE_DIR}/thirdparty")
+endif()
+message(STATUS "KUNLUN_PATH :${KUNLUN_PATH}")
+
+include_directories(${KUNLUN_PATH}/include)
+link_directories(${KUNLUN_PATH}/lib)
 
 ####################
 # APSU C++ library #
@@ -265,257 +269,55 @@ install(
     DESTINATION ${APSU_INCLUDES_INSTALL_DIR}/apsu)
 
 # Create a single library "apsu" for common, sender, and receiver
-option(APSU_USE_Kunlun "Comile apsu into executable with Kunlun" ON)
-if(APSU_USE_Kunlun)
+
+
 message(STATUS "APSU_USE_Kunlun")
-    add_executable(sender_cli)
-    add_executable(receiver_cli)
+
+
+add_executable(sender_cli)
+add_executable(receiver_cli)
 
 ########  target include for sender cli  #########
-    target_include_directories(sender_cli PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/common>
-        )
-    target_include_directories(sender_cli PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/sender>
-        )
-    target_include_directories(sender_cli PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/common>
-       )
-    target_include_directories(sender_cli PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/sender>
-       )
+target_include_directories(sender_cli PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/common>
+    )
+target_include_directories(sender_cli PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/sender>
+    )
+target_include_directories(sender_cli PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/common>
+    )
+target_include_directories(sender_cli PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/sender>
+    )
 
 ########  target include for receiver cli  #########
 
-    target_include_directories(receiver_cli PUBLIC
-       $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/common>
-       )
-    target_include_directories(receiver_cli PUBLIC
-       $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/receiver>
-       )
-    target_include_directories(receiver_cli PUBLIC
-       $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/common>
-      )
-    target_include_directories(receiver_cli PUBLIC
-       $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/receiver>
-      )
+target_include_directories(receiver_cli PUBLIC
+$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/common>
+)
+target_include_directories(receiver_cli PUBLIC
+$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/receiver>
+)
+target_include_directories(receiver_cli PUBLIC
+$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/common>
+)
+target_include_directories(receiver_cli PUBLIC
+$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/receiver>
+)
 
 
-       SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-pic -Wno-deprecated-declarations -Xpreprocessor -fopenmp -pthread -O3 -fPIE")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-pic -Wno-deprecated-declarations -Xpreprocessor -fopenmp -pthread -O3 -fPIE")
 
 ##### target cli for sender #########
 
-       target_link_libraries(sender_cli
-           PUBLIC SEAL::seal
-           PUBLIC Kuku::kuku
-           PUBLIC flatbuffers::flatbuffers
-           PUBLIC jsoncpp_static)
-       TARGET_LINK_LIBRARIES(sender_cli PUBLIC ${OPENSSL_LIBRARIES})
-       target_link_libraries(sender_cli 
-	       PUBLIC libOTe
-	       PUBLIC relic_s 
-	       PUBLIC bitpolymul
-	       PUBLIC cryptoTools
-	       PUBLIC KyberOT
-	       PUBLIC libOTe
-	       PUBLIC pthread
-       )
-       target_link_libraries(sender_cli 
-	       PUBLIC boost_atomic 
-	       PUBLIC boost_date_time
-	       PUBLIC boost_filesystem
-	       PUBLIC boost_regex
-	       PUBLIC boost_system
-	       PUBLIC boost_thread
-       )
-       target_link_libraries(sender_cli PUBLIC -lomp)
-
-##### target cli for receiver #########
-
-        target_link_libraries(receiver_cli
-		PUBLIC SEAL::seal
-		PUBLIC Kuku::kuku
-		PUBLIC flatbuffers::flatbuffers
-		PUBLIC jsoncpp_static)
-        TARGET_LINK_LIBRARIES(receiver_cli PUBLIC ${OPENSSL_LIBRARIES})
-        target_link_libraries(receiver_cli 
-		PUBLIC libOTe
-		PUBLIC relic_s 
-		PUBLIC bitpolymul
-		PUBLIC cryptoTools
-		PUBLIC KyberOT
-		PUBLIC libOTe
-		PUBLIC pthread
-        )
-        target_link_libraries(receiver_cli 
-		PUBLIC boost_atomic 
-		PUBLIC boost_date_time
-		PUBLIC boost_filesystem
-		PUBLIC boost_regex
-		PUBLIC boost_system
-		PUBLIC boost_thread
-        )
-       target_link_libraries(receiver_cli PUBLIC -lomp)
-
-##### target link option for sender #########
-
-
-       target_link_options(sender_cli PUBLIC -fPIC -no-pie)
-       target_compile_options(sender_cli PUBLIC -fPIC -no-pie)
-       if(APSU_USE_LOG4CPLUS)
-           target_link_libraries(sender_cli PUBLIC log4cplus::log4cplus)
-       endif()
-       if(APSU_USE_ZMQ)
-           target_link_libraries(sender_cli PRIVATE libzmq-static cppzmq-static)
-       endif()
-   
-       # Configurations for FourQlib: system, arch, SIMD, and assembler
-       target_compile_options(sender_cli PUBLIC -DHAVE_CONFIG)
-       target_compile_options(sender_cli PUBLIC -DUSE_SECURE_SEED)
-       target_compile_options(sender_cli PUBLIC -DUSE_ENDO=true)
-##### target link option for sender #########
-
-
-        target_link_options(receiver_cli PUBLIC -fPIC -no-pie)
-        target_compile_options(receiver_cli PUBLIC -fPIC -no-pie)
-        if(APSU_USE_LOG4CPLUS)
-            target_link_libraries(receiver_cli PUBLIC log4cplus::log4cplus)
-        endif()
-        if(APSU_USE_ZMQ)
-            target_link_libraries(receiver_cli PRIVATE libzmq-static cppzmq-static)
-        endif()
-
-        # Configurations for FourQlib: system, arch, SIMD, and assembler
-        target_compile_options(receiver_cli PUBLIC -DHAVE_CONFIG)
-        target_compile_options(receiver_cli PUBLIC -DUSE_SECURE_SEED)
-        target_compile_options(receiver_cli PUBLIC -DUSE_ENDO=true)   
-       
-       
-####### Set system for sender ######
-       if(MSVC)
-            target_compile_options(sender_cli PUBLIC -D__WINDOWS__)
-            target_compile_options(receiver_cli PUBLIC -D__WINDOWS__)
-
-       elseif (UNIX)
-            target_compile_options(sender_cli PUBLIC -D__LINUX__)
-            target_compile_options(receiver_cli PUBLIC -D__LINUX__)
-
-       endif()
- 
-####### Set architecture  #######
-       include(DetectArch)
-       if(APSU_FOURQ_AMD64)
-           target_compile_options(sender_cli PUBLIC -D_AMD64_)
-           target_compile_options(receiver_cli PUBLIC -D_AMD64_)
-           message(STATUS "FourQlib optimization: arch=AMD64")
-       elseif (APSU_FOURQ_ARM64)
-           target_compile_options(sender_cli PUBLIC -D_ARM64_)
-           target_compile_options(receiver_cli PUBLIC -D_ARM64_)
-           message(STATUS "FourQlib optimization: arch=ARM64")
-       else()
-           target_compile_options(sender_cli PUBLIC -D_GENERIC_)
-           target_compile_options(receiver_cli PUBLIC -D_GENERIC_)
-           message(STATUS "FourQlib optimization: arch=GENERIC")
-       endif()
-       if(NOT MSVC)
-           target_compile_options(sender_cli PUBLIC -march=native)
-           target_compile_options(receiver_cli PUBLIC -march=native)
-       endif()
-
-####### Set AVX or AVX2 if not generic #######
-        if(APSU_FOURQ_AMD64 OR APSU_FOURQ_ARM64)
-        include(FindAVX)
-        check_for_avx(sender_cli)
-        
-        if (HAVE_AVX2_EXTENSIONS)
-            target_compile_options(sender_cli PUBLIC -D_AVX2_)
-            target_compile_options(receiver_cli PUBLIC -D_AVX2_)
-            message(STATUS "FourQlib optimization: simd=AVX2")
-        elseif(HAVE_AVX_EXTENSIONS)
-            target_compile_options(sender_cli PUBLIC -D_AVX_)
-            target_compile_options(receiver_cli PUBLIC -D_AVX_)
-            message(STATUS "FourQlib optimization: simd=AVX")
-        endif()
-        else()
-            message(STATUS "FourQlib optimization: simd=OFF")
-        endif()
-
-####### Use optimized assembly on Linux (non-AVX or AVX2) ######
-        set(APSU_FOURQ_USE_ASM OFF)
-        if(UNIX AND NOT APPLE AND NOT CYGWIN AND NOT MINGW)
-        check_language(ASM)
-            if(CMAKE_ASM_COMPILER)
-                enable_language(ASM)
-                target_compile_options(sender_cli PUBLIC -D_ASM_)
-                target_compile_options(receiver_cli PUBLIC -D_ASM_)
-                set(APSU_FOURQ_USE_ASM ON)
-                message(STATUS "FourQlib optimization: asm=ON")
-            endif()
-        endif()
-        # Add source files to library and header files to install
-        # Must follow configurations for FourQlib
-        set(APSU_SOURCE_FILES "")
-        set(APSU_SOURCE_FILES_SENDER "")
-        set(APSU_SOURCE_FILES_RECEIVER "")
-
-        add_subdirectory(common/apsu)
-        
-        add_subdirectory(sender/apsu)
-        add_subdirectory(receiver/apsu)
-	message(STATUS "${APSU_SOURCE_FILES_SENDER}")
-	message(STATUS "${APSU_SOURCE_FILES_RECEIVER}")
-        target_sources(sender_cli  PRIVATE ${APSU_SOURCE_FILES_SENDER})
-        target_sources(receiver_cli PRIVATE ${APSU_SOURCE_FILES_RECEIVER})
-        
-        
-        target_include_directories(sender_cli PUBLIC cli)
-        target_include_directories(sender_cli PUBLIC ${TCLAP_INCLUDE_DIRS})
-        target_include_directories(receiver_cli PUBLIC cli)
-        target_include_directories(receiver_cli PUBLIC ${TCLAP_INCLUDE_DIRS})
-        add_subdirectory(cli/sender)
-        add_subdirectory(cli/receiver)
-        target_sources(sender_cli
-            PRIVATE
-            ${CMAKE_CURRENT_LIST_DIR}/cli/common_utils.cpp
-            ${CMAKE_CURRENT_LIST_DIR}/cli/csv_reader.cpp
-        )
-        target_sources(receiver_cli
-            PRIVATE
-            ${CMAKE_CURRENT_LIST_DIR}/cli/common_utils.cpp
-            ${CMAKE_CURRENT_LIST_DIR}/cli/csv_reader.cpp
-            )
-else()
-
-    add_library(apsu STATIC)
-    apsu_set_version_filename(apsu)
-    apsu_set_language(apsu)
-    target_include_directories(apsu PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/common>
-        $<INSTALL_INTERFACE:${APSU_INCLUDES_INSTALL_DIR}>)
-    target_include_directories(apsu PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/sender>
-        $<INSTALL_INTERFACE:${APSU_INCLUDES_INSTALL_DIR}>)
-    target_include_directories(apsu PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/receiver>
-        $<INSTALL_INTERFACE:${APSU_INCLUDES_INSTALL_DIR}>)
-    target_include_directories(apsu PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/common>
-        $<INSTALL_INTERFACE:${APSU_INCLUDES_INSTALL_DIR}>)
-    target_include_directories(apsu PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/sender>
-        $<INSTALL_INTERFACE:${APSU_INCLUDES_INSTALL_DIR}>)
-
-    apsu_set_version(apsu)
-    apsu_link_threads(apsu)
-    apsu_install_target(apsu APSUTargets)
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-pic -Wno-deprecated-declarations -Xpreprocessor -fopenmp -pthread -O3 -fPIE")
-    target_link_libraries(apsu
-        PUBLIC SEAL::seal
-        PUBLIC Kuku::kuku
-        PUBLIC flatbuffers::flatbuffers
-        PUBLIC jsoncpp_static)
-    TARGET_LINK_LIBRARIES(apsu PUBLIC ${OPENSSL_LIBRARIES})
-    target_link_libraries(apsu 
+target_link_libraries(sender_cli
+    PUBLIC SEAL::seal
+    PUBLIC Kuku::kuku
+    PUBLIC flatbuffers::flatbuffers
+    PUBLIC jsoncpp_static)
+TARGET_LINK_LIBRARIES(sender_cli PUBLIC ${OPENSSL_LIBRARIES})
+target_link_libraries(sender_cli 
     PUBLIC libOTe
     PUBLIC relic_s 
     PUBLIC bitpolymul
@@ -523,193 +325,170 @@ else()
     PUBLIC KyberOT
     PUBLIC libOTe
     PUBLIC pthread
-    )
-    target_link_libraries(apsu 
+)
+target_link_libraries(sender_cli 
     PUBLIC boost_atomic 
     PUBLIC boost_date_time
     PUBLIC boost_filesystem
     PUBLIC boost_regex
     PUBLIC boost_system
     PUBLIC boost_thread
-    )
-    target_link_libraries(apsu PUBLIC -lomp)
-    target_link_options(apsu PUBLIC -fPIC -no-pie)
-    target_compile_options(apsu PUBLIC -fPIC -no-pie)
-    if(APSU_USE_LOG4CPLUS)
-        target_link_libraries(apsu PUBLIC log4cplus::log4cplus)
-    endif()
-    if(APSU_USE_ZMQ)
-        target_link_libraries(apsu PRIVATE libzmq-static cppzmq-static)
-    endif()
+)
+target_link_libraries(sender_cli PUBLIC -lomp)
 
-    # Configurations for FourQlib: system, arch, SIMD, and assembler
-    target_compile_options(apsu PUBLIC -DHAVE_CONFIG)
-    target_compile_options(apsu PUBLIC -DUSE_SECURE_SEED)
-    target_compile_options(apsu PUBLIC -DUSE_ENDO=true)
+##### target cli for receiver #########
 
-    # Set system
-    if(MSVC)
-        target_compile_options(apsu PUBLIC -D__WINDOWS__)
-    elseif (UNIX)
-        target_compile_options(apsu PUBLIC -D__LINUX__)
-    endif()
+target_link_libraries(receiver_cli
+    PUBLIC SEAL::seal
+    PUBLIC Kuku::kuku
+    PUBLIC flatbuffers::flatbuffers
+    PUBLIC jsoncpp_static)
+TARGET_LINK_LIBRARIES(receiver_cli PUBLIC ${OPENSSL_LIBRARIES})
+target_link_libraries(receiver_cli 
+    PUBLIC libOTe
+    PUBLIC relic_s 
+    PUBLIC bitpolymul
+    PUBLIC cryptoTools
+    PUBLIC KyberOT
+    PUBLIC libOTe
+    PUBLIC pthread
+)
+target_link_libraries(receiver_cli 
+    PUBLIC boost_atomic 
+    PUBLIC boost_date_time
+    PUBLIC boost_filesystem
+    PUBLIC boost_regex
+    PUBLIC boost_system
+    PUBLIC boost_thread
+)
+target_link_libraries(receiver_cli PUBLIC -lomp)
 
-    # Set architecture
-    include(DetectArch)
-    if(APSU_FOURQ_AMD64)
-        target_compile_options(apsu PUBLIC -D_AMD64_)
-        message(STATUS "FourQlib optimization: arch=AMD64")
-    elseif (APSU_FOURQ_ARM64)
-        target_compile_options(apsu PUBLIC -D_ARM64_)
-        message(STATUS "FourQlib optimization: arch=ARM64")
-    else()
-        target_compile_options(apsu PUBLIC -D_GENERIC_)
-        message(STATUS "FourQlib optimization: arch=GENERIC")
-    endif()
-    if(NOT MSVC)
-        target_compile_options(apsu PUBLIC -march=native)
-    endif()
+##### target link option for sender #########
 
-    # Set AVX or AVX2 if not generic
-    if(APSU_FOURQ_AMD64 OR APSU_FOURQ_ARM64)
-        include(FindAVX)
-        check_for_avx(apsu)
-        if (HAVE_AVX2_EXTENSIONS)
-            target_compile_options(apsu PUBLIC -D_AVX2_)
-            message(STATUS "FourQlib optimization: simd=AVX2")
-        elseif(HAVE_AVX_EXTENSIONS)
-            target_compile_options(apsu PUBLIC -D_AVX_)
-            message(STATUS "FourQlib optimization: simd=AVX")
-        endif()
-    else()
-        message(STATUS "FourQlib optimization: simd=OFF")
-    endif()
 
-    # Use optimized assembly on Linux (non-AVX or AVX2)
-    set(APSU_FOURQ_USE_ASM OFF)
-    if(UNIX AND NOT APPLE AND NOT CYGWIN AND NOT MINGW)
-        check_language(ASM)
-        if(CMAKE_ASM_COMPILER)
-            enable_language(ASM)
-            target_compile_options(apsu PUBLIC -D_ASM_)
-            set(APSU_FOURQ_USE_ASM ON)
-            message(STATUS "FourQlib optimization: asm=ON")
-        endif()
-    endif()
+target_link_options(sender_cli PUBLIC -fPIC -no-pie)
+target_compile_options(sender_cli PUBLIC -fPIC -no-pie)
+if(APSU_USE_LOG4CPLUS)
+    target_link_libraries(sender_cli PUBLIC log4cplus::log4cplus)
+endif()
+if(APSU_USE_ZMQ)
+    target_link_libraries(sender_cli PRIVATE libzmq-static cppzmq-static)
+endif()
 
-    # Add source files to library and header files to install
-    # Must follow configurations for FourQlib
-    set(APSU_SOURCE_FILES "")
-    add_subdirectory(common/apsu)
-    add_subdirectory(receiver/apsu)
-    add_subdirectory(sender/apsu)
+# Configurations for FourQlib: system, arch, SIMD, and assembler
+target_compile_options(sender_cli PUBLIC -DHAVE_CONFIG)
+target_compile_options(sender_cli PUBLIC -DUSE_SECURE_SEED)
+target_compile_options(sender_cli PUBLIC -DUSE_ENDO=true)
+##### target link option for sender #########
 
-    target_sources(apsu PRIVATE ${APSU_SOURCE_FILES})
 
-    #################################
-    # Installation and CMake config #
-    #################################
+target_link_options(receiver_cli PUBLIC -fPIC -no-pie)
+target_compile_options(receiver_cli PUBLIC -fPIC -no-pie)
+if(APSU_USE_LOG4CPLUS)
+    target_link_libraries(receiver_cli PUBLIC log4cplus::log4cplus)
+endif()
+if(APSU_USE_ZMQ)
+    target_link_libraries(receiver_cli PRIVATE libzmq-static cppzmq-static)
+endif()
 
-    # Create the CMake config file
-    include(CMakePackageConfigHelpers)
-    configure_package_config_file(
-        ${APSU_CONFIG_IN_FILENAME} ${APSU_CONFIG_FILENAME}
-        INSTALL_DESTINATION ${APSU_CONFIG_INSTALL_DIR}
-    )
+# Configurations for FourQlib: system, arch, SIMD, and assembler
+target_compile_options(receiver_cli PUBLIC -DHAVE_CONFIG)
+target_compile_options(receiver_cli PUBLIC -DUSE_SECURE_SEED)
+target_compile_options(receiver_cli PUBLIC -DUSE_ENDO=true)   
 
-    # Install the export
-    install(
-        EXPORT APSUTargets
-        NAMESPACE APSU::
-        DESTINATION ${APSU_CONFIG_INSTALL_DIR})
 
-    # Version file; we require exact version match for downstream
-    write_basic_package_version_file(
-        ${APSU_CONFIG_VERSION_FILENAME}
-        VERSION ${APSU_VERSION}
-        COMPATIBILITY SameMinorVersion)
+####### Set system for sender ######
+if(MSVC)
+    target_compile_options(sender_cli PUBLIC -D__WINDOWS__)
+    target_compile_options(receiver_cli PUBLIC -D__WINDOWS__)
 
-    # Install config and module files
-    install(
-        FILES
-            ${APSU_CONFIG_FILENAME}
-            ${APSU_CONFIG_VERSION_FILENAME}
-        DESTINATION ${APSU_CONFIG_INSTALL_DIR})
+elseif (UNIX)
+    target_compile_options(sender_cli PUBLIC -D__LINUX__)
+    target_compile_options(receiver_cli PUBLIC -D__LINUX__)
 
-    # We export SEALTargets from the build tree so it can be used by other projects
-    # without requiring an install.
-    export(
-        EXPORT APSUTargets
-        NAMESPACE APSU::
-        NAMESPACE APSU::
-        FILE ${APSU_TARGETS_FILENAME})
+endif()
 
-    ###################
-    # APSU unit tests #
-    ###################
+####### Set architecture  #######
+include(DetectArch)
+if(APSU_FOURQ_AMD64)
+    target_compile_options(sender_cli PUBLIC -D_AMD64_)
+    target_compile_options(receiver_cli PUBLIC -D_AMD64_)
+    message(STATUS "FourQlib optimization: arch=AMD64")
+elseif (APSU_FOURQ_ARM64)
+    target_compile_options(sender_cli PUBLIC -D_ARM64_)
+    target_compile_options(receiver_cli PUBLIC -D_ARM64_)
+    message(STATUS "FourQlib optimization: arch=ARM64")
+else()
+    target_compile_options(sender_cli PUBLIC -D_GENERIC_)
+    target_compile_options(receiver_cli PUBLIC -D_GENERIC_)
+    message(STATUS "FourQlib optimization: arch=GENERIC")
+endif()
+if(NOT MSVC)
+    target_compile_options(sender_cli PUBLIC -march=native)
+    target_compile_options(receiver_cli PUBLIC -march=native)
+endif()
 
-    if(APSU_BUILD_TESTS)
-        add_executable(unit_tests)
-        add_subdirectory(tests/unit/src)
-        target_link_libraries(unit_tests apsu GTest::gtest)
-    endif()
+####### Set AVX or AVX2 if not generic #######
+if(APSU_FOURQ_AMD64 OR APSU_FOURQ_ARM64)
+include(FindAVX)
+check_for_avx(sender_cli)
 
-    ##########################
-    # APSU integration tests #
-    ##########################
+if (HAVE_AVX2_EXTENSIONS)
+    target_compile_options(sender_cli PUBLIC -D_AVX2_)
+    target_compile_options(receiver_cli PUBLIC -D_AVX2_)
+    message(STATUS "FourQlib optimization: simd=AVX2")
+elseif(HAVE_AVX_EXTENSIONS)
+    target_compile_options(sender_cli PUBLIC -D_AVX_)
+    target_compile_options(receiver_cli PUBLIC -D_AVX_)
+    message(STATUS "FourQlib optimization: simd=AVX")
+endif()
+else()
+    message(STATUS "FourQlib optimization: simd=OFF")
+endif()
 
-    if(APSU_BUILD_TESTS)
-        add_executable(integration_tests)
-        add_subdirectory(tests/integration/src)
-        target_link_libraries(integration_tests apsu GTest::gtest)
-    endif()
-
-    ##########################
-    # Command Line Interface #
-    ##########################
-
-    if(APSU_BUILD_CLI)
-        add_library(common_cli OBJECT)
-        add_subdirectory(cli/common)
-        target_include_directories(common_cli PUBLIC cli)
-        target_include_directories(common_cli PUBLIC ${TCLAP_INCLUDE_DIRS})
-        target_link_libraries(common_cli PUBLIC apsu)
-        if (NOT MSVC AND NOT APPLE)
-            target_link_libraries(common_cli PUBLIC stdc++fs)
-        endif()
-        if(NOT APSU_USE_CXX17)
-            message(STATUS "Command line interface is built with C++17 regardless of APSU_USE_CXX17")
-        endif()
-        target_compile_features(common_cli PUBLIC cxx_std_17)
-        # Ensure PDB is generated even in Release mode
-        if(MSVC)
-            target_link_options(common_cli PUBLIC /DEBUG)
-        endif()
-
-        add_executable(sender_cli)
-        add_subdirectory(cli/sender)
-        target_link_libraries(sender_cli PRIVATE common_cli apsu)
-        if (APPLE)
-            target_compile_options(common_cli PUBLIC -DHAVE_LONG_LONG)
-        endif()
-
-        add_executable(receiver_cli)
-        add_subdirectory(cli/receiver)
-        target_link_libraries(receiver_cli PRIVATE common_cli apsu)
-
-        add_executable(pd_tool)
-        add_subdirectory(cli/pd_tool)
-        target_include_directories(pd_tool PRIVATE cli)
-        target_include_directories(pd_tool PRIVATE ${TCLAP_INCLUDE_DIRS})
-        target_link_libraries(pd_tool apsu)
-
-        target_link_options(sender_cli PUBLIC -fPIC -no-pie)
-        target_compile_options(apsu PUBLIC -fPIC -no-pie)
-
-        target_link_options(receiver_cli PUBLIC -fPIC -no-pie)
-        target_compile_options(apsu PUBLIC -fPIC -no-pie)
-
-        target_link_options(pd_tool PUBLIC -fPIC -no-pie)
-        target_compile_options(apsu PUBLIC -fPIC -no-pie)
+####### Use optimized assembly on Linux (non-AVX or AVX2) ######
+set(APSU_FOURQ_USE_ASM OFF)
+if(UNIX AND NOT APPLE AND NOT CYGWIN AND NOT MINGW)
+check_language(ASM)
+    if(CMAKE_ASM_COMPILER)
+        enable_language(ASM)
+        target_compile_options(sender_cli PUBLIC -D_ASM_)
+        target_compile_options(receiver_cli PUBLIC -D_ASM_)
+        set(APSU_FOURQ_USE_ASM ON)
+        message(STATUS "FourQlib optimization: asm=ON")
     endif()
 endif()
+# Add source files to library and header files to install
+# Must follow configurations for FourQlib
+set(APSU_SOURCE_FILES "")
+set(APSU_SOURCE_FILES_SENDER "")
+set(APSU_SOURCE_FILES_RECEIVER "")
+
+add_subdirectory(common/apsu)
+
+add_subdirectory(sender/apsu)
+add_subdirectory(receiver/apsu)
+#message(STATUS "${APSU_SOURCE_FILES_SENDER}")
+#message(STATUS "${APSU_SOURCE_FILES_RECEIVER}")
+target_sources(sender_cli  PRIVATE ${APSU_SOURCE_FILES_SENDER})
+target_sources(receiver_cli PRIVATE ${APSU_SOURCE_FILES_RECEIVER})
+
+
+target_include_directories(sender_cli PUBLIC cli)
+target_include_directories(sender_cli PUBLIC ${TCLAP_INCLUDE_DIRS})
+target_include_directories(receiver_cli PUBLIC cli)
+target_include_directories(receiver_cli PUBLIC ${TCLAP_INCLUDE_DIRS})
+add_subdirectory(cli/sender)
+add_subdirectory(cli/receiver)
+target_sources(sender_cli
+    PRIVATE
+    ${CMAKE_CURRENT_LIST_DIR}/cli/common_utils.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/cli/csv_reader.cpp
+)
+target_sources(receiver_cli
+    PRIVATE
+    ${CMAKE_CURRENT_LIST_DIR}/cli/common_utils.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/cli/csv_reader.cpp
+)
+
+

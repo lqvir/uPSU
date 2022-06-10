@@ -22,7 +22,7 @@
 #include "seal/modulus.h"
 #include "seal/util/common.h"
 
-#include "kunlun/mpc/peqt/peqt_from_ddh.hpp"
+#include "Kunlun/mpc/peqt/peqt_from_ddh.hpp"
 
 
 using namespace std;
