@@ -22,12 +22,12 @@
 namespace apsu {
     namespace network {
         /**
-        Stores a decrypted and decoded PSI response and optionally a labeled PSI response.
+        Stores a decrypted and decoded PSU response and optionally a labeled PSU response.
         */
         struct PlainResultPackage {
             std::uint32_t bundle_idx;
 
-            std::vector<std::uint64_t> psi_result;
+            std::vector<std::uint64_t> psu_result;
 
             std::uint32_t label_byte_count;
 
@@ -37,7 +37,7 @@ namespace apsu {
         };
 
         /**
-        Stores a PSI response and optionally labeled PSI response ciphertexts.
+        Stores a PSU response and optionally labeled PSU response ciphertexts.
         */
         class ResultPackage {
         public:
@@ -59,7 +59,7 @@ namespace apsu {
 
             seal::compr_mode_type compr_mode = seal::Serialization::compr_mode_default;
 
-            SEALObject<seal::Ciphertext> psi_result;
+            SEALObject<seal::Ciphertext> psu_result;
 
             std::uint32_t label_byte_count;
 

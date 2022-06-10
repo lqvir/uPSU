@@ -4,24 +4,33 @@
 #pragma once
 
 // STD
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
-#include <functional>
 #include <memory>
+#include <set>
+#include <stdexcept>
+#include <type_traits>
+#include <unordered_map>
 #include <utility>
 #include <vector>
+#include <string>
 
 // APSU
+#include "apsu/crypto_context.h"
+#include "apsu/item.h"
+#include "apsu/itt.h"
+#include "apsu/match_record.h"
 #include "apsu/network/channel.h"
-#include "apsu/network/sender_operation.h"
-#include "apsu/oprf/oprf_sender.h"
-#include "apsu/query.h"
+#include "apsu/network/network_channel.h"
+#include "apsu/oprf/oprf_receiver.h"
+#include "apsu/powers.h"
+#include "apsu/psu_params.h"
 #include "apsu/requests.h"
 #include "apsu/responses.h"
-#include "apsu/sender_db.h"
-#include "apsu/permute/apsu_OSNReceiver.h"
-
-
+#include "apsu/seal_object.h"
+#include "apsu/permute/apsu_OSNSender.h"
+// libOTe
 #include <cryptoTools/Network/Session.h>
 #include <cryptoTools/Network/Channel.h>
 #include <cryptoTools/Network/IOService.h>
@@ -34,207 +43,230 @@
 #include "libOTe/Base/BaseOT.h"
 namespace apsu {
     namespace sender {
-        // An alias to denote the powers of a receiver's ciphertext. At index i, holds Cⁱ, where C
-        // is the ciphertext. The 0th index is always a dummy value.
-        using CiphertextPowers = std::vector<seal::Ciphertext>;
-
-        namespace {
-            template <typename T>
-            inline void hash_combine(std::size_t &seed, const T &val)
-            {
-                seed ^= std::hash<T>()(val) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-            }
-            // auxiliary generic functions to create a hash value using a seed
-            template <typename T>
-            inline void hash_val(std::size_t &seed, const T &val)
-            {
-                hash_combine(seed, val);
-            }
-            template <typename T, typename... Types>
-            inline void hash_val(std::size_t &seed, const T &val, const Types &...args)
-            {
-                hash_combine(seed, val);
-                hash_val(seed, args...);
-            }
-
-            template <typename... Types>
-            inline std::size_t hash_val(const Types &...args)
-            {
-                std::size_t seed = 0;
-                hash_val(seed, args...);
-                return seed;
-            }
-
-            struct pair_hash {
-                template <class T1, class T2>
-                std::size_t operator()(const std::pair<T1, T2> &p) const
-                {
-                    return hash_val(p.first, p.second);
-                }
-            };
-
-        }
         /**
-        The Sender class implements all necessary functions to process and respond to parameter,
-        OPRF, and PSI or labeled PSI queries (depending on the sender). Unlike the Receiver class,
-        Sender also takes care of actually sending data back to the receiver. Sender is a static
-        class and cannot be instantiated.
+        The Sender class implements all necessary functions to create and send parameter, OPRF,
+        and PSU or labeled PSU queries (depending on the sender), and process any responses
+        received. Most of the member functions are static, but a few (related to creating and
+        processing the query itself) require an instance of the class to be created.
 
-        Like the Receiver, there are two ways of using the Sender. The "simple" approach supports
-        network::ZMQChannel and is implemented in the ZMQSenderDispatcher class in
-        zmq/sender_dispatcher.h. The ZMQSenderDispatcher provides a very fast way of deploying an
-        APSU Sender: it automatically binds to a ZeroMQ socket, starts listening to requests, and
-        acts on them as appropriate.
+        The class includes two versions of an API to performs the necessary operations. The "simple"
+        API consists of three functions: Sender::RequestParams, Sender::RequestOPRF, and
+        Sender::request_query. However, these functions only support network::NetworkChannel, such
+        as network::ZMQChannel, for the communication. Other channels, such as
+        network::StreamChannel, are only supported by the "advanced" API.
 
-        The advanced Sender API consisting of three functions: RunParams, RunOPRF, and RunQuery. Of
-        these, RunParams and RunOPRF take the request object (ParamsRequest or OPRFRequest) as
-        input. RunQuery requires the QueryRequest to be "unpacked" into a Query object first.
+        The advanced API requires many more steps. The full process is as follows:
 
-        The full process for the sender is as follows:
+        (0 -- optional) Sender::CreateParamsRequest must be used to create a parameter request.
+        The request must be sent to the sender on a channel with network::Channel::send. The sender
+        must respond to the request and the response must be received on the channel with
+        network::Channel::receive_response. The received Response object must be converted to the
+        right type (ParamsResponse) with the to_params_response function. This function will return
+        nullptr if the received response was not of the right type. A PSUParams object can be
+        extracted from the response.
 
-        (1) Create a PSIParams object that is appropriate for the kinds of queries the sender is
-        expecting to serve. Create a SenderDB object from the PSIParams. The SenderDB constructor
-        optionally accepts an existing oprf::OPRFKey object and samples a random one otherwise. It
-        is recommended to construct the SenderDB directly into a std::shared_ptr, as the Query
-        constructor (see below) expects it to be passed as a std::shared_ptr<SenderDB>.
+        (1) A Sender object must be created from a PSUParams object. The PSUParams must match what
+        the sender uses.
 
-        (2) The sender's data must be loaded into the SenderDB with SenderDB::set_data. More data
-        can always be added later with SenderDB::insert_or_assign, or removed with SenderDB::remove,
-        as long as the SenderDB has not been stripped (see SenderDB::strip).
+        (2) Sender::CreateOPRFReceiver must be used to process the input vector of items and
+        return an associated oprf::OPRFReceiver object. Next, Sender::CreateOPRFRequest must be
+        used to create an OPRF request from the oprf::OPRFReceiver, which can subsequently be sent
+        to the sender with network::Channel::send. The sender must respond to the request and the
+        response must be received on the channel with network::Channel::receive_response. The
+        received Response object must be converted to the right type (OPRFResponse) with the
+        to_oprf_response function. This function will return nullptr if the received response was
+        not of the right type. Finally, Sender::ExtractHashes must be called with the
+        OPRFResponse and the oprf::OPRFReceiver object. This function returns
+        std::pair<std::vector<HashedItem>, std::vector<LabelKey>>, containing the OPRF hashed items
+        and the label encryption keys. Both vectors in this pair must be kept for the next steps.
 
-        (3 -- optional) Receive a parameter request with network::Channel::receive_operation. The
-        received Request object must be converted to the right type (ParamsRequest) with the
-        to_params_request function. This function will return nullptr if the received request was
-        not of the right type. Once the request has been obtained, the RunParams function can be
-        called with the ParamsRequest, the SenderDB, the network::Channel, and optionally a lambda
-        function that implements custom logic for sending the ParamsResponse object on the channel.
+        (3) Sender::create_query (non-static member function) must then be used to create the
+        query itself. The function returns std::pair<Request, IndexTranslationTable>, where the
+        Request object contains the query itself to be send to the sender, and the
+        IndexTranslationTable is an object associated to this query describing how the internal data
+        structures of the query maps to the vector of OPRF hashed items given to
+        Sender::create_query. The IndexTranslationTable object is needed later to process the
+        responses from the sender. The Request object must be sent to the sender with
+        network::Channel::send. The received Response object must be converted to the right type
+        (QueryResponse) with the to_query_response function. This function will return nullptr if
+        the received response was not of the right type. The QueryResponse contains only one
+        important piece of data: the number of ResultPart objects the sender should expect to
+        receive from the sender in the next step.
 
-        (4) Receive an OPRF request with network::Channel::receive_operation. The received Request
-        object must be converted to the right type (OPRFRequest) with the to_oprf_request function.
-        This function will return nullptr if the received request was not of the right type. Once
-        the request has been obtained, the RunOPRF function can be called with the OPRFRequest, the
-        oprf::OPRFKey, the network::Channel, and optionally a lambda function that implements custom
-        logic for sending the OPRFResponse object on the channel.
-
-        (5) Receive a query request with network::Channel::receive_operation. The received Request
-        object must be converted to the right type (QueryRequest) with the to_query_request
-        function. This function will return nullptr if the received request was not of the correct
-        type. Once the request has been obtained, a Query object must be created from it. The
-        constructor of the Query class verifies that the QueryRequest is valid for the given
-        SenderDB, and if it is not the constructor still returns successfully but the Query is
-        marked as invalid (Query::is_valid() returns false) and cannot be used in the next step.
-        Once a valid Query object is created, the RunQuery function can be used to perform the query
-        and respond on the given channel. Optionally, two lambda functions can be given to RunQuery
-        to provide custom logic for sending the QueryResponse and the ResultPart objects on the
-        channel.
+        (4) network::Channel::receive_result must be called repeatedly to receive all ResultParts.
+        For each received ResultPart Sender::process_result_part must be called to find a
+        std::vector<MatchRecord> representing the match data associated to that ResultPart.
+        Alternatively, one can first retrieve all ResultParts, collect them into a
+        std::vector<ResultPart>, and use Sender::process_result to find the complete result --
+        just like what the simple API returns. Both Sender::process_result_part and
+        Sender::process_result require the IndexTranslationTable and the std::vector<LabelKey>
+        objects created in the previous steps.
         */
         class Sender {
-        private:
+        public:
             /**
-            The most basic kind of function for sending an APSU message on a given channel. This
-            function can be used unless the channel requires encapsulating the raw APSU messages,
-            e.g., for including routing information or a digital signature. For example,
-            network::ZMQChannel cannot use BasicSend; see zmq/sender_dispatcher.cpp for another
-            example of a send function that works with the ZMQChannel.
+            Indicates the number of random-walk steps used by the Kuku library to insert items into
+            the cuckoo hash table. Increasing this number can yield better packing rates in cuckoo
+            hashing.
             */
-            template <typename T>
-            static void BasicSend(network::Channel &chl, std::unique_ptr<T> pkg)
+            static constexpr std::uint64_t cuckoo_table_insert_attempts = 500;
+
+            /**
+            Creates a new sender with parameters specified. In this case the sender has
+            specified the parameters and expects the sender to use the same set.
+            */
+            Sender(PSUParams params);
+
+            /**
+            Generates a new set of keys to use for queries.
+            */
+            void reset_keys();
+
+            /**
+            Returns a reference to the PowersDag configured for this Sender.
+            */
+            const PowersDag &get_powers_dag() const
             {
-                chl.send(std::move(pkg));
+                return pd_;
             }
 
-        public:
-            Sender(){
-                ans.clear();
-                pack_cnt = 0;
-                item_cnt = 0;
-                random_map.clear();
-                random_after_permute_map.clear();
-                random_plain_list.clear();
+            /**
+            Returns a reference to the CryptoContext for this Sender.
+            */
+            const CryptoContext &get_crypto_context() const
+            {
+                return crypto_context_;
+            }
+
+            /**
+            Returns a reference to the SEALContext for this Sender.
+            */
+            std::shared_ptr<seal::SEALContext> get_seal_context() const
+            {
+                return crypto_context_.seal_context();
+            }
+
+            /**
+            Performs a parameter request and returns the received PSUParams object.
+            */
+            static PSUParams RequestParams(network::NetworkChannel &chl);
+
+            /**
+            Performs an OPRF request on a vector of items through a given channel and returns a
+            vector of OPRF hashed items of the same size as the input vector.
+            */
+            static std::pair<std::vector<HashedItem>, std::vector<LabelKey>> RequestOPRF(
+                const std::vector<Item> &items, network::NetworkChannel &chl);
+
+            /**
+            Performs a PSU or labeled PSU (depending on the sender) query. The query is a vector of
+            items, and the result is a same-size vector of MatchRecord objects. If an item is in the
+            intersection, the corresponding MatchRecord indicates it in the `found` field, and the
+            `label` field may contain the corresponding label if a sender's data included it.
+            */
+            std::vector<MatchRecord> request_query(
+                const std::vector<HashedItem> &items,
+              
+                network::NetworkChannel &chl,
+                const std::vector<std::string> &origin_item);
+
+            /**
+            Creates and returns a parameter request that can be sent to the sender with the
+            Sender::SendRequest function.
+            */
+            static Request CreateParamsRequest();
+
+            /**
+            Creates and returns an oprf::OPRFReceiver object for the given items.
+            */
+            static oprf::OPRFReceiver CreateOPRFReceiver(const std::vector<Item> &items);
+
+            /**
+            Creates an OPRF request that can be sent to the sender with the Sender::SendRequest
+            function.
+            */
+            static Request CreateOPRFRequest(const oprf::OPRFReceiver &oprf_receiver);
+
+            /**
+            Extracts a vector of OPRF hashed items from an OPRFResponse and the corresponding
+            oprf::OPRFReceiver.
+            */
+            static std::pair<std::vector<HashedItem>, std::vector<LabelKey>> ExtractHashes(
+                const OPRFResponse &oprf_response, const oprf::OPRFReceiver &oprf_receiver);
+
+            /**
+            Creates a Query object from a vector of OPRF hashed items. The query contains the query
+            request that can be extracted with the Query::extract_request function and sent to the
+            sender with Sender::SendRequest. It also contains an index translation table that
+            keeps track of the order of the hashed items vector, and is used internally by the
+            Sender::process_result_part function to sort the results in the correct order.
+            */
+            std::pair<Request, IndexTranslationTable> create_query(
+                const std::vector<HashedItem> &items,const std::vector<std::string> &origin_item);
+
+            /**
+            Processes a ResultPart object and returns a vector of MatchRecords in the same order as
+            the original vector of OPRF hashed items used to create the query. The return value
+            includes matches only for those items whose results happened to be in this particular
+            result part. Thus, to determine whether there was a match with the sender's data, the
+            results for each received ResultPart must be checked.
+            */
+            void process_result_part(
                 
-            };
+                const IndexTranslationTable &itt,
+                const ResultPart &result_part,
+                network::NetworkChannel &chl) const;
 
             /**
-            Generate and send a response to a parameter request.
+            This function does multiple calls to Sender::process_result_part, once for each
+            ResultPart in the given vector. The results are collected together so that the returned
+            vector of MatchRecords reflects the logical OR of the results from each ResultPart.
             */
-            void RunParams(
-                const ParamsRequest &params_request,
-                std::shared_ptr<SenderDB> sender_db,
-                network::Channel &chl,
-                std::function<void(network::Channel &, Response)> send_fun =
-                    BasicSend<Response::element_type>);
-
-            /**
-            Generate and send a response to an OPRF request.
-            */
-            void RunOPRF(
-                const OPRFRequest &oprf_request,
-                oprf::OPRFKey key,
-                network::Channel &chl,
-                std::function<void(network::Channel &, Response)> send_fun =
-                    BasicSend<Response::element_type>);
-
-            /**
-            Generate and send a response to a query.
-            */
-            void RunQuery(
-                const Query &query,
-                network::Channel &chl,
-                std::function<void(network::Channel &, Response)> send_fun =
-                    BasicSend<Response::element_type>,
-                std::function<void(network::Channel &, ResultPart)> send_rp_fun =
-                    BasicSend<ResultPart::element_type>
-                );
-
-
+         /*   std::vector<MatchRecord> process_result(
+                const std::vector<LabelKey> &label_keys,
+                const IndexTranslationTable &itt,
+                const std::vector<ResultPart> &result) const;*/
             
-            
-            void RunResponse(
-                const plainRequest &params_request, network::Channel &chl,const PSIParams &params_);
-        
-            void RunOT();
-        
+            /**
+             * @brief send items values to sender to finished the complete APSU
+             * 
+             * @param[in] conn_addr sender web socker
+             */
+
+            void ResponseOT(std::string conn_addr);
         private:
             /**
-            Method that handles computing powers for a given bundle index
+            Recomputes the PowersDag. The function returns the depth of the PowersDag. In some cases
+            the sender may want to ensure that the depth of the powers computation will be as
+            expected (PowersDag::depth), and otherwise attempt to reconfigure the PowersDag.
             */
-             void ComputePowers(
-                const std::shared_ptr<SenderDB> &sender_db,
-                const CryptoContext &crypto_context,
-                std::vector<std::vector<seal::Ciphertext>> &powers,
-                const PowersDag &pd,
-                std::uint32_t bundle_idx,
-                seal::MemoryPoolHandle &pool);
+            std::uint32_t reset_powers_dag(const std::set<std::uint32_t> &source_powers);
 
-            /**
-            Method that processes a single Bin Bundle cache.
-            Sends a result package through the given channel.
-            */
-            void ProcessBinBundleCache(
-                const std::shared_ptr<SenderDB> &sender_db,
-                const CryptoContext &crypto_context,
-                std::reference_wrapper<const BinBundleCache> cache,
-                std::vector<CiphertextPowers> &all_powers,
-                network::Channel &chl,
-                std::function<void(network::Channel &, ResultPart)> send_rp_fun,
-                std::uint32_t bundle_idx,
-                seal::compr_mode_type compr_mode,
-                seal::MemoryPoolHandle &pool,
-                std::uint32_t cache_idx,
-                std::uint32_t pack_idx
-                );
-            //static std::unordered_map<std::pair<std::uint32_t, std::uint32_t>, std::vector<uint64_t>, pair_hash > random_map;
-            std::uint32_t pack_cnt;
-            std::vector<uint64_t> ans;
-            std::uint64_t item_cnt;
-            int send_size,receiver_size;
-           
-            std::vector<std::vector<uint64_t> > random_map;
-            std::vector<seal::Plaintext > random_plain_list;
-            std::vector<uint64_t > random_after_permute_map;
-            //static std::vector<uint64_t> match_record;
+            void process_result_worker(
+                std::atomic<std::uint32_t> &package_count,
+                std::vector<MatchRecord> &mrs,
+                const IndexTranslationTable &itt,
+                network::NetworkChannel &chl);
+
+            void initialize();
+            // params for permutation 
+            std::vector<int > permutation;
+            std::vector<uint64_t> sender_set;
+            std::vector<std::vector<oc::block > > psu_result_before_shuffle;
+            int send_size=0,recv_size =0;
+            //std::vector<vector<uint64_t> > psu_result_before_shuffle;
+            PSUParams params_;
+
+            CryptoContext crypto_context_;
+
+            PowersDag pd_;
+
+            SEALObject<seal::RelinKeys> relin_keys_;
+
+            oc::Timer all_timer;
+
+           std::vector<std::array<oc::block, 2>> sendMessages;
+           std::vector<std::array<oc::block, 2>> shuffleMessages;
         }; // class Sender
-       
-        //std::unordered_map<std::pair<std::uint32_t, std::uint32_t>, std::vector<uint64_t>, pair_hash > Sender::random_map = {};
     }      // namespace sender
 } // namespace apsu

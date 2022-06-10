@@ -24,7 +24,7 @@
 
 #ifndef KUNLUN_MPOPRF_HPP_
 #define KUNLUN_MPOPRF_HPP_
-#define THREAD_NUM 8
+
 #include "../ot/naor_pinkas_ot.hpp"
 
 namespace MPOPRF{
@@ -124,7 +124,7 @@ namespace MPOPRF{
         std::vector<std::vector<uint8_t>> hash_output(set_size, std::vector<uint8_t>(H1_OUTPUT_LEN));
         std::vector<block> temp_block(set_size);
 
-        #pragma omp parallel for num_threads(THREAD_NUM) 
+        #pragma omp parallel for
 		for (auto i = 0; i < set_size; i++) {
 			BasicHash((uint8_t*)(set.data() + i), sizeof(block), hash_output[i].data());
 			// H(x) = (x_0 || x_1)		
@@ -137,7 +137,7 @@ namespace MPOPRF{
         AES::FastECBEnc(seed.aes_key, temp_block.data(), set_size);
 
         // compute [G(x_0) xor x_1]
-        #pragma omp parallel for num_threads(THREAD_NUM) 
+        #pragma omp parallel for
         for (auto i = 0; i < set_size; i++)
         {
             hash_set[i] = temp_block[i] ^ set[i];
@@ -192,9 +192,6 @@ namespace MPOPRF{
         /* step2: compute matrix_C[matrix_width][matrix_height] (page 10 figure 4 item3)*/
         size_t log_height_byte = (pp.log_matrix_height + 7) >> 3; 
         size_t matrix_height_byte = pp.matrix_height >> 3;
-        std::cout<<"log height byte"<<pp.log_matrix_height<<std::endl;
-
-        std::cout<<"log height byte"<<log_height_byte<<std::endl;
         size_t split_bucket_size = sizeof(block) / log_height_byte; // the size of each splited part
 
         std::vector<std::vector<uint8_t>> matrix_C(pp.matrix_width, std::vector<uint8_t>(pp.matrix_height)); 
@@ -210,7 +207,7 @@ namespace MPOPRF{
             std::vector<uint8_t> rev_matrix_B(split_bucket_size * matrix_height_byte);
             io.ReceiveBytes(rev_matrix_B.data(), bucket_size * matrix_height_byte);
 
-            #pragma omp parallel for num_threads(THREAD_NUM) 
+            #pragma omp parallel for
 			for (auto i = 0; i < bucket_size; i++)
 			{
                 PRG::ReSeed(temp_seed[i], &vec_K[left_index + i], 0);
@@ -218,7 +215,7 @@ namespace MPOPRF{
 
 				if (vec_selection_bit[left_index + i])
 				{
-                    #pragma omp parallel for num_threads(THREAD_NUM) 
+                    #pragma omp parallel for
 					for (auto j = 0; j < matrix_height_byte; j++)
 					{
 						matrix_C[left_index + i][j] ^= rev_matrix_B[i * matrix_height_byte + j];
@@ -281,7 +278,7 @@ namespace MPOPRF{
 			}
 
             // compute mapping values from the oprfkey (compute (C1[v[1]] || ... || Cw[v[w]]) in page 9 figure 3 item3-(b))
-            #pragma omp parallel for num_threads(THREAD_NUM) 
+            #pragma omp parallel for
             for (auto i = 0; i < bucket_size; i++)
 			{
 				for (auto j = 0; j < set_size; j++)
@@ -311,10 +308,9 @@ namespace MPOPRF{
 		NPOT::Send(io, pp.npot_part, vec_K0, vec_K1, pp.matrix_width);
 
         /* step2: hash each item y in vec_Y to a 256-bits string and custom to a 128-bits string [G(y_0) xor y_1] */
-        
         size_t log_height_byte = (pp.log_matrix_height + 7) >> 3; 
         size_t split_bucket_size = sizeof(block) / log_height_byte;
-     
+
         // AES_ENC_NUM = t + 1 (t in page 17)
         size_t AES_ENC_NUM = (pp.matrix_width / split_bucket_size) + 2;
         std::vector<block> aeskeys = PRG::GenRandomBlocks(pp.commonseed, AES_ENC_NUM); // AES keys used
@@ -338,7 +334,7 @@ namespace MPOPRF{
         // the actual size is matrix_location[w][n*logn]
 		std::vector<std::vector<uint8_t>> matrix_location(split_bucket_size, std::vector<uint8_t>(set_size * log_height_byte + sizeof(uint32_t)));
         std::vector<std::vector<uint8_t>> matrix_mapping_values(pp.matrix_width, std::vector<uint8_t>(matrix_height_byte, 0));
-
+ 
         // divides into t parts
         for (auto left_index = 0; left_index < pp.matrix_width; left_index += split_bucket_size)
         {
@@ -365,7 +361,7 @@ namespace MPOPRF{
 			}
 
             // initialize a all one matrix_D
-            #pragma omp parallel for num_threads(THREAD_NUM) 
+            #pragma omp parallel for
             for (auto i = 0; i < split_bucket_size; i++)
 			{
 				memset(matrix_D[i].data(), 255, matrix_height_byte);
@@ -382,7 +378,6 @@ namespace MPOPRF{
 					matrix_D[i][location_in_D >> 3] &= ~(1 << (location_in_D & 7));
 				}
 			}
-
 
             /* step3-3: compute matrix_B and send to sender (page 10 figure 4 item2) */
             std::vector<std::vector<uint8_t>> matrix_B(bucket_size, std::vector<uint8_t>(matrix_height_byte));
@@ -406,10 +401,9 @@ namespace MPOPRF{
 				}
 			}
             io.SendBytes(send_matrix_B.data(), bucket_size * matrix_height_byte);
-
             
             /* step3-4: compute mapping values from matrix A (compute (A1[v[1]] || ... || Aw[v[w]]) in page 9 figure 3 item3-(c)) */ 
-            #pragma omp parallel for num_threads(THREAD_NUM) 
+            #pragma omp parallel for
             for (auto i = 0; i < bucket_size; i++)
 			{
 				for (auto j = 0; j < set_size; j++)

@@ -3,26 +3,23 @@
 
 # Source files in this directory
 set(APSU_SOURCE_FILES ${APSU_SOURCE_FILES}
-    ${CMAKE_CURRENT_LIST_DIR}/bin_bundle.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/query.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/plaintext_powers.cpp
     ${CMAKE_CURRENT_LIST_DIR}/sender.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/sender_db.cpp
+)
+set(APSU_SOURCE_FILES_SENDER ${APSU_SOURCE_FILES_SENDER}
+${CMAKE_CURRENT_LIST_DIR}/plaintext_powers.cpp
+${CMAKE_CURRENT_LIST_DIR}/sender.cpp
 )
 
 # Add header files for installation
 install(
     FILES
-        ${CMAKE_CURRENT_LIST_DIR}/bin_bundle.h
-        ${CMAKE_CURRENT_LIST_DIR}/query.h
+        ${CMAKE_CURRENT_LIST_DIR}/itt.h
+        ${CMAKE_CURRENT_LIST_DIR}/match_record.h
         ${CMAKE_CURRENT_LIST_DIR}/sender.h
-        ${CMAKE_CURRENT_LIST_DIR}/sender_db.h
     DESTINATION
         ${APSU_INCLUDES_INSTALL_DIR}/apsu
 )
 
-add_subdirectory(util)
-
-if(APSU_USE_ZMQ)
-    add_subdirectory(zmq)
-endif()
+set(APSU_SOURCE_FILES_SENDER ${APSU_SOURCE_FILES_SENDER} PARENT_SCOPE)
 set(APSU_SOURCE_FILES ${APSU_SOURCE_FILES} PARENT_SCOPE)
