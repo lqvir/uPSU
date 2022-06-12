@@ -1,25 +1,17 @@
 # APSU
-A c++ library about asymmetric PSU is based on the [APSI](https://github.com/microsoft/APSI) and [libOTe](https://github.com/osu-crypto/libOTe).(It works only in "x64 Release" mod now.)
-## Build
-```
-git clone https://github.com/lqvir/APSU.git
-mkdir build
-cd build
-cmake ..
-cmake --build . --config release 
-``` # uPSU
+
 ## Introduction
-uPSU is an unbalanced PSU protocol which is described in [eprint.iacr.org/2022/653](https://eprint.iacr.org/2022/653). The larger difference betweend the sizeof of two sets, the better our protocol performs.   
+APSU is an unbalanced PSU protocol which is described in [eprint.iacr.org/2022/653](https://eprint.iacr.org/2022/653). The larger difference betweend the sizeof of two sets, the better our protocol performs.   
 
 
 ## How to build
 
-Our `uPSU` is amended form [APSI](https://github.com/microsoft/APSI), so you may use for reference the method of build `APSI` to compile `uPSU`. 
+Our `APSU` is amended form [APSI](https://github.com/microsoft/APSI), so you may use for reference the method of build `APSI` to compile `APSU`. 
 
 
 ### vcpkg
-[vcpkg](https://github.com/microsoft/vcpkg) can help you manange C and C++ libraries on Windows, Linux and MacOS. We recommend to build and install dependencies for `uPSU ` with vcpkg.  
-Some Dependencies which are needed by building uPSU are as follows. 
+[vcpkg](https://github.com/microsoft/vcpkg) can help you manange C and C++ libraries on Windows, Linux and MacOS. We recommend to build and install dependencies for `APSU ` with vcpkg.  
+Some Dependencies which are needed by building APSU are as follows. 
 
 | Dependency                                                | vcpkg name                                           |
 |-----------------------------------------------------------|------------------------------------------------------|
@@ -39,7 +31,7 @@ First follow this [Quick Start on Unix](https://github.com/microsoft/vcpkg#quick
 ```
 
 
-To build your CMake project with dependency on uPSU, follow [this guide](https://github.com/microsoft/vcpkg#using-vcpkg-with-cmake).
+To build your CMake project with dependency on APSU, follow [this guide](https://github.com/microsoft/vcpkg#using-vcpkg-with-cmake).
 
 ### libOTe
 [libOTe](https://github.com/osu-crypto/libOTe) is a  fast and portable C++17 library for Oblivious Transfer extension (OTe). We can build it by following commands.
@@ -55,17 +47,17 @@ We recommend that you install `libOTe` in the folder `thirdparty\`. If not, plea
 ### Kunlun
 [Kunlun](https://github.com/yuchen1024/Kunlun) is an efficient and modular crypto library. We use the implement of `MP-OPRF` and `PEQT` in Kunlun, and adjust some paramaters used in `MP-OPRF`. So we recommend that you employ Kunlun in the folder `thirdparty/` directly.
 **TIPS** Temporarily, we have to adjust the number of threads used in Kunlun manually. 
-### uPSU
-When you have all dependencies ready, you can build uPSU by the following commands. 
+### APSU
+When you have all dependencies ready, you can build APSU by the following commands. 
 ```
-git clone https://github.com/lqvir/uPSU.git
-cd uPSU
+git clone https://github.com/lqvir/APSU.git
+cd APSU
 mkdir build
 cd build
 make 
 ```
 ## Command-Line Interface (CLI)
-Same as `APSI`, out uPSU comes with example command-line programs implementing a sender and a receiver.
+Same as `APSI`, out APSU comes with example command-line programs implementing a sender and a receiver.
 In this section we describe how to run these programs.
 
 ### Common Arguments
@@ -103,4 +95,4 @@ Note that in other applications the receiver may already know the parameters, an
 
 
 ### AutoTest
-We have prapared an automated testing tool in the folder `\tools`. You could test whether uPSU protocol works successlfully.
+We have prapared an automated testing tool in the folder `\tools`. You could test whether APSU protocol works successlfully.
