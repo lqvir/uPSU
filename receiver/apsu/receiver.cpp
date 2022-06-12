@@ -632,6 +632,7 @@ namespace apsu {
             //RunOT();
 
         }
+#if ARBITARY == 0 
 
         void Receiver::RunOT(){
             all_timer.setTimePoint("RunOT start");
@@ -688,6 +689,73 @@ namespace apsu {
              send_chls.clear();
             send_session.stop();
         }
+
+#else
+
+
+   void Receiver::RunOT(){
+            all_timer.setTimePoint("RunOT start");
+
+            int numThreads = 1;
+            osuCrypto::IOService ios;
+            oc::Session send_session=oc::Session(ios,"localhost:59999",oc::SessionMode::Server);
+            std::vector<oc::Channel> send_chls(numThreads);
+            
+            osuCrypto::PRNG prng(osuCrypto::sysRandomSeed());
+            
+            for (int i = 0; i < numThreads; ++i)
+                send_chls[i]=send_session.addChannel();
+            std::vector<osuCrypto::IknpOtExtReceiver> receivers(numThreads);
+            cout<<hex<<item_cnt<<endl;
+            osuCrypto::BitVector choices(item_cnt);
+            APSU_LOG_INFO(ans.size());
+            for(auto i : ans){
+                choices[i] = 1;
+            }
+
+            APSU_LOG_DEBUG("item_len"<<item_len);
+            
+            std::vector<std::vector<osuCrypto::block > > messages;
+            messages.resize(item_len);
+
+            for(size_t item_turnc_idx = 0;item_turnc_idx<item_len;item_turnc_idx++){
+                messages[item_turnc_idx].resize(item_cnt);
+                APSU_LOG_INFO( messages[item_turnc_idx].size());
+                receivers[0].receiveChosen(choices, messages[item_turnc_idx], prng, send_chls[0]);
+            }
+            
+            std::ofstream fout;
+            fout.open("union.csv",std::ofstream::out);
+            for(size_t item_idx = 0;item_idx<item_cnt;item_idx++){
+                
+                if(messages[0][item_idx] == oc::ZeroBlock)
+                    continue;;
+                for(size_t item_turnc_idx = 0;item_turnc_idx<item_len;item_turnc_idx++){
+                    auto temp = messages[item_turnc_idx][item_idx];
+                    if( temp == oc::ZeroBlock){                        
+                        break;
+                    }
+                    stringstream ss;
+                    ss<<temp.as<uint8_t>().data();
+                    fout<<flush<<ss.str().substr(0,16);                   
+                }
+               
+                fout << endl;
+            }
+            all_timer.setTimePoint("RunOT finish");
+            cout<<all_timer<<endl;
+
+            APSU_LOG_INFO("OT send_com_size ps"<<send_chls[0].getTotalDataSent()/1024<<"KB");
+            APSU_LOG_INFO("OT recv_com_size ps"<<send_chls[0].getTotalDataRecv()/1024<<"KB");
+            all_timer.reset();
+            send_chls.clear();
+            send_session.stop();
+        }
+
+
+
+#endif
+
 
     } // namespace receiver
 } // namespace apsu

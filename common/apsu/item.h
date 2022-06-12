@@ -21,6 +21,8 @@
 // GSL
 #include "gsl/span"
 
+
+
 namespace apsu {
     /**
     Identical to Bitstring, except the underlying data is not owned.

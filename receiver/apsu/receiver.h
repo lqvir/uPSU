@@ -159,6 +159,23 @@ namespace apsu {
                 
             };
 
+
+
+
+#if ARBITARY == 0 
+
+#else
+            void set_item_len(size_t in){
+                item_len = (in+15)/16;
+                APSU_LOG_INFO("item_len"<<item_len);
+            }
+            size_t get_item_len(){
+                return item_len;
+            }
+
+#endif
+
+
             /**
             Generate and send a response to a parameter request.
             */
@@ -239,6 +256,13 @@ namespace apsu {
             std::vector<uint64_t > random_after_permute_map;
             //std::vector<std::vector<oc::block> > random_map_block;
             //static std::vector<uint64_t> match_record;
+
+#if ARBITARY == 0 
+
+#else
+           size_t item_len = 0;
+
+#endif
         }; // class Receiver
        
         //std::unordered_map<std::pair<std::uint32_t, std::uint32_t>, std::vector<uint64_t>, pair_hash > Receiver::random_map = {};

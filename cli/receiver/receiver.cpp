@@ -63,7 +63,6 @@ int main(int argc, char *argv[])
 void sigint_handler(int param [[maybe_unused]])
 {
     APSU_LOG_WARNING("Receiver interrupted");
-    print_timing_report(recv_stopwatch);
     exit(0);
 }
 
@@ -181,12 +180,18 @@ int start_receiver(const CLP &cmd)
     // Run the dispatcher
     atomic<bool> stop = false;
     Receiver receiver;
+
+#if ARBITARY == 0 
+#else
+    receiver.set_item_len(cmd.item_byte_count());
+#endif
     ZMQReceiverDispatcher dispatcher(receiver_db, receiver);
   	auto end_time = std::chrono::steady_clock::now();
     auto running_time = end_time-start_time;
     std::cout<<"\n\n\n\n receiver offline time"<<std::chrono::duration<double,std::milli> (running_time).count()<<std::endl<<std::endl<<std::endl;
     // The dispatcher will run until stopped.
     dispatcher.run(stop, cmd.net_port());
+    print_timing_report(recv_stopwatch);
 
     return 0;
 }

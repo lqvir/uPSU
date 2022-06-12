@@ -49,7 +49,7 @@ def sender_func(id,t):
             fp.write(i.decode())
         fp.write("===================================one call finish =========================================\n\n\n")
 def receiver_func(id,t):
-    recv_cmd = [recv_c[t],"-d "+db, "--port 60000","-p "+param,thread_c[t]]
+    recv_cmd = [recv_c[t],"-d "+db, "--port 60000","-p "+param,thread_c[t],item_len]
     print(recv_cmd)
    
     outfile = subprocess.Popen(recv_cmd,stdout=subprocess.PIPE)
@@ -89,12 +89,12 @@ def PSU_work():
  
 
 
-def prepare_data(sender_sz,recv_sz,int_sz):
+def prepare_data(sender_sz,recv_sz,int_sz,item_bc):
     data_set_name='db.csv'
     query_set_name='query.csv'
-
+    
     label_bc = 0
-    item_bc = 16
+    
     sender_list = []
 
     letters = string.ascii_lowercase + string.ascii_uppercase
@@ -148,8 +148,8 @@ def prepare_json():
     with open(json_name,"w") as f:
          json.dump(PSU_pram,f)
     json_name_list.append(json_name)
-def work_fun():
-    table = [0]
+def work_fun(table):
+    
     for i in table:
         senders= send_thread(0, "sender",t = i)
         receivers= recv_thread(1, "receiver",t=i)
@@ -167,11 +167,12 @@ if __name__ =="__main__":
     query = "query.csv"
     param = '16M-2048.json'
     union = "union.csv"
-    thread_c = ["-t 1","-t 4","-t 8"]
+    
+    thread_c = ["-t 1","-t 4","-t 8","-t 1","-t 4","-t 8"]
     sender_c = ["./sender1","./sender4","./sender8"]
     recv_c = ["./receiver1","./receiver4","./receiver8"]
-    sender_c = ["./sender_cli1","./sender_cli4","./sender_cli8"]
-    recv_c = ["./receiver_cli1","./receiver_cli4","./receiver_cli8"]
+    sender_c = ["./sender_cli1","./sender_cli4","./sender_cli8","./sender_cli1_M","./sender_cli4","./sender_cli8"]
+    recv_c = ["./receiver_cli1","./receiver_cli4","./receiver_cli8","./receiver_cli1_M","./receiver_cli4","./receiver_cli8"]
     cmd_t = ["tc","qdisc", "change", "dev","lo",  "root", "handle", "1:0" ,"tbf" ,"lat" ,"10ms" ,"rate" ,"10Gbit" ,"burst" ,"1G"]
     print(cmd_t)
     subprocess.run(cmd_t)
@@ -180,10 +181,12 @@ if __name__ =="__main__":
     subprocess.run(cmd_t1)
     
 
-    
- 
-    prepare_data(pow(2,18),pow(2,11),256)
-    work_fun()
+    table = [3]
+    item_bc = 32
+    item_len = "--len "+str(item_bc)
+ 	
+    prepare_data(pow(2,20),pow(2,11),256,item_bc)
+    work_fun(table)
     
     #param = '16M-2048.json'
     
