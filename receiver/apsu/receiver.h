@@ -154,6 +154,17 @@ namespace apsu {
                 
             };
 
+#if ARBITARY == 0
+
+#else
+            void set_item_len(size_t in){
+                item_len = (in+15)/16;
+            }
+            size_t get_item_len(){
+                return item_len;
+            }
+#endif
+
             /**
             Generate and send a response to a parameter request.
             */
@@ -232,6 +243,13 @@ namespace apsu {
             std::vector<std::vector<uint64_t> > random_map;
             std::vector<seal::Plaintext > random_plain_list;
             std::vector<uint64_t > random_after_permute_map;
+
+#if ARBITARY == 0
+
+#else
+            size_t item_len;
+#endif
+
             //static std::vector<uint64_t> match_record;
         }; // class Receiver
        

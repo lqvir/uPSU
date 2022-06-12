@@ -264,9 +264,14 @@ namespace apsu {
             SEALObject<seal::RelinKeys> relin_keys_;
 
             oc::Timer all_timer;
-
-           std::vector<std::array<oc::block, 2>> sendMessages;
-           std::vector<std::array<oc::block, 2>> shuffleMessages;
+#if ARBITARY == 0
+            std::vector<std::array<oc::block, 2>> sendMessages;
+            std::vector<std::array<oc::block, 2>> shuffleMessages;
+#else
+            size_t item_len;
+            std::vector<std::vector<std::array<oc::block, 2> > > sendMessages;
+            std::vector<std::vector<std::array<oc::block, 2> > >shuffleMessages;
+#endif
         }; // class Sender
     }      // namespace sender
 } // namespace apsu

@@ -28,7 +28,7 @@
 #include "seal/util/common.h"
 #include "seal/util/defines.h"
 
-#include "kunlun/mpc/oprf/mp_oprf.hpp"
+#include "Kunlun/mpc/oprf/mp_oprf.hpp"
 
 using namespace std;
 using namespace seal;
@@ -54,10 +54,7 @@ namespace apsu {
             uint64_t plain_modulus_mask = (1<<plain_modulus_len)-1;
             uint64_t plain_modulus_mask_lower = (1<<(plain_modulus_len>>1))-1;
             uint64_t plain_modulus_mask_higher = plain_modulus_mask-plain_modulus_mask_lower;
-            // cout<<"masks"<<endl;
-            // cout<<hex<<plain_modulus<<endl;
-            // cout<<hex<<plain_modulus_mask_lower<<endl;
-            // cout<<hex<<plain_modulus_mask_higher<<endl;
+
             uint64_t lower=0,higher=0;
             if(felts_per_item&1){
                 lower = (in[felts_per_item-1] & plain_modulus_mask_lower);
@@ -78,16 +75,13 @@ namespace apsu {
             uint64_t plain_modulus_mask = (1<<plain_modulus_len)-1;
             uint64_t plain_modulus_mask_lower = (1<<(plain_modulus_len>>1))-1;
             uint64_t plain_modulus_mask_higher = plain_modulus_mask-plain_modulus_mask_lower;
-                //  cout<<"masks"<<endl;
-                // cout<<hex<<plain_modulus<<endl;
-                // cout<<hex<<plain_modulus_mask_lower<<endl;
-                // cout<<hex<<plain_modulus_mask_higher<<endl;
+
             uint64_t lower=0,higher=0;
             if(felts_per_item&1){
                 lower = (in[felts_per_item-1] & plain_modulus_mask_lower);
                 higher = ((in[felts_per_item-1] & plain_modulus_mask_higher) >>((plain_modulus_len>>1)-1));
             }
-            //cout<< lower<<' '<< higher<<endl;
+
             for(int pla = 0;pla < felts_per_item-1;pla+=2){
                 lower = ((in[pla] & plain_modulus_mask) | (lower<<plain_modulus_len));
                 higher = ((in[pla+1] & plain_modulus_mask) | (higher<<plain_modulus_len));
@@ -348,7 +342,7 @@ namespace apsu {
                     << cuckoo.loc_func_count()
                     << " hash functions; cuckoo table fill-rate: " << cuckoo.fill_rate());
             }
-          
+#if ARBITARY == 0
             sendMessages.assign(cuckoo.table_size(),{oc::ZeroBlock,oc::ZeroBlock});
 
             shuffleMessages.assign(cuckoo.table_size(),{oc::ZeroBlock,oc::ZeroBlock});
@@ -362,7 +356,32 @@ namespace apsu {
                 // APSU_LOG_INFO(sendMessages[temp_loc][0].as<char>().data());
                // cout<<(int)sendMessages[temp_loc][0].as<char>()[0]<<endl;
             }
+#else
+            item_len = (origin_item[0].size()+15)/16;
+            sendMessages.resize(item_len);
+            shuffleMessages.resize(item_len);
+            for(size_t idx = 0;idx<item_len;idx++){
+                sendMessages[idx].assign(cuckoo.table_size(),{oc::ZeroBlock,oc::ZeroBlock});
+                shuffleMessages[idx].assign(cuckoo.table_size(),{oc::ZeroBlock,oc::ZeroBlock});
+            }
+             // Once the table is filled, fill the table_idx_to_item_idx map
+            for (size_t item_idx = 0; item_idx < items.size(); item_idx++) {
+                auto item_loc = cuckoo.query(items[item_idx].get_as<kuku::item_type>().front());
+                auto temp_loc = item_loc.location();
+                itt.table_idx_to_item_idx_[temp_loc] = item_idx;
+               // sendMessages[temp_loc]={oc::ZeroBlock,oc::toBlock((uint8_t*)origin_item[item_idx].data())};
 
+               // one block only contain 16 Bytes 
+               // We need to truncate it into some substring
+                for(size_t item_trunc_idx=0;item_trunc_idx<item_len;item_trunc_idx++){
+                    sendMessages[item_trunc_idx][temp_loc]={oc::toBlock((uint8_t*)origin_item[item_idx].substr(16*item_trunc_idx,16).data()),oc::ZeroBlock};
+
+                }
+               // APSU_LOG_INFO(sendMessages[0][temp_loc][0].as<char>().data());
+               // cout<<(int)sendMessages[temp_loc][0].as<char>()[0]<<endl;
+            }
+
+#endif
             // Set up unencrypted query data
             vector<PlaintextPowers> plain_powers;
 
@@ -502,24 +521,24 @@ namespace apsu {
             {
                 int numThreads=1;
                 oc::IOService ios;
-                oc::Session recv_session=oc::Session(ios,"localhost:59999",oc::SessionMode::Client);
-                std::vector<oc::Channel> recv_chls(numThreads);
+                oc::Session send_session=oc::Session(ios,"localhost:59999",oc::SessionMode::Client);
+                std::vector<oc::Channel> send_chls(numThreads);
                 for(int i=0;i<numThreads;i++)
-                    recv_chls[i] = recv_session.addChannel();
+                    send_chls[i] = send_session.addChannel();
                 OSNSender osn;
                 osn.init(alpha_max_cache_count,item_cnt,1,"");
                 permutation = osn.dest;
                 col_permutation = osn.cols_premutation;
                 all_timer.setTimePoint("before osn");
-                send_share = osn.run_osn(recv_chls);
+                send_share = osn.run_osn(send_chls);
                 all_timer.setTimePoint("after osn");
                 
                 send_size=0,recv_size =0;
-                for(auto x: recv_chls){
+                for(auto x: send_chls){
                     send_size+=x.getTotalDataSent();
                     recv_size+=x.getTotalDataRecv();
                 }
-                recv_session.stop();
+                send_session.stop();
 
             }
             std::vector<oc::block> shuffle_decrypt_randoms_matrix(shuffle_size);
@@ -562,11 +581,11 @@ namespace apsu {
             //     MPOPRF::FetchPP(pp, pp_filename); 
             // }
             cout<<pp.log_matrix_height<<endl;
-           // APSU_LOG_INFO("test");
+          
             auto mpoprf_key = MPOPRF::Send(client,pp);
-           // APSU_LOG_INFO("test1");
+           
             std::vector<std::string> mpoprf_out = MPOPRF::EvaluateOPRFValues(pp,mpoprf_key,mpoprf_in);
-            //APSU_LOG_INFO("test2");
+         
  
             //APSU_LOG_INFO(mpoprf_out.size());
             for(int i = 0;i<shuffle_size;i++){
@@ -581,8 +600,20 @@ namespace apsu {
            // Block::PrintBlocks(decrypt_randoms_matrix);
 
             APSU_LOG_INFO("permute"<<permutation.size())   
+#if ARBITARY == 0
+
             for(int i=0;i<item_cnt;i++)
                 shuffleMessages[i]=sendMessages[col_permutation[i]];
+#else
+
+            for(int item_trunc_idx=0;item_trunc_idx < item_len;item_trunc_idx++){
+                for(int i=0;i<item_cnt;i++){
+                    shuffleMessages[item_trunc_idx][i]=sendMessages[item_trunc_idx][col_permutation[i]];
+                    // APSU_LOG_INFO(shuffleMessages[item_trunc_idx][permutation[i]][0].as<uint8_t>().data());
+                    // APSU_LOG_INFO(sendMessages[item_trunc_idx][i][0].as<uint8_t>().data());
+                }
+            }
+#endif
             all_timer.setTimePoint("decrypt and unpermute finish");
             cout<<all_timer<<endl;
             
@@ -696,24 +727,26 @@ namespace apsu {
                
             }
         }
+#if ARBITARY == 0
+
         void Sender::ResponseOT(string conn_addr){
             all_timer.setTimePoint("response OT start");
 
             int numThreads = 5;
       
             oc::IOService ios;
-            oc::Session recv_session=oc::Session(ios,"localhost:59999",oc::SessionMode::Client);
-            std::vector<oc::Channel> recv_chls(numThreads);
+            oc::Session send_session=oc::Session(ios,"localhost:59999",oc::SessionMode::Client);
+            std::vector<oc::Channel> send_chls(numThreads);
 
             oc::PRNG prng(oc::sysRandomSeed());            
             for (int i = 0; i < numThreads; ++i)
-                recv_chls[i]=recv_session.addChannel();
+                send_chls[i]=send_session.addChannel();
             std::vector<oc::IknpOtExtSender> senders(numThreads);
             APSU_LOG_INFO(sendMessages.size());
-            senders[0].sendChosen(shuffleMessages, prng, recv_chls[0]);
+            senders[0].sendChosen(shuffleMessages, prng, send_chls[0]);
 
-            int recv_num = recv_chls[0].getTotalDataRecv();
-            int send_num = recv_chls[0].getTotalDataSent();
+            int recv_num = send_chls[0].getTotalDataRecv();
+            int send_num = send_chls[0].getTotalDataSent();
 
             APSU_LOG_INFO("send_com_size ps"<<send_size/1024<<"KB");
             APSU_LOG_INFO("recv_com_size ps"<<recv_size/1024<<"KB");
@@ -724,7 +757,46 @@ namespace apsu {
             cout<<all_timer<<endl;
             all_timer.reset();
         
-            recv_session.stop();
+            send_session.stop();
         }
+#else
+
+      void Sender::ResponseOT(string conn_addr){
+            all_timer.setTimePoint("response OT start");
+
+            int numThreads = 1;
+      
+            oc::IOService ios;
+            oc::Session send_session=oc::Session(ios,"localhost:59999",oc::SessionMode::Client);
+            std::vector<oc::Channel> send_chls(numThreads);
+            APSU_LOG_INFO(item_len);
+            oc::PRNG prng(oc::sysRandomSeed());            
+            for (int i = 0; i < numThreads; ++i)
+                send_chls[i]=send_session.addChannel();
+            std::vector<oc::IknpOtExtSender> senders(numThreads);
+           
+            for(size_t item_trunc_idx=0;item_trunc_idx<item_len;item_trunc_idx++){
+                APSU_LOG_INFO("send size"<<shuffleMessages[item_trunc_idx].size());
+                senders[0].sendChosen(shuffleMessages[item_trunc_idx], prng, send_chls[0]);
+
+
+            }
+
+            int recv_num = send_chls[0].getTotalDataRecv();
+            int send_num = send_chls[0].getTotalDataSent();
+
+            APSU_LOG_INFO("send_com_size ps"<<send_size/1024<<"KB");
+            APSU_LOG_INFO("recv_com_size ps"<<recv_size/1024<<"KB");
+            APSU_LOG_INFO("OT send_com_size ps"<<send_num/1024<<"KB");
+            APSU_LOG_INFO("OT recv_com_size ps"<<recv_num/1024<<"KB");
+            all_timer.setTimePoint("response OT finish");
+
+            cout<<all_timer<<endl;
+            all_timer.reset();
+        
+            send_session.stop();
+        }
+
+#endif
     } // namespace sender
 } // namespace apsu

@@ -182,12 +182,17 @@ int start_receiver(const CLP &cmd)
     // Run the dispatcher
     atomic<bool> stop = false;
     Receiver receiver;
+#if ARBITARY == 0
+#else
+    receiver.set_item_len(cmd.item_byte_count());
+#endif
     ZMQReceiverDispatcher dispatcher(receiver_db, receiver);
     auto end_time = std::chrono::steady_clock::now();
     auto running_time = end_time-start_time;
 	std::cout<<"\n\n\nall time"<<std::chrono::duration<double,std::milli> (running_time).count()<<std::endl<<std::endl<<std::endl;
     // The dispatcher will run until stopped.
     dispatcher.run(stop, cmd.net_port());
+    print_timing_report(recv_stopwatch);
 
     return 0;
 }

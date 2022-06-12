@@ -45,7 +45,11 @@ namespace apsu {
         ZMQReceiverDispatcher::ZMQReceiverDispatcher(shared_ptr<ReceiverDB> receiver_db,Receiver receiver)
             : receiver_db_(move(receiver_db)), receiver_()
         {
+#if ARBITARY == 0
             
+#else
+            receiver_.set_item_len(receiver.get_item_len()*16);
+#endif
             
             if (!receiver_db_) {
                 throw invalid_argument("receiver_db is not set");
@@ -55,7 +59,7 @@ namespace apsu {
         ZMQReceiverDispatcher::ZMQReceiverDispatcher(shared_ptr<ReceiverDB> receiver_db)
             : receiver_db_(move(receiver_db))
         {
-            
+
             
             if (!receiver_db_) {
                 throw invalid_argument("receiver_db is not set");

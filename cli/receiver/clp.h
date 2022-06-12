@@ -32,6 +32,7 @@ public:
         add(params_file_arg_);
         add(db_file_arg_);
         add(sdb_out_file_arg_);
+        add(item_byte_count_arg_);
     }
 
     virtual void get_args()
@@ -42,11 +43,17 @@ public:
         net_port_ = net_port_arg_.getValue();
         params_file_ = params_file_arg_.getValue();
         sdb_out_file_ = sdb_out_file_arg_.getValue();
+        item_byte_count_ = item_byte_count_arg_.getValue();
     }
 
     std::size_t nonce_byte_count() const
     {
         return nonce_byte_count_;
+    }
+
+    std::size_t item_byte_count() const
+    {
+        return item_byte_count_;
     }
 
     bool compress() const
@@ -86,6 +93,14 @@ private:
     TCLAP::ValueArg<int> net_port_arg_ = TCLAP::ValueArg<int>(
         "", "port", "TCP port to bind to (default is 1212)", false, 1212, "TCP port");
 
+    TCLAP::ValueArg<std::size_t> item_byte_count_arg_ = TCLAP::ValueArg<std::size_t>(
+        "",
+        "len",
+        "MAX Number of bytes about all item",
+        false,
+        16,
+        "unsigned integer");
+
     TCLAP::ValueArg<std::string> db_file_arg_ = TCLAP::ValueArg<std::string>(
         "d",
         "dbFile",
@@ -112,7 +127,7 @@ private:
         TCLAP::SwitchArg("c", "compress", "Whether to compress the ReceiverDB in memory", false);
 
     std::size_t nonce_byte_count_;
-
+    std::size_t item_byte_count_;
     bool compress_;
 
     int net_port_;

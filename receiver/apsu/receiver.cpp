@@ -22,7 +22,7 @@
 #include "seal/modulus.h"
 #include "seal/util/common.h"
 
-#include "kunlun/mpc/oprf/mp_oprf.hpp"
+#include "Kunlun/mpc/oprf/mp_oprf.hpp"
 
 
 using namespace std;
@@ -56,10 +56,7 @@ namespace apsu {
                 uint64_t plain_modulus_mask = (1<<plain_modulus_len)-1;
                 uint64_t plain_modulus_mask_lower = (1<<(plain_modulus_len>>1))-1;
                 uint64_t plain_modulus_mask_higher = plain_modulus_mask-plain_modulus_mask_lower;
-                // cout<<"masks"<<endl;
-                // cout<<hex<<plain_modulus<<endl;
-                // cout<<hex<<plain_modulus_mask_lower<<endl;
-                // cout<<hex<<plain_modulus_mask_higher<<endl;
+
                 uint64_t lower=0,higher=0;
                 if(felts_per_item&1){
                     lower = (in[felts_per_item-1] & plain_modulus_mask_lower);
@@ -69,12 +66,7 @@ namespace apsu {
                     lower = ((in[pla] & plain_modulus_mask) | (lower<<plain_modulus_len));
                     higher = ((in[pla+1] & plain_modulus_mask) | (higher<<plain_modulus_len));
                 }
-                // auto temp = oc::toBlock(higher,lower);
-                // auto h = temp.as<uint64_t>()[0];
-                // auto l = temp.as<uint64_t>()[1];
-                // cout<<higher<<endl<<lower<<endl<<h<<endl<<l<<endl;
-                // Block::PrintBlock(Block::MakeBlock(higher,lower));
-                // Block::PrintBlock(block_oc_to_std(temp));
+
                 return oc::toBlock(higher,lower);
             }
             inline block vec_to_std_block(const std::vector<uint64_t> &in,size_t felts_per_item,uint64_t plain_modulus){
@@ -85,10 +77,7 @@ namespace apsu {
                 uint64_t plain_modulus_mask = (1<<plain_modulus_len)-1;
                 uint64_t plain_modulus_mask_lower = (1<<(plain_modulus_len>>1))-1;
                 uint64_t plain_modulus_mask_higher = plain_modulus_mask-plain_modulus_mask_lower;
-                // cout<<"masks"<<endl;
-                // cout<<hex<<plain_modulus<<endl;
-                // cout<<hex<<plain_modulus_mask_lower<<endl;
-                // cout<<hex<<plain_modulus_mask_higher<<endl;
+
                 uint64_t lower=0,higher=0;
                 if(felts_per_item&1){
                     lower = (in[felts_per_item-1] & plain_modulus_mask_lower);
@@ -329,9 +318,6 @@ namespace apsu {
                 }
      
 
-               
-
-
             }
 
 
@@ -429,36 +415,32 @@ namespace apsu {
                 int numThreads=1;
                 osuCrypto::IOService ios;
                 
-                oc::Session send_session=oc::Session(ios,"localhost:59999",oc::SessionMode::Server);
-                std::vector<oc::Channel> send_chls(numThreads);
+                oc::Session recv_session=oc::Session(ios,"localhost:59999",oc::SessionMode::Server);
+                std::vector<oc::Channel> recv_chls(numThreads);
                 for(int i=0;i<numThreads;i++)
-                    send_chls[i]=send_session.addChannel();
+                    recv_chls[i]=recv_session.addChannel();
 
                 OSNReceiver osn;
                 osn.init(shuffle_size,1);
-                oc::Timer timer;
-	            osn.setTimer(timer);
 
-	            timer.setTimePoint("set -> block_set");
+
+	           
                 all_timer.setTimePoint("set -> block_set");
                 
                 APSU_LOG_INFO("per change"<<random_matrix.size());
                 all_timer.setTimePoint("before run_osn");
-	            timer.setTimePoint("before run_osn");
 
-                receiver_share =osn.run_osn(random_matrix,send_chls);
+                receiver_share =osn.run_osn(random_matrix,recv_chls);
                 
-                timer.setTimePoint("after run_osn");
                 all_timer.setTimePoint("after run_osn");
-// block change   timer.setTimePoint("block_set -> set");
-                APSU_LOG_INFO("receiver"<<timer);
+ 
                 all_timer.setTimePoint("block_set -> set");
                 send_size=0,recv_size =0;
-                for(auto x: send_chls){
+                for(auto x: recv_chls){
                     send_size+=x.getTotalDataSent();
                     recv_size+=x.getTotalDataRecv();
                 }
-                send_session.stop();
+                recv_session.stop();
                 
                 for(auto x: receiver_share){
                     mpoprf_in.emplace_back(block_oc_to_std(x));
@@ -513,8 +495,7 @@ namespace apsu {
                 }
             }
             APSU_LOG_INFO("ans size"<<ans.size());
-            // for(auto x: ans)
-            //     cout<<x<<endl;
+
             }
 
             cout<<"pack_cnt"<<pack_cnt<<endl;
@@ -674,9 +655,7 @@ namespace apsu {
             const plainRequest &plain_request, network::Channel &chl,const PSUParams &params_)
         {
       
-      /*      for (auto i : params_request->psu_result) {
-                cout << i << endl;
-            }*/
+
 
             // To be atomic counter
           
@@ -722,27 +701,27 @@ namespace apsu {
             //RunOT();
 
         }
+#if ARBITARY == 0
 
         void Receiver::RunOT(){
             all_timer.setTimePoint("RunOT start");
 
             int numThreads = 5;
             osuCrypto::IOService ios;
-            oc::Session send_session=oc::Session(ios,"localhost:59999",oc::SessionMode::Server);
-            std::vector<oc::Channel> send_chls(numThreads);
+            oc::Session recv_session=oc::Session(ios,"localhost:59999",oc::SessionMode::Server);
+            std::vector<oc::Channel> recv_chls(numThreads);
             
             osuCrypto::PRNG prng(osuCrypto::sysRandomSeed());
             
             for (int i = 0; i < numThreads; ++i)
-                send_chls[i]=send_session.addChannel();
+                recv_chls[i]=recv_session.addChannel();
             std::vector<osuCrypto::IknpOtExtReceiver> receivers(numThreads);
             
             // osuCrypto::DefaultBaseOT base;
             // std::array<std::array<osuCrypto::block, 2>, 128> baseMsg;
             // base.send(baseMsg, prng, chls[0], numThreads);
             // receivers[0].setBaseOts(baseMsg, prng, chls[0]);
-            cout<<"++++++++++++++"<<endl;
-            cout<<hex<<item_cnt<<endl;
+
             osuCrypto::BitVector choices(item_cnt);
             APSU_LOG_INFO(ans.size());
             for(auto i : ans){
@@ -754,7 +733,7 @@ namespace apsu {
             
             std::vector<osuCrypto::block> messages(item_cnt);
             
-            receivers[0].receiveChosen(choices, messages, prng, send_chls[0]);
+            receivers[0].receiveChosen(choices, messages, prng, recv_chls[0]);
             std::ofstream fout;
             fout.open("union.csv",std::ofstream::out);
             for(auto i:messages){
@@ -773,12 +752,87 @@ namespace apsu {
             cout<<all_timer<<endl;
             APSU_LOG_INFO("send_com_size ps"<<send_size/1024<<"KB");
             APSU_LOG_INFO("recv_com_size ps"<<recv_size/1024<<"KB");
-            APSU_LOG_INFO("OT send_com_size ps"<<send_chls[0].getTotalDataSent()/1024<<"KB");
-            APSU_LOG_INFO("OT recv_com_size ps"<<send_chls[0].getTotalDataRecv()/1024<<"KB");
+            APSU_LOG_INFO("OT send_com_size ps"<<recv_chls[0].getTotalDataSent()/1024<<"KB");
+            APSU_LOG_INFO("OT recv_com_size ps"<<recv_chls[0].getTotalDataRecv()/1024<<"KB");
             all_timer.reset();
-             send_chls.clear();
-            send_session.stop();
+             recv_chls.clear();
+            recv_session.stop();
+        }
+#else
+        void Receiver::RunOT(){
+            all_timer.setTimePoint("RunOT start");
+
+            int numThreads = 1;
+            osuCrypto::IOService ios;
+            oc::Session recv_session=oc::Session(ios,"localhost:59999",oc::SessionMode::Server);
+            std::vector<oc::Channel> recv_chls(numThreads);
+            
+            osuCrypto::PRNG prng(osuCrypto::sysRandomSeed());
+            
+            for (int i = 0; i < numThreads; ++i)
+                recv_chls[i]=recv_session.addChannel();
+            std::vector<osuCrypto::IknpOtExtReceiver> receivers(numThreads);
+            
+            // osuCrypto::DefaultBaseOT base;
+            // std::array<std::array<osuCrypto::block, 2>, 128> baseMsg;
+            // base.send(baseMsg, prng, chls[0], numThreads);
+            // receivers[0].setBaseOts(baseMsg, prng, chls[0]);
+            cout<<"++++++++++++++"<<endl;
+            cout<<hex<<item_cnt<<endl;
+            osuCrypto::BitVector choices(item_cnt);
+            APSU_LOG_INFO(ans.size());
+            for(auto i : ans){
+                choices[i] = 1;
+            }
+            //  for (auto i = 1; i < numThreads; ++i){
+            //     receivers[i] = receivers[0].splitBase();
+            // }
+            APSU_LOG_DEBUG("item_len"<<item_len);
+            
+            std::vector<std::vector<osuCrypto::block > > messages;
+            messages.resize(item_len);
+
+            for(size_t item_turnc_idx = 0;item_turnc_idx<item_len;item_turnc_idx++){
+                messages[item_turnc_idx].resize(item_cnt);
+                APSU_LOG_INFO( messages[item_turnc_idx].size());
+                receivers[0].receiveChosen(choices, messages[item_turnc_idx], prng, recv_chls[0]);
+            }
+            
+            std::ofstream fout;
+            
+            
+            fout.open("union.csv",std::ofstream::out);
+            for(size_t item_idx = 0;item_idx<item_cnt;item_idx++){
+                
+                if(messages[0][item_idx] == oc::ZeroBlock)
+                    continue;;
+                for(size_t item_turnc_idx = 0;item_turnc_idx<item_len;item_turnc_idx++){
+                    auto temp = messages[item_turnc_idx][item_idx];
+                    if( temp == oc::ZeroBlock){
+                        
+                        break;
+                    }
+                    stringstream ss;
+                   // cout<<temp.as<char>().data()<<endl;
+                    ss<<temp.as<char>().data();
+                    fout<<flush<<ss.str().substr(0,16);   
+                      
+                }
+               
+                fout << endl;
+            }
+            all_timer.setTimePoint("RunOT finish");
+            cout<<all_timer<<endl;
+            APSU_LOG_INFO("send_com_size ps"<<send_size/1024<<"KB");
+            APSU_LOG_INFO("recv_com_size ps"<<recv_size/1024<<"KB");
+            APSU_LOG_INFO("OT send_com_size ps"<<recv_chls[0].getTotalDataSent()/1024<<"KB");
+            APSU_LOG_INFO("OT recv_com_size ps"<<recv_chls[0].getTotalDataRecv()/1024<<"KB");
+            all_timer.reset();
+            recv_chls.clear();
+            recv_session.stop();
         }
 
+
+#endif
     } // namespace receiver
 } // namespace apsu
