@@ -663,12 +663,12 @@ namespace apsu {
 
         void Sender::ResponseOT(string conn_addr){
             all_timer.setTimePoint("response OT start");
-
             int numThreads = 1;
       
             oc::IOService ios;
             oc::Session send_session=oc::Session(ios,"localhost:59999",oc::SessionMode::Client);
             std::vector<oc::Channel> send_chls(numThreads);
+            cout<<"hello world\n";
 
             oc::PRNG prng(oc::sysRandomSeed());            
             for (int i = 0; i < numThreads; ++i)

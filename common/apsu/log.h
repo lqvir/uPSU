@@ -9,7 +9,7 @@
 #include <string>
 
 #define APSU 1
-#define ARBITARY 1
+#define ARBITARY 0
 namespace apsu {
     /**
     Class that provides the logging interface.

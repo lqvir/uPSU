@@ -19,7 +19,7 @@ static BN_CTX *bn_ctx;
 static BN_CTX *ec_ctx; // define ctx for ecc operations
 
 #define PARALLEL
-const static size_t thread_count = 1; // maximum thread count 
+const static size_t thread_count = 2; // maximum thread count 
 
 const static size_t AES_BATCH_SIZE = 8;
 const static size_t HASH_BUFFER_SIZE = 1024*8;

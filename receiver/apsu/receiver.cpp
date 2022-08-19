@@ -685,9 +685,8 @@ namespace apsu {
             //APSU_LOG_INFO("recv_com_size ps"<<receiver_size/1024<<"KB");
             APSU_LOG_INFO("OT send_com_size ps"<<send_chls[0].getTotalDataSent()/1024<<"KB");
             APSU_LOG_INFO("OT recv_com_size ps"<<send_chls[0].getTotalDataRecv()/1024<<"KB");
-            all_timer.reset();
-             send_chls.clear();
-            send_session.stop();
+        
+
         }
 
 #else

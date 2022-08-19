@@ -42,20 +42,32 @@ def sender_func(id,t):
     print(send_cmd)
     
     outfile = subprocess.Popen(send_cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    time.sleep(50)
-    outfile.send_signal(signal.SIGINT)
-    with open("new","a+") as fp:
+    outfile.wait(200)
+    # time.sleep(50)
+    # outfile.send_signal(signal.SIGINT)
+    with open("table10","a+") as fp:
         for i in outfile.stdout.readlines():
             fp.write(i.decode())
         fp.write("===================================one call finish =========================================\n\n\n")
 def receiver_func(id,t):
     recv_cmd = [recv_c[t],"-d "+db, "--port 60000","-p "+param,thread_c[t],item_len]
     print(recv_cmd)
+    
    
     outfile = subprocess.Popen(recv_cmd,stdout=subprocess.PIPE)
-    time.sleep(50)
-    outfile.send_signal(signal.SIGINT)
-    with open("new","a+") as fp:
+    # time.sleep(50)
+    # outfile.send_signal(signal.SIGINT)
+    for i in range(200):
+        if outfile.poll()!= None:
+            break
+        else:
+            time.sleep(1)
+        if(i == 99):
+            outfile.send_signal(signal.SIGINT)
+            break
+    
+
+    with open("table10","a+") as fp:
         for i in outfile.stdout.readlines():
             fp.write(i.decode())
         fp.write("===================================one call finish =========================================\n\n\n")
@@ -151,46 +163,120 @@ def prepare_json():
 def work_fun(table):
     
     for i in table:
+        start = time.time()
+
         senders= send_thread(0, "sender",t = i)
         receivers= recv_thread(1, "receiver",t=i)
-        senders.start()
-        time.sleep(10)
         receivers.start()
+        senders.start()
+
         receivers.join()
         senders.join()
         check_ans(db,query,union)
+        end = time.time()
 
-
+        with open("python-out.txt","a+") as fp:
+            fp.write(str(end-start)+'\n')
+        print('====================================================================')
+def PCST_fun(table):
+    time_list = []
+    for i in table:
+        start = time.time()
+        senders= send_thread(0, "sender",t = i)
+        receivers= recv_thread(1, "receiver",t=i)
+        receivers.start()
+        
+        senders.start()
+      
+        receivers.join()
+        senders.join()
+        end = time.time()
+        time_list.append(end-start)
+    with open("python-out.txt","a+") as fp:
+        fp.write(str(time_list)+'\n')
+    print('====================================================================')
+def network10G():
+    cmd_t = ["tc","qdisc", "change", "dev","lo",  "root", "handle", "1:0" ,"tbf" ,"lat" ,"10ms" ,"rate" ,"10Gbit" ,"burst" ,"1G"]
+    print(cmd_t)
+    with open("python-out.txt","a+") as fp:
+        fp.write(str(cmd_t)+'\n')
+    subprocess.run(cmd_t)
+    cmd_t1 = [ "tc", "qdisc", "change", "dev","lo", "parent", "1:1" ,"handle" ,"10:" ,"netem" ,"delay" ,"0.1msec"]
+    print(cmd_t1)
+    with open("python-out.txt","a+") as fp:
+        fp.write(str(cmd_t1)+'\n')
+    subprocess.run(cmd_t1)
+def network100M():
+    cmd_t = ["tc","qdisc", "change", "dev","lo",  "root", "handle", "1:0" ,"tbf" ,"lat" ,"10ms" ,"rate" ,"100Mbit" ,"burst" ,"10M"]
+    print(cmd_t)
+    with open("python-out.txt","a+") as fp:
+        fp.write(str(cmd_t)+'\n')
+    subprocess.run(cmd_t)
+    cmd_t1 = [ "tc", "qdisc", "change", "dev","lo", "parent", "1:1" ,"handle" ,"10:" ,"netem" ,"delay" ,"40msec"]
+    print(cmd_t1)
+    with open("python-out.txt","a+") as fp:
+        fp.write(str(cmd_t1)+'\n')
+    subprocess.run(cmd_t1)
+def network10M():
+    cmd_t = ["tc","qdisc", "change", "dev","lo",  "root", "handle", "1:0" ,"tbf" ,"lat" ,"10ms" ,"rate" ,"10Mbit" ,"burst" ,"1M"]
+    print(cmd_t)
+    with open("python-out.txt","a+") as fp:
+        fp.write(str(cmd_t)+'\n')
+    subprocess.run(cmd_t)
+    cmd_t1 = [ "tc", "qdisc", "change", "dev","lo", "parent", "1:1" ,"handle" ,"10:" ,"netem" ,"delay" ,"40msec"]
+    print(cmd_t1)
+    with open("python-out.txt","a+") as fp:
+        fp.write(str(cmd_t1)+'\n')
+    subprocess.run(cmd_t1)
 if __name__ =="__main__":
     
     db = "db.csv"
     query = "query.csv"
-    param = '16M-2048.json'
+    param = '16M-1024.json'
     union = "union.csv"
     
-    thread_c = ["-t 1","-t 4","-t 8","-t 1","-t 4","-t 8"]
+    thread_c = ["-t 1","-t 2","-t 4","-t 1","-t 4","-t 8"]
     sender_c = ["./sender1","./sender4","./sender8"]
     recv_c = ["./receiver1","./receiver4","./receiver8"]
-    sender_c = ["./sender_cli1","./sender_cli4","./sender_cli8","./sender_cli1_M","./sender_cli4","./sender_cli8"]
-    recv_c = ["./receiver_cli1","./receiver_cli4","./receiver_cli8","./receiver_cli1_M","./receiver_cli4","./receiver_cli8"]
-    cmd_t = ["tc","qdisc", "change", "dev","lo",  "root", "handle", "1:0" ,"tbf" ,"lat" ,"10ms" ,"rate" ,"10Gbit" ,"burst" ,"1G"]
-    print(cmd_t)
-    subprocess.run(cmd_t)
-    cmd_t1 = [ "tc", "qdisc", "change", "dev","lo", "parent", "1:1" ,"handle" ,"10:" ,"netem" ,"delay" ,"0.1msec"]
-    print(cmd_t1)
-    subprocess.run(cmd_t1)
-    
+    sender_c = ["./sender_cli1","./sender_cli2","./sender_cli4","./sender_cli1_M","./sender_cli4","./sender_cli8"]
+    recv_c = ["./receiver_cli1","./receiver_cli2","./receiver_cli4","./receiver_cli1_M","./receiver_cli4","./receiver_cli8"]
 
-    table = [3]
-    item_bc = 32
+    table = [1]
+    item_bc = 16
     item_len = "--len "+str(item_bc)
+    network100M()
  	
-    prepare_data(pow(2,20),pow(2,11),256,item_bc)
+    # prepare_data(pow(2,18),pow(2,10),256,item_bc)
+    # work_fun(table)
+
+    # prepare_data(pow(2,19),pow(2,10),256,item_bc)
+    # work_fun(table)
+
+    # prepare_data(pow(2,20),pow(2,10),256,item_bc)
+    # work_fun(table)
+    # work_fun(table)
+    
+   # prepare_data(pow(2,22),pow(2,10),256,item_bc)
+    #work_fun(table)
+
+    param = '16M-2048.json'
+
+    prepare_data(pow(2,18),pow(2,11),256,item_bc)
     work_fun(table)
     
-    #param = '16M-2048.json'
-    
-    
+    prepare_data(pow(2,19),pow(2,11),256,item_bc)
+    work_fun(table)
+
+    prepare_data(pow(2,20),pow(2,11),256,item_bc)
+    work_fun(table) 
+   # prepare_data(pow(2,22),pow(2,11),256,item_bc)
+
+   # work_fun(table)
+    # network100M()
+    # PCST_fun(table)
+
+    # network10M()
+    # PCST_fun(table)
     #prepare_data(pow(2,18),pow(2,11),256)
     #work_fun()
     
