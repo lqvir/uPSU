@@ -157,20 +157,11 @@ namespace apsu {
                 reinterpret_cast<const seal_byte *>(batched_coeffs[0].data()),
                 batched_coeffs[0].size());
             evaluator->add_plain_inplace(result, coeff);
-#if APSU == 1
+
             
-            
-            //uint64_t random_i[3] = { 0 };
-           
-            //Plaintext ri("1");
-            //cout << random_plain.to_string() << endl;
-           // ri.set_zero();
-           // cout << ri.to_string() << endl;
-            //encoder->encode(random_i, ri);
             evaluator->add_plain_inplace(result, random_plain);
           
-    
-#endif
+
 
             // Make the result as small as possible by modulus switching and possibly clearing
             // irrelevant bits.
@@ -352,11 +343,9 @@ namespace apsu {
                 batched_coeffs[0].size());
 
             evaluator->add_plain_inplace(result, coeff);
-#if APSU == 1
-  
-            evaluator->add_plain_inplace(result, random_plain);
-           
-#endif
+
+            evaluator->add_plain_inplace(result, random_plain);       
+
 
 
 

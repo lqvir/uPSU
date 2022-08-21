@@ -23,7 +23,7 @@
 #include "seal/util/common.h"
 
 #include "Kunlun/mpc/peqt/peqt_from_ddh.hpp"
-
+#include "Kunlun/mpc/ot/naor_pinkas_ot.hpp"
 
 using namespace std;
 using namespace seal;
@@ -91,7 +91,7 @@ namespace apsu {
             }
 
             #define block_oc_to_std(a) (Block::MakeBlock((oc::block)a.as<uint64_t>()[1],(oc::block)a.as<uint64_t>()[0]))
-  
+
 
 
         } // namespace
@@ -119,7 +119,7 @@ namespace apsu {
    
             ParamsResponse response_params = make_unique<ParamsResponse::element_type>();
             response_params->params = make_unique<PSUParams>(receiver_db->get_params());
-
+            
             try {
                 send_fun(chl, move(response_params));
             } catch (const exception &ex) {
@@ -408,10 +408,11 @@ namespace apsu {
             APSU_LOG_INFO(random_matrix.size());
 
             std::vector<uint8_t> vec_result;
+            NetIO server("server","",59999);
             {
                 Global_Initialize(); 
                 ECGroup_Initialize(NID_X9_62_prime256v1); 
-                NetIO server("server", "", 59999);
+                
                 vec_result = DDHPEQT::Receive(server,random_matrix,max_bin_bundle_conut_alpha,item_cnt);
                 ECGroup_Finalize(); 
                 Global_Finalize();  
@@ -430,7 +431,24 @@ namespace apsu {
            // cout<<"pack_cnt"<<pack_cnt<<endl;
             all_timer.setTimePoint("ProcessBinBundleCache finished");
             APSU_LOG_INFO("Finished processing query request");
+            
+#if APSU == 1
             RunOT();
+#endif
+
+#if CARD == 1
+            APSU_LOG_INFO("cardinality "<<ans.size());
+            all_timer.setTimePoint("cardinality time");
+#endif
+#if  CARDSUM == 1
+	server.SendInteger(1);
+            Cardsum_receiver();
+
+#endif
+            cout<<"???"<<endl;
+            APSU_LOG_INFO(all_timer);
+            all_timer.reset();
+
         }
 
         void Receiver::ComputePowers(
@@ -685,8 +703,9 @@ namespace apsu {
             //APSU_LOG_INFO("recv_com_size ps"<<receiver_size/1024<<"KB");
             APSU_LOG_INFO("OT send_com_size ps"<<send_chls[0].getTotalDataSent()/1024<<"KB");
             APSU_LOG_INFO("OT recv_com_size ps"<<send_chls[0].getTotalDataRecv()/1024<<"KB");
-        
-
+            all_timer.reset();
+            send_chls.clear();
+            send_session.stop();
         }
 
 #else
@@ -754,7 +773,42 @@ namespace apsu {
 
 
 #endif
+#if  CARDSUM == 1
+        void Receiver::Cardsum_receiver(){
+            all_timer.setTimePoint("Cardsum_begin");
+            Global_Initialize(); 
+            ECGroup_Initialize(NID_X9_62_prime256v1); 
+		NetIO client = NetIO("server","",58888);
+            size_t Card = ans.size();
+            std::vector<uint8_t> vec_select_bit(item_cnt);
+            for(auto x : ans){
+                vec_select_bit[x] = 1;
+            }
+            auto pp = NPOT::Setup();
+            APSU_LOG_INFO(item_cnt);
+          
+        
+        
+            
+            auto rece_vec = NPOT::Receive(client,pp,vec_select_bit,item_cnt);
+           
+            uint64_t sum = 0;
+            for(auto x: rece_vec){
+                uint64_t temp = Block::BlockToInt64(x);
+                sum += temp;
+                sum &= 0xFFFFFFFF;
+            }
+            client.SendInteger(sum);
+            client.SendInteger(Card);
+            APSU_LOG_INFO("card"<<Card);
+            ECGroup_Finalize(); 
+            Global_Finalize();   
+            all_timer.setTimePoint("Cardsum_finish");
 
+  
+        }
+
+#endif
 
     } // namespace receiver
 } // namespace apsu

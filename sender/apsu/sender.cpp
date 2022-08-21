@@ -29,6 +29,7 @@
 #include "seal/util/defines.h"
 
 #include "Kunlun/mpc/peqt/peqt_from_ddh.hpp"
+#include "Kunlun/mpc/ot/naor_pinkas_ot.hpp"
 
 using namespace std;
 using namespace seal;
@@ -94,6 +95,7 @@ namespace apsu {
 
         #define block_oc_to_std(a) (Block::MakeBlock((oc::block)a.as<uint64_t>()[1],(oc::block)a.as<uint64_t>()[0]))
         std::vector<block> decrypt_randoms_matrix;
+
     } // namespace
 
     namespace sender {
@@ -193,7 +195,7 @@ namespace apsu {
         {
             // Create parameter request and send to Sender
             chl.send(CreateParamsRequest());
-
+            
             // Wait for a valid message of the right type
 
             
@@ -342,6 +344,12 @@ namespace apsu {
                     << cuckoo.loc_func_count()
                     << " hash functions; cuckoo table fill-rate: " << cuckoo.fill_rate());
             }
+
+#if CARDSUM == 1
+            valueMessages.assign(cuckoo.table_size(),(uint64_t)0);
+            shuffle_valueMessages.assign(cuckoo.table_size(),(uint64_t)0);
+
+#endif
 #if ARBITARY == 0 
             sendMessages.assign(cuckoo.table_size(),{oc::ZeroBlock,oc::ZeroBlock});
 
@@ -355,6 +363,10 @@ namespace apsu {
                 sendMessages[temp_loc]={oc::toBlock((uint8_t*)origin_item[item_idx].data()),oc::ZeroBlock};
               //  APSU_LOG_INFO(sendMessages[temp_loc][0].as<char>().data());
                // cout<<(int)sendMessages[temp_loc][0].as<char>()[0]<<endl;
+
+#if CARDSUM == 1
+                valueMessages[temp_loc] = item_idx;
+#endif
             }
 #else
 
@@ -534,7 +546,11 @@ namespace apsu {
             ECGroup_Finalize(); 
             Global_Finalize();  
             APSU_LOG_INFO("permute"<<permutation.size())   
-            
+#if CARDSUM == 1
+            for(size_t i = 0 ; i < item_cnt ; i ++ ){
+                shuffle_valueMessages[permutation[i]] = valueMessages[i];
+            }
+#endif            
             
 #if ARBITARY == 0 
 
@@ -550,6 +566,9 @@ namespace apsu {
            
             }
 #endif
+		int flag;
+		client.ReceiveInteger(flag);
+		APSU_LOG_INFO("flag"<<flag);
             all_timer.setTimePoint("decrypt and unpermute finish");
          //   cout<<all_timer<<endl;
             return mrs;
@@ -663,12 +682,12 @@ namespace apsu {
 
         void Sender::ResponseOT(string conn_addr){
             all_timer.setTimePoint("response OT start");
+
             int numThreads = 1;
       
             oc::IOService ios;
             oc::Session send_session=oc::Session(ios,"localhost:59999",oc::SessionMode::Client);
             std::vector<oc::Channel> send_chls(numThreads);
-            cout<<"hello world\n";
 
             oc::PRNG prng(oc::sysRandomSeed());            
             for (int i = 0; i < numThreads; ++i)
@@ -725,11 +744,67 @@ namespace apsu {
             send_session.stop();
         }
 
+#endif
+#if CARDSUM == 1
+    void Sender::Cardsum_Send(){
+        all_timer.setTimePoint("cardsum_begin");
+        
+        Global_Initialize(); 
+        ECGroup_Initialize(NID_X9_62_prime256v1); 
+        APSU_LOG_INFO("line821");
+        
+            NetIO server("client","127.0.0.1",58888);
 
+            
+          
+            auto pp = NPOT::Setup();
+           
+            APSU_LOG_INFO("line831");
+    
+   
+            
+            uint64_t sum_r = 0;
+        
 
+            prng_seed_type newseed;
+            random_bytes(reinterpret_cast<seal_byte *>(newseed.data()), prng_seed_byte_count);
+            UniformRandomGeneratorInfo myGEN(prng_type::blake2xb, newseed);
+            std::shared_ptr<UniformRandomGenerator> myprng = myGEN.make_prng();
+            std::vector<uint64_t> randomMessages;
+            APSU_LOG_INFO("line837");
+            for(auto v : shuffle_valueMessages){
+                auto temp = (uint64_t)(myprng->generate()&0xFFFFFFFF);
+                sum_r = ((sum_r + temp)&0xFFFFFFFF);
+                randomMessages.emplace_back(temp);
+            }
+            size_t len = shuffle_valueMessages.size();
+            std::vector<block> v;
+            std::vector<block> r;
 
+            for(size_t i = 0 ; i < len; i++){
+                v.emplace_back(Block::MakeBlock(0,randomMessages[i]));
+                r.emplace_back(Block::MakeBlock(0,randomMessages[i]+shuffle_valueMessages[i]));
+            }
+    
+            APSU_LOG_INFO(len);
+            NPOT::Send(server,pp,v,r,len);
+            uint64_t S_prime = 0;
+            uint64_t card = 0;
+            server.ReceiveInteger(S_prime);
+            S_prime -= sum_r;
+            server.ReceiveInteger(card);
+            APSU_LOG_INFO("Sum"<<S_prime);
+            APSU_LOG_INFO("Card"<<card);
+
+            ECGroup_Finalize(); 
+            Global_Finalize();  
+            all_timer.setTimePoint("cardsum Finish");
+            cout<<all_timer<<endl;
+            all_timer.reset();
+    }
 
 #endif
+
 
 
     } // namespace sender

@@ -215,7 +215,9 @@ namespace apsu {
                 const plainRequest &params_request, network::Channel &chl,const PSUParams &params_);
         
             void RunOT();
-        
+#if CARDSUM == 1
+            void Cardsum_receiver();
+#endif
         private:
             /**
             Method that handles computing powers for a given bundle index

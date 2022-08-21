@@ -234,6 +234,10 @@ namespace apsu {
              */
 
             void ResponseOT(std::string conn_addr);
+
+#if CARDSUM == 1
+            void Cardsum_Send();
+#endif
         private:
             /**
             Recomputes the PowersDag. The function returns the depth of the PowersDag. In some cases
@@ -272,6 +276,11 @@ namespace apsu {
            std::vector<std::vector<std::array<oc::block, 2> > >shuffleMessages;
            size_t item_len = 0;
 #endif
+#if CARDSUM == 1
+            std::vector<uint64_t> valueMessages;
+            std::vector<uint64_t> shuffle_valueMessages;
+#endif
+
         }; // class Receiver
     }      // namespace receiver
 } // namespace apsu

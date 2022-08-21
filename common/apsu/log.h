@@ -8,8 +8,10 @@
 #include <sstream>
 #include <string>
 
-#define APSU 1
+#define APSU 0
 #define ARBITARY 0
+#define CARD 1
+#define CARDSUM 1
 namespace apsu {
     /**
     Class that provides the logging interface.
